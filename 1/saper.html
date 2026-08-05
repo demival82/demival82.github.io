@@ -1,0 +1,1134 @@
+   
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>3D Сапер · Превосходный сенсорный отклик</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #0a0c14;
+            font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            touch-action: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: pointer;
+        }
+        
+        /* Улучшенный HUD */
+        #game-status {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            left: 12px;
+            right: 12px;
+            color: white;
+            background: rgba(10, 15, 25, 0.95);
+            backdrop-filter: blur(16px);
+            padding: 12px 18px;
+            border-radius: 60px;
+            font-size: clamp(13px, 4vw, 17px);
+            font-weight: 700;
+            border-left: 4px solid #ffb347;
+            border-right: 1px solid #ffb34780;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 20;
+            letter-spacing: 0.3px;
+            pointer-events: none;
+            text-align: center;
+            white-space: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        /* Мобильная панель */
+        .hud-panel {
+            position: absolute;
+            top: max(12px, env(safe-area-inset-top));
+            right: 12px;
+            display: flex;
+            gap: 10px;
+            z-index: 25;
+            pointer-events: none;
+        }
+        
+        .hud-panel button, .difficulty-badge {
+            pointer-events: auto;
+            background: rgba(20, 25, 45, 0.96);
+            backdrop-filter: blur(16px);
+            border: 1.5px solid #7f9fcf;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: clamp(12px, 3.5vw, 15px);
+            cursor: pointer;
+            transition: all 0.1s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .hud-panel button:active {
+            transform: scale(0.94);
+            background: #3a6a9a;
+            border-color: #ffcc66;
+        }
+        
+        .difficulty-badge {
+            background: linear-gradient(135deg, #1e2a3a, #0f1a2f);
+            border-color: #ffcc55;
+            color: #ffeaac;
+            cursor: default;
+        }
+        
+        .hud-panel button:active {
+            transform: scale(0.94);
+        }
+        
+        #restart-btn {
+            background: #8b2c2c;
+            border-color: #ff8a6a;
+        }
+        
+        /* Нижняя панель */
+        .bottom-bar {
+            position: absolute;
+            bottom: max(15px, env(safe-area-inset-bottom));
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 30;
+            pointer-events: none;
+            padding: 0 15px;
+        }
+        
+        .bottom-bar button {
+            pointer-events: auto;
+            background: rgba(20, 30, 48, 0.96);
+            backdrop-filter: blur(16px);
+            border: 1.5px solid #9fbfef;
+            color: #f0f3ff;
+            padding: 14px 24px;
+            border-radius: 60px;
+            font-size: clamp(14px, 4vw, 17px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.1s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 130px;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .bottom-bar button:active {
+            transform: scale(0.95);
+            background: #3a6a9a;
+        }
+        
+        /* Улучшенный индикатор касания */
+        #touch-indicator {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.8), rgba(255,100,0,0.5));
+            border: 3px solid rgba(255, 240, 150, 1);
+            pointer-events: none;
+            z-index: 200;
+            transform: translate(-50%, -50%) scale(1);
+            transition: all 0.08s ease-out;
+            display: none;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 50px rgba(255,200,0,0.8);
+            animation: pulse-ring 0.3s ease-out;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                transform: translate(-50%, -50%) scale(0.6);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        #touch-indicator.active {
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, rgba(255,80,80,0.9), rgba(200,40,0,0.7));
+            border-color: #ff6644;
+            animation: pulse-active 0.2s ease-out;
+        }
+        
+        @keyframes pulse-active {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Улучшенная подсветка клеток */
+        .tile-glow {
+            transition: all 0.05s linear;
+        }
+        
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, #1a2545, #12142a);
+            border-radius: 40px;
+            padding: 24px 20px;
+            max-width: 95%;
+            width: 100%;
+            color: #f5f5ff;
+            border: 2px solid #ffdd77;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.6);
+            animation: slideUp 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ffcc66;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            color: #ffdd88;
+            font-size: clamp(20px, 5.5vw, 28px);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #ffcc66;
+            font-size: 44px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 12px;
+            transition: 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .close-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .help-section {
+            background: rgba(255,255,255,0.06);
+            border-radius: 28px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffcc66;
+        }
+        
+        .help-section h3 {
+            color: #ffdd88;
+            margin-bottom: 12px;
+            font-size: clamp(17px, 4.5vw, 21px);
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0,0,0,0.35);
+            padding: 12px 16px;
+            border-radius: 60px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .control-icon {
+            background: #ffaa44;
+            color: #1a1a2a;
+            width: 48px;
+            height: 48px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        
+        .component-card {
+            background: #0a1020cc;
+            border-radius: 24px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #ffaa66;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .team-member {
+            background: rgba(255,215,100,0.08);
+            border-radius: 28px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 1px solid #ffcc88;
+        }
+        
+        .member-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ffaa44, #ff6633);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            border: 3px solid #ffe0aa;
+        }
+        
+        .difficulty-selector button {
+            padding: 16px;
+            font-size: 18px;
+            margin-bottom: 12px;
+            width: 100%;
+            border-radius: 60px;
+            font-weight: bold;
+            transition: 0.1s;
+        }
+        
+        .difficulty-selector button:active {
+            transform: scale(0.97);
+        }
+        
+        .stats-highlight {
+            font-size: 13px;
+            background: #00000060;
+            border-radius: 30px;
+            padding: 12px;
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 550px) {
+            .bottom-bar button {
+                min-width: 110px;
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+            .control-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+            .control-row {
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            #game-status {
+                font-size: 10px;
+                white-space: normal;
+                line-height: 1.3;
+            }
+            .bottom-bar button {
+                min-width: 95px;
+                padding: 10px 12px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-status">🎮 ЛЕГКО · 5×5 · 💣 3 мины | 🚩 0/3</div>
+    
+    <div class="hud-panel">
+        <div class="difficulty-badge" id="difficulty-display">⭐ Лёгкий</div>
+        <button id="difficulty-btn" aria-label="Сложность">⚙️</button>
+        <button id="restart-btn" aria-label="Новая игра">🔄</button>
+    </div>
+    
+    <div class="bottom-bar">
+        <button id="help-btn">📘 Справка</button>
+        <button id="credits-btn">✨ Создатели</button>
+    </div>
+    
+    <div id="touch-indicator"></div>
+    
+    <!-- Модалка сложности -->
+    <div id="difficulty-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎚️ Выбор сложности</h2>
+                <button class="close-btn" id="close-difficulty">&times;</button>
+            </div>
+            <div class="difficulty-selector">
+                <button id="diff-easy" style="background: #1f6d4a; border: 2px solid #a5d6a5; color: white;">🌱 Лёгкая · 5x5 · 3 мины</button>
+                <button id="diff-medium" style="background: #b87c2e; border: 2px solid #ffcc77; color: white;">🔥 Средняя · 8x8 · 12 мин</button>
+                <button id="diff-hard" style="background: #aa4444; border: 2px solid #ff8a7a; color: white;">💀 Сложная · 10x10 · 20 мин</button>
+            </div>
+            <div class="stats-highlight">🏆 Победа: все мины отмечены флагами + все безопасные клетки открыты</div>
+        </div>
+    </div>
+    
+    <!-- Модалка справки -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎮 Управление</h2>
+                <button class="close-btn" id="close-help">&times;</button>
+            </div>
+            <div class="help-section">
+                <h3>👆 Сенсорное управление</h3>
+                <div class="control-row">
+                    <span class="control-icon">⚡</span>
+                    <span><strong>Короткое касание</strong> — открыть клетку (мгновенный отклик)</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-icon">🚩</span>
+                    <span><strong>Длинное касание (0.4 сек)</strong> — установить/снять флаг</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-icon">✌️</span>
+                    <span><strong>Двойное касание</strong> — альтернативная установка флага</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-icon">🔄</span>
+                    <span><strong>Вращение поля</strong> — одним пальцем</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-icon">📳</span>
+                    <span><strong>Тактильный отклик</strong> — вибрация при действиях (если поддерживается)</span>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>📦 Игровые элементы</h3>
+                <div class="component-grid">
+                    <div class="component-card">⬜ Закрытая клетка</div>
+                    <div class="component-card">🔢 Число мин рядом</div>
+                    <div class="component-card">🚩 Флаг (предполагаемая мина)</div>
+                    <div class="component-card">💣 Мина (взрыв)</div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>📊 Сложности</h3>
+                <p><strong>🌱 Лёгкая:</strong> 5×5, 3 мины, 22 безопасных</p>
+                <p><strong>🔥 Средняя:</strong> 8×8, 12 мин, 52 безопасных</p>
+                <p><strong>💀 Сложная:</strong> 10×10, 20 мин, 80 безопасных</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модалка создателей -->
+    <div id="credits-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🌟 Команда разработки</h2>
+                <button class="close-btn" id="close-credits">&times;</button>
+            </div>
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-avatar">🧙</div>
+                    <h3>Алексей В.</h3>
+                    <p>Ведущий разработчик</p>
+                </div>
+                <div class="team-member">
+                    <div class="member-avatar">🎨</div>
+                    <h3>Елена К.</h3>
+                    <p>UI/UX дизайнер</p>
+                </div>
+                <div class="team-member">
+                    <div class="member-avatar">🎮</div>
+                    <h3>Роман Д.</h3>
+                    <p>Геймдизайнер</p>
+                </div>
+                <div class="team-member">
+                    <div class="member-avatar">✨</div>
+                    <h3>София М.</h3>
+                    <p>Визуальные эффекты</p>
+                </div>
+            </div>
+            <div class="stats-highlight" style="margin-top: 20px;">📱 Оптимизировано для мобильных устройств с превосходным сенсорным откликом</div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    
+    <script>
+        (function() {
+            // Определение мобильного устройства
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            // Вибрация (если поддерживается)
+            const vibrate = (duration = 20) => {
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(duration);
+                }
+            };
+            
+            // Three.js сцена
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0c1a);
+            if (isMobile) scene.fog = new THREE.FogExp2(0x0a0c1a, 0.006);
+            
+            const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(7.2, 6.2, 10.5);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = !isMobile;
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.body.appendChild(renderer.domElement);
+            
+            // Освещение
+            const ambient = new THREE.AmbientLight(0x556688);
+            scene.add(ambient);
+            const mainLight = new THREE.DirectionalLight(0xfff5e8, 1.1);
+            mainLight.position.set(5, 12, 6);
+            if (!isMobile) mainLight.castShadow = true;
+            scene.add(mainLight);
+            const fillLight = new THREE.PointLight(0x77aaff, 0.45);
+            fillLight.position.set(-2, 4, 5);
+            scene.add(fillLight);
+            const backLight = new THREE.PointLight(0xffaa66, 0.3);
+            backLight.position.set(3, 2, -4);
+            scene.add(backLight);
+            
+            // Звёзды (уменьшено для мобильных)
+            const starCount = isMobile ? 600 : 1200;
+            const starField = new THREE.BufferGeometry();
+            const starPos = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount; i++) {
+                starPos[i*3] = (Math.random() - 0.5) * 280;
+                starPos[i*3+1] = (Math.random() - 0.5) * 160;
+                starPos[i*3+2] = (Math.random() - 0.5) * 100 - 40;
+            }
+            starField.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starsMat = new THREE.PointsMaterial({ color: 0xaaccff, size: isMobile ? 0.09 : 0.11 });
+            const starsSys = new THREE.Points(starField, starsMat);
+            scene.add(starsSys);
+            
+            const tilesGroup = new THREE.Group();
+            scene.add(tilesGroup);
+            
+            // Игровые параметры
+            let GRID_SIZE = 5;
+            let MINE_COUNT = 3;
+            let TOTAL_CELLS = 25;
+            let mines = [], numbers = [], revealed = [], flags = [];
+            let gameActive = true, gameWon = false;
+            
+            const tileSize = 1.0;
+            const gap = 0.1;
+            const tileHeight = 0.22;
+            
+            // Создание клетки с улучшенной визуализацией
+            function createTileVisual(x, z, idx) {
+                const group = new THREE.Group();
+                const boxGeom = new THREE.BoxGeometry(tileSize - gap, tileHeight, tileSize - gap);
+                const matBody = new THREE.MeshPhongMaterial({ color: 0xcbd5ff, emissive: 0x111122, shininess: 60 });
+                const tileMesh = new THREE.Mesh(boxGeom, matBody);
+                tileMesh.castShadow = !isMobile;
+                tileMesh.receiveShadow = !isMobile;
+                group.add(tileMesh);
+                
+                // Экран для цифр
+                const screenPlane = new THREE.PlaneGeometry(tileSize * 0.72, tileSize * 0.72);
+                const screenMat = new THREE.MeshPhongMaterial({ color: 0x1e2340, emissive: 0x111122, side: THREE.DoubleSide });
+                const screen = new THREE.Mesh(screenPlane, screenMat);
+                screen.rotation.x = -Math.PI / 2;
+                screen.position.y = tileHeight/2 + 0.02;
+                group.add(screen);
+                
+                // Мина
+                const mineSphere = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.22, isMobile ? 12 : 16, isMobile ? 12 : 16),
+                    new THREE.MeshPhongMaterial({ color: 0xdd5555, emissive: 0x441111 })
+                );
+                mineSphere.position.y = tileHeight/2 + 0.21;
+                mineSphere.visible = false;
+                group.add(mineSphere);
+                
+                // Флаг
+                const flagGroup = new THREE.Group();
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.54, 6), new THREE.MeshPhongMaterial({ color: 0xeeeeee }));
+                pole.position.y = 0.28;
+                flagGroup.add(pole);
+                const flagCloth = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.3, 6), new THREE.MeshPhongMaterial({ color: 0xffbb55, emissive: 0x442200 }));
+                flagCloth.position.set(0.13, 0.5, 0);
+                flagCloth.rotation.z = -0.25;
+                flagGroup.add(flagCloth);
+                flagGroup.position.y = tileHeight/2;
+                flagGroup.visible = false;
+                group.add(flagGroup);
+                
+                // Подсветка при наведении/касании
+                const glowPlane = new THREE.Mesh(
+                    new THREE.BoxGeometry(tileSize - gap + 0.12, 0.04, tileSize - gap + 0.12),
+                    new THREE.MeshPhongMaterial({ color: 0xffaa66, transparent: true, opacity: 0, emissive: 0x442200 })
+                );
+                glowPlane.position.y = -0.06;
+                group.add(glowPlane);
+                
+                group.position.x = (x - (GRID_SIZE-1)/2) * tileSize;
+                group.position.z = (z - (GRID_SIZE-1)/2) * tileSize;
+                group.userData = { tileMesh, screen, mineSphere, flagGroup, glowPlane, index: idx, row: z, col: x };
+                return group;
+            }
+            
+            function buildField() {
+                while(tilesGroup.children.length) tilesGroup.remove(tilesGroup.children[0]);
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        const idx = i * GRID_SIZE + j;
+                        const tileObj = createTileVisual(j, i, idx);
+                        tilesGroup.add(tileObj);
+                    }
+                }
+            }
+            
+            function updateUI() {
+                const flagged = flags.filter(v => v === true).length;
+                const diffName = GRID_SIZE === 5 ? 'ЛЕГКО' : (GRID_SIZE === 8 ? 'СРЕДНЕ' : 'СЛОЖНО');
+                const statusDiv = document.getElementById('game-status');
+                statusDiv.innerHTML = `🎮 ${diffName} · ${GRID_SIZE}×${GRID_SIZE} · 💣 ${MINE_COUNT} мин | 🚩 ${flagged}/${MINE_COUNT}`;
+                if (gameWon) statusDiv.innerHTML += ` ✨ ПОБЕДА! ✨`;
+                else if (!gameActive) statusDiv.innerHTML += ` 💀 ПОРАЖЕНИЕ`;
+            }
+            
+            function drawNumber(screenMesh, value) {
+                while(screenMesh.children.length) screenMesh.remove(screenMesh.children[0]);
+                if (value <= 0) return;
+                const colors = [0xffffff, 0x6cb0ff, 0x6be06b, 0xff6b6b, 0xc97eff, 0xffaa66, 0x55ccff];
+                const col = colors[Math.min(value, 6)] || 0xffaa88;
+                const matDigit = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.35 });
+                const groupDigits = new THREE.Group();
+                
+                if (value === 1) {
+                    const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10), matDigit);
+                    sphere.position.set(0, 0, 0.02);
+                    groupDigits.add(sphere);
+                } else {
+                    const count = Math.min(value, 6);
+                    for (let k = 0; k < count; k++) {
+                        const angle = (k / count) * Math.PI * 2;
+                        const xOff = Math.cos(angle) * 0.19;
+                        const zOff = Math.sin(angle) * 0.19;
+                        const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8), matDigit);
+                        sphere.position.set(xOff, zOff, 0.02);
+                        groupDigits.add(sphere);
+                    }
+                }
+                screenMesh.add(groupDigits);
+            }
+            
+            function refreshAllTiles() {
+                tilesGroup.children.forEach(tile => {
+                    const d = tile.userData;
+                    const idx = d.index;
+                    if (revealed[idx]) {
+                        d.tileMesh.material.color.setHex(0x8a90b5);
+                        d.screen.visible = true;
+                        if (mines[idx]) {
+                            d.mineSphere.visible = true;
+                            while(d.screen.children.length) d.screen.remove(d.screen.children[0]);
+                        } else {
+                            d.mineSphere.visible = false;
+                            drawNumber(d.screen, numbers[idx]);
+                        }
+                        d.flagGroup.visible = false;
+                        d.glowPlane.material.opacity = 0;
+                    } else {
+                        d.tileMesh.material.color.setHex(0xcbd5ff);
+                        d.screen.visible = false;
+                        d.mineSphere.visible = false;
+                        d.flagGroup.visible = flags[idx];
+                    }
+                });
+                updateUI();
+            }
+            
+            function checkWin() {
+                let minesFlagged = 0, safeRevealed = 0;
+                for (let i = 0; i < TOTAL_CELLS; i++) {
+                    if (mines[i] && flags[i]) minesFlagged++;
+                    if (!mines[i] && revealed[i]) safeRevealed++;
+                }
+                if (minesFlagged === MINE_COUNT && safeRevealed === TOTAL_CELLS - MINE_COUNT && gameActive && !gameWon) {
+                    gameWon = true;
+                    gameActive = false;
+                    updateUI();
+                    startConfetti();
+                    vibrate(100);
+                    return true;
+                }
+                return false;
+            }
+            
+            function revealCell(idx, fromTouch = false) {
+                if (!gameActive || gameWon || revealed[idx] || flags[idx]) return false;
+                
+                revealed[idx] = true;
+                if (fromTouch) vibrate(12);
+                
+                if (mines[idx]) {
+                    gameActive = false;
+                    for (let i = 0; i < TOTAL_CELLS; i++) if (mines[i]) revealed[i] = true;
+                    refreshAllTiles();
+                    updateUI();
+                    vibrate(80);
+                    return false;
+                }
+                
+                if (numbers[idx] === 0) {
+                    const x = Math.floor(idx / GRID_SIZE);
+                    const y = idx % GRID_SIZE;
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const nx = x + dx, ny = y + dy;
+                            if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE) {
+                                const nIdx = nx * GRID_SIZE + ny;
+                                if (!revealed[nIdx] && !mines[nIdx]) revealCell(nIdx, false);
+                            }
+                        }
+                    }
+                }
+                refreshAllTiles();
+                checkWin();
+                return true;
+            }
+            
+            function toggleFlag(idx) {
+                if (!gameActive || gameWon || revealed[idx]) return;
+                flags[idx] = !flags[idx];
+                refreshAllTiles();
+                vibrate(15);
+                checkWin();
+            }
+            
+            function initGameLogic() {
+                TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+                mines = new Array(TOTAL_CELLS).fill(false);
+                numbers = new Array(TOTAL_CELLS).fill(0);
+                revealed = new Array(TOTAL_CELLS).fill(false);
+                flags = new Array(TOTAL_CELLS).fill(false);
+                gameActive = true;
+                gameWon = false;
+                
+                let placed = 0;
+                while (placed < MINE_COUNT) {
+                    const r = Math.floor(Math.random() * TOTAL_CELLS);
+                    if (!mines[r]) { mines[r] = true; placed++; }
+                }
+                
+                for (let i = 0; i < GRID_SIZE; i++) {
+                    for (let j = 0; j < GRID_SIZE; j++) {
+                        const idx = i * GRID_SIZE + j;
+                        if (mines[idx]) { numbers[idx] = -1; continue; }
+                        let cnt = 0;
+                        for (let di = -1; di <= 1; di++) {
+                            for (let dj = -1; dj <= 1; dj++) {
+                                if (di === 0 && dj === 0) continue;
+                                const ni = i + di, nj = j + dj;
+                                if (ni >= 0 && ni < GRID_SIZE && nj >= 0 && nj < GRID_SIZE && mines[ni * GRID_SIZE + nj]) cnt++;
+                            }
+                        }
+                        numbers[idx] = cnt;
+                    }
+                }
+                refreshAllTiles();
+            }
+            
+            function setDifficulty(size, minesCount) {
+                GRID_SIZE = size;
+                MINE_COUNT = minesCount;
+                buildField();
+                initGameLogic();
+                document.getElementById('difficulty-display').innerHTML = size === 5 ? '⭐ Лёгкий' : (size === 8 ? '🔥 Средний' : '💀 Сложный');
+                if (window.confettiPoints) { scene.remove(window.confettiPoints); window.confettiPoints = null; }
+                vibrate(10);
+            }
+            
+            // Конфетти
+            let confettiPoints = null, confettiVel = [];
+            function startConfetti() {
+                if (confettiPoints) scene.remove(confettiPoints);
+                const count = isMobile ? 200 : 350;
+                const geom = new THREE.BufferGeometry();
+                const positions = new Float32Array(count * 3);
+                const colorsArr = new Float32Array(count * 3);
+                confettiVel = [];
+                for (let i = 0; i < count; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const rad = 2 + Math.random() * 6;
+                    positions[i*3] = Math.cos(angle) * rad;
+                    positions[i*3+1] = 3 + Math.random() * 5;
+                    positions[i*3+2] = Math.sin(angle) * rad;
+                    colorsArr[i*3] = Math.random();
+                    colorsArr[i*3+1] = Math.random();
+                    colorsArr[i*3+2] = Math.random();
+                    confettiVel.push({ vy: -0.018 - Math.random() * 0.02, vx: (Math.random()-0.5)*0.012, vz: (Math.random()-0.5)*0.012 });
+                }
+                geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geom.setAttribute('color', new THREE.BufferAttribute(colorsArr, 3));
+                const ptMat = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, blending: THREE.AdditiveBlending });
+                confettiPoints = new THREE.Points(geom, ptMat);
+                scene.add(confettiPoints);
+                window.confettiPoints = confettiPoints;
+            }
+            
+            function updateConfetti() {
+                if (!confettiPoints) return;
+                const posAttr = confettiPoints.geometry.attributes.position.array;
+                for (let i = 0; i < posAttr.length / 3; i++) {
+                    posAttr[i*3] += confettiVel[i].vx;
+                    posAttr[i*3+1] += confettiVel[i].vy;
+                    posAttr[i*3+2] += confettiVel[i].vz;
+                    if (posAttr[i*3+1] < -1) {
+                        posAttr[i*3] = (Math.random() - 0.5) * 12;
+                        posAttr[i*3+1] = 5 + Math.random() * 4;
+                        posAttr[i*3+2] = (Math.random() - 0.5) * 12;
+                    }
+                }
+                confettiPoints.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // Улучшенное сенсорное управление
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.enableZoom = true;
+            controls.enablePan = true;
+            controls.rotateSpeed = isMobile ? 0.9 : 1.0;
+            controls.zoomSpeed = isMobile ? 0.8 : 1.0;
+            controls.panSpeed = isMobile ? 0.8 : 1.0;
+            controls.maxPolarAngle = Math.PI / 2.2;
+            controls.minDistance = 3.2;
+            controls.maxDistance = 13;
+            
+            const raycaster = new THREE.Raycaster();
+            let touchStartTime = 0;
+            let touchStartPos = null;
+            let longPressTimer = null;
+            let currentHoverTile = null;
+            let lastTapTime = 0;
+            const touchInd = document.getElementById('touch-indicator');
+            
+            function getTileUnderPoint(clientX, clientY) {
+                const mouseVec = new THREE.Vector2();
+                mouseVec.x = (clientX / renderer.domElement.clientWidth) * 2 - 1;
+                mouseVec.y = -(clientY / renderer.domElement.clientHeight) * 2 + 1;
+                raycaster.setFromCamera(mouseVec, camera);
+                const intersects = raycaster.intersectObjects(tilesGroup.children, true);
+                for (let hit of intersects) {
+                    let obj = hit.object;
+                    while (obj && obj !== tilesGroup) {
+                        if (obj.userData && obj.userData.index !== undefined) return obj;
+                        obj = obj.parent;
+                    }
+                }
+                return null;
+            }
+            
+            function clearTileGlow() {
+                if (currentHoverTile && currentHoverTile.userData.glowPlane) {
+                    currentHoverTile.userData.glowPlane.material.opacity = 0;
+                }
+                currentHoverTile = null;
+            }
+            
+            // Обработка касаний с улучшенным откликом
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                if (!touch) return;
+                
+                touchStartTime = Date.now();
+                touchStartPos = { x: touch.clientX, y: touch.clientY };
+                
+                // Показываем индикатор касания
+                touchInd.style.display = 'block';
+                touchInd.style.left = touch.clientX + 'px';
+                touchInd.style.top = touch.clientY + 'px';
+                touchInd.classList.remove('active');
+                
+                const tile = getTileUnderPoint(touch.clientX, touch.clientY);
+                if (tile) {
+                    currentHoverTile = tile;
+                    if (tile.userData.glowPlane) {
+                        tile.userData.glowPlane.material.opacity = 0.75;
+                    }
+                    
+                    // Устанавливаем таймер для длинного нажатия
+                    longPressTimer = setTimeout(() => {
+                        if (currentHoverTile && gameActive && !gameWon) {
+                            const idx = currentHoverTile.userData.index;
+                            if (!revealed[idx]) {
+                                toggleFlag(idx);
+                                touchInd.classList.add('active');
+                                setTimeout(() => touchInd.classList.remove('active'), 200);
+                                // Визуальный эффект
+                                if (currentHoverTile.userData.glowPlane) {
+                                    currentHoverTile.userData.glowPlane.material.opacity = 0.4;
+                                    setTimeout(() => {
+                                        if (currentHoverTile && currentHoverTile.userData.glowPlane && !revealed[idx]) {
+                                            currentHoverTile.userData.glowPlane.material.opacity = 0;
+                                        }
+                                    }, 150);
+                                }
+                            }
+                        }
+                        longPressTimer = null;
+                    }, 400);
+                }
+            }, { passive: false });
+            
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!e.touches[0]) return;
+                const touch = e.touches[0];
+                const dx = touch.clientX - (touchStartPos?.x || touch.clientX);
+                const dy = touch.clientY - (touchStartPos?.y || touch.clientY);
+                const distance = Math.hypot(dx, dy);
+                
+                // Обновляем индикатор
+                touchInd.style.left = touch.clientX + 'px';
+                touchInd.style.top = touch.clientY + 'px';
+                
+                // Если палец сильно переместился, отменяем длинное нажатие
+                if (distance > 15 && longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                
+                // Обновляем подсветку клетки
+                const newTile = getTileUnderPoint(touch.clientX, touch.clientY);
+                if (newTile !== currentHoverTile) {
+                    clearTileGlow();
+                    if (newTile && !revealed[newTile.userData.index]) {
+                        currentHoverTile = newTile;
+                        if (currentHoverTile.userData.glowPlane) {
+                            currentHoverTile.userData.glowPlane.material.opacity = 0.75;
+                        }
+                    }
+                }
+            }, { passive: false });
+            
+            renderer.domElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                if (!touch) return;
+                
+                const duration = Date.now() - touchStartTime;
+                const now = Date.now();
+                const isDoubleTap = (now - lastTapTime) < 280;
+                lastTapTime = now;
+                
+                // Скрываем индикатор
+                touchInd.style.display = 'none';
+                
+                // Отменяем длинное нажатие, если оно ещё активно
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                
+                // Обрабатываем касание как короткий тап (открытие клетки)
+                if (duration < 400 && currentHoverTile && gameActive && !gameWon) {
+                    const idx = currentHoverTile.userData.index;
+                    if (!revealed[idx] && !flags[idx]) {
+                        revealCell(idx, true);
+                        // Мгновенная обратная связь
+                        if (currentHoverTile.userData.glowPlane) {
+                            currentHoverTile.userData.glowPlane.material.opacity = 0.3;
+                            setTimeout(() => {
+                                if (currentHoverTile && currentHoverTile.userData.glowPlane) {
+                                    currentHoverTile.userData.glowPlane.material.opacity = 0;
+                                }
+                            }, 100);
+                        }
+                    }
+                }
+                
+                // Альтернативная обработка двойного тапа для флага
+                if (isDoubleTap && currentHoverTile && gameActive && !gameWon && duration < 300) {
+                    const idx = currentHoverTile.userData.index;
+                    if (!revealed[idx]) {
+                        toggleFlag(idx);
+                        touchInd.classList.add('active');
+                        setTimeout(() => touchInd.classList.remove('active'), 150);
+                    }
+                }
+                
+                // Сбрасываем подсветку
+                clearTileGlow();
+                currentHoverTile = null;
+                touchStartPos = null;
+            });
+            
+            renderer.domElement.addEventListener('touchcancel', (e) => {
+                if (longPressTimer) clearTimeout(longPressTimer);
+                clearTileGlow();
+                currentHoverTile = null;
+                touchInd.style.display = 'none';
+            });
+            
+            // Поддержка мыши для десктопа
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                const tile = getTileUnderPoint(e.clientX, e.clientY);
+                if (tile && !revealed[tile.userData.index]) {
+                    if (tile.userData.glowPlane) tile.userData.glowPlane.material.opacity = 0.6;
+                }
+            });
+            
+            renderer.domElement.addEventListener('mouseup', (e) => {
+                const tile = getTileUnderPoint(e.clientX, e.clientY);
+                if (tile && !revealed[tile.userData.index] && !flags[tile.userData.index] && gameActive && !gameWon) {
+                    revealCell(tile.userData.index, true);
+                }
+                if (tile && tile.userData.glowPlane) tile.userData.glowPlane.material.opacity = 0;
+            });
+            
+            // Модальные окна
+            const diffModal = document.getElementById('difficulty-modal');
+            const helpModal = document.getElementById('help-modal');
+            const credModal = document.getElementById('credits-modal');
+            
+            document.getElementById('difficulty-btn').onclick = () => { diffModal.classList.add('active'); vibrate(8); };
+            document.getElementById('close-difficulty').onclick = () => diffModal.classList.remove('active');
+            document.getElementById('diff-easy').onclick = () => { setDifficulty(5, 3); diffModal.classList.remove('active'); };
+            document.getElementById('diff-medium').onclick = () => { setDifficulty(8, 12); diffModal.classList.remove('active'); };
+            document.getElementById('diff-hard').onclick = () => { setDifficulty(10, 20); diffModal.classList.remove('active'); };
+            document.getElementById('restart-btn').onclick = () => { initGameLogic(); if(confettiPoints) scene.remove(confettiPoints); confettiPoints = null; vibrate(15); };
+            document.getElementById('help-btn').onclick = () => { helpModal.classList.add('active'); vibrate(8); };
+            document.getElementById('credits-btn').onclick = () => { credModal.classList.add('active'); vibrate(8); };
+            document.getElementById('close-help').onclick = () => helpModal.classList.remove('active');
+            document.getElementById('close-credits').onclick = () => credModal.classList.remove('active');
+            
+            [diffModal, helpModal, credModal].forEach(modal => {
+                modal.addEventListener('click', (e) => { if(e.target === modal) modal.classList.remove('active'); });
+            });
+            
+            // Запуск
+            buildField();
+            initGameLogic();
+            
+            let animTime = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                animTime += 0.016;
+                
+                // Плавная анимация клеток
+                tilesGroup.children.forEach(tile => {
+                    if (!revealed[tile.userData.index]) {
+                        const floatY = Math.sin(animTime * 1.6 + tile.userData.index * 0.25) * 0.045;
+                        tile.position.y = floatY;
+                    } else {
+                        tile.position.y = 0.08;
+                    }
+                });
+                
+                starsSys.rotation.y += 0.0004;
+                if (confettiPoints) updateConfetti();
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+    </script>
+</body>
+</html>
