@@ -1,0 +1,446 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Градиентная Вселенная · 2000 кубов</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0b0b18;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: rgba(255, 255, 255, 0.5);
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* ── Интерфейс ── */
+        .ui-overlay {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            pointer-events: none;
+            z-index: 10;
+            flex-wrap: wrap;
+            padding: 0 20px;
+        }
+
+        .ui-overlay span {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            padding: 8px 22px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 13px;
+            letter-spacing: 1px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.35);
+            pointer-events: auto;
+            transition: 0.25s;
+        }
+
+        .ui-overlay span:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .ui-overlay .badge {
+            background: rgba(255, 215, 0, 0.08);
+            border-color: rgba(255, 215, 0, 0.15);
+            color: rgba(255, 215, 0, 0.6);
+        }
+
+        .stats {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.15);
+            font-weight: 300;
+            text-align: right;
+            line-height: 1.6;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stats strong {
+            color: rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+        }
+
+        @media (max-width: 600px) {
+            .ui-overlay {
+                bottom: 18px;
+                gap: 12px;
+            }
+            .ui-overlay span {
+                font-size: 10px;
+                padding: 5px 14px;
+            }
+            .stats {
+                font-size: 11px;
+                top: 14px;
+                right: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Статистика -->
+    <div class="stats">
+        <strong id="fpsDisplay">--</strong> FPS<br />
+        <span id="cubeCount">2000</span> кубов
+    </div>
+
+    <!-- Нижняя панель -->
+    <div class="ui-overlay">
+        <span class="badge">✦ 2000 градиентных кубов</span>
+        <span>🖱 Наведи — волна</span>
+        <span>🔄 Тащи — вращай</span>
+    </div>
+
+    <!-- ─── Импорт Three.js ─── -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Импорты
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Конфиг
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const CONFIG = {
+            cols: 50, // по X
+            rows: 40, // по Z
+            spacing: 1.2,
+            cubeSize: 0.6,
+            waveSpeed: 0.8,
+            waveAmplitude: 0.9,
+            mouseRadius: 4.0,
+            mouseStrength: 1.8,
+            colors: {
+                top: new THREE.Color('#f093fb'),
+                bottom: new THREE.Color('#4facfe'),
+            },
+        };
+
+        const TOTAL = CONFIG.cols * CONFIG.rows; // 2000
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Сцена, камера, рендер
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b0b18);
+        scene.fog = new THREE.Fog(0x0b0b18, 25, 45);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(18, 16, 22);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.prepend(renderer.domElement);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Управление
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.maxPolarAngle = Math.PI / 2.05;
+        controls.minDistance = 8;
+        controls.maxDistance = 50;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Освещение
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const ambient = new THREE.AmbientLight(0x404060, 0.5);
+        scene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xffeedd, 2.5);
+        dirLight.position.set(15, 25, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 1;
+        dirLight.shadow.camera.far = 60;
+        dirLight.shadow.camera.left = -25;
+        dirLight.shadow.camera.right = 25;
+        dirLight.shadow.camera.top = 25;
+        dirLight.shadow.camera.bottom = -25;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0x8888ff, 0.6);
+        fillLight.position.set(-15, 10, -15);
+        scene.add(fillLight);
+
+        const backLight = new THREE.DirectionalLight(0xff66aa, 0.4);
+        backLight.position.set(0, -10, -20);
+        scene.add(backLight);
+
+        // ── Точечный свет для атмосферы ──
+        const pointLight = new THREE.PointLight(0xff88aa, 0.6, 30);
+        pointLight.position.set(0, 8, 0);
+        scene.add(pointLight);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Создание 2000 кубов (InstancedMesh)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const geometry = new THREE.BoxGeometry(CONFIG.cubeSize, CONFIG.cubeSize, CONFIG.cubeSize);
+        // Добавляем скругление? Нет, оставим чёткие грани — стильно.
+
+        const material = new THREE.MeshStandardMaterial({
+            roughness: 0.25,
+            metalness: 0.15,
+            envMapIntensity: 0.6,
+            emissive: new THREE.Color(0x000000),
+            emissiveIntensity: 0,
+        });
+
+        const mesh = new THREE.InstancedMesh(geometry, material, TOTAL);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        scene.add(mesh);
+
+        // ── Данные каждого экземпляра ──
+        const dummy = new THREE.Object3D();
+        const positions = new Float32Array(TOTAL * 3);
+        const baseHeights = new Float32Array(TOTAL);
+        const colors = new Float32Array(TOTAL * 3);
+
+        const halfCols = CONFIG.cols / 2;
+        const halfRows = CONFIG.rows / 2;
+
+        let idx = 0;
+        for (let z = 0; z < CONFIG.rows; z++) {
+            for (let x = 0; x < CONFIG.cols; x++) {
+                const px = (x - halfCols) * CONFIG.spacing;
+                const pz = (z - halfRows) * CONFIG.spacing;
+
+                positions[idx * 3] = px;
+                positions[idx * 3 + 1] = 0;
+                positions[idx * 3 + 2] = pz;
+
+                // базовая высота (с небольшим шумом для естественности)
+                baseHeights[idx] = 0;
+
+                // ── Градиентный цвет ──
+                const tX = x / CONFIG.cols;
+                const tZ = z / CONFIG.rows;
+                const dist = Math.sqrt((tX - 0.5) ** 2 + (tZ - 0.5) ** 2) * 1.6;
+
+                const hue = 0.65 + dist * 0.25 + (tX * 0.1);
+                const sat = 0.7 + 0.3 * Math.sin(tZ * 3.0);
+                const light = 0.5 + 0.4 * Math.cos(tX * 2.5 + tZ * 1.8);
+
+                const color = new THREE.Color().setHSL(hue % 1, sat, light * 0.7 + 0.2);
+                colors[idx * 3] = color.r;
+                colors[idx * 3 + 1] = color.g;
+                colors[idx * 3 + 2] = color.b;
+
+                idx++;
+            }
+        }
+
+        // Устанавливаем цвета
+        mesh.instanceColor = new THREE.InstancedBufferAttribute(colors, 3);
+
+        // Начальная матрица
+        const matrix = new THREE.Matrix4();
+        for (let i = 0; i < TOTAL; i++) {
+            dummy.position.set(positions[i * 3], 0, positions[i * 3 + 2]);
+            dummy.scale.set(1, 1, 1);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+
+        // Сохраним позиции для быстрого доступа
+        const posArray = positions;
+
+        // ── Пол для теней ──
+        const groundGeo = new THREE.PlaneGeometry(60, 60);
+        const groundMat = new THREE.ShadowMaterial({
+            opacity: 0.3,
+            color: 0x000000,
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.8;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ── Вспомогательная сетка (полупрозрачная) ──
+        const gridHelper = new THREE.GridHelper(50, 30, 0x6666aa, 0x333366);
+        gridHelper.position.y = -0.75;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.15;
+        scene.add(gridHelper);
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Raycaster для взаимодействия
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const raycaster = new THREE.Raycaster();
+        const pointer = new THREE.Vector2();
+        let mouseWorld = new THREE.Vector3(0, 0, 0);
+        let mouseOnPlane = false;
+
+        // ── Отслеживаем мышку ──
+        renderer.domElement.addEventListener('pointermove', (e) => {
+            pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(pointer, camera);
+            const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const target = new THREE.Vector3();
+            const intersect = raycaster.ray.intersectPlane(plane, target);
+            if (intersect) {
+                mouseWorld.copy(target);
+                mouseOnPlane = true;
+            } else {
+                mouseOnPlane = false;
+            }
+        });
+
+        renderer.domElement.addEventListener('pointerleave', () => {
+            mouseOnPlane = false;
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Анимация
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        const clock = new THREE.Clock();
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+
+        // Буфер для высот
+        const heights = new Float32Array(TOTAL);
+        const scales = new Float32Array(TOTAL);
+
+        function animate() {
+            const time = clock.getElapsedTime();
+            const delta = clock.getDelta();
+
+            // ── FPS ──
+            frameCount++;
+            if (time - lastFpsUpdate > 0.5) {
+                document.getElementById('fpsDisplay').textContent = Math.round(frameCount / (time - lastFpsUpdate));
+                frameCount = 0;
+                lastFpsUpdate = time;
+            }
+
+            // ── Волны ──
+            const speed = CONFIG.waveSpeed;
+            const amp = CONFIG.waveAmplitude;
+            const radius = CONFIG.mouseRadius;
+            const strength = CONFIG.mouseStrength;
+
+            const mouseX = mouseWorld.x;
+            const mouseZ = mouseWorld.z;
+
+            for (let i = 0; i < TOTAL; i++) {
+                const x = posArray[i * 3];
+                const z = posArray[i * 3 + 2];
+
+                // Основная волна (от центра + вторичная)
+                const distCenter = Math.sqrt(x * x + z * z);
+                const wave1 = Math.sin(distCenter * 0.5 - time * speed) * amp * 0.4;
+                const wave2 = Math.sin(x * 0.3 + z * 0.4 + time * 0.7) * amp * 0.25;
+                const wave3 = Math.sin(x * 0.7 - z * 0.5 + time * 0.5) * amp * 0.2;
+
+                let h = wave1 + wave2 + wave3;
+
+                // ── Влияние мыши ──
+                if (mouseOnPlane) {
+                    const dx = x - mouseX;
+                    const dz = z - mouseZ;
+                    const distMouse = Math.sqrt(dx * dx + dz * dz);
+                    if (distMouse < radius) {
+                        const influence = 1 - (distMouse / radius);
+                        const bump = influence * influence * strength * 1.8;
+                        h += bump;
+                    }
+                }
+
+                // Сохраняем высоту
+                heights[i] = h;
+                const scaleY = 1 + h * 0.4;
+                scales[i] = scaleY;
+
+                // Обновляем матрицу
+                dummy.position.set(x, h * 0.5, z);
+                dummy.scale.set(1, scaleY, 1);
+                dummy.updateMatrix();
+                mesh.setMatrixAt(i, dummy.matrix);
+            }
+
+            mesh.instanceMatrix.needsUpdate = true;
+
+            // ── Движение точечного света ──
+            pointLight.position.x = Math.sin(time * 0.15) * 12;
+            pointLight.position.z = Math.cos(time * 0.12) * 12;
+            pointLight.position.y = 6 + Math.sin(time * 0.2) * 2;
+
+            // ── Обновление управления ──
+            controls.update();
+
+            // ── Рендер ──
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Адаптив
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Счетчик кубов в UI
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        document.getElementById('cubeCount').textContent = TOTAL;
+
+        // ── Сообщение в консоль ──
+        console.log(`✨ Градиентная Вселенная запущена! ${TOTAL} кубов.`);
+    </script>
+</body>
+</html>
