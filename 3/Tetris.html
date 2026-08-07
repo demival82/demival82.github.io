@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>🧩 Binance Tetris 3.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0B0E11;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 12px;
+        }
+
+        .game-wrapper {
+            max-width: 560px;
+            width: 100%;
+            background: #0B0E11;
+            border-radius: 32px;
+            padding: 18px 16px 16px;
+            border: 1px solid #2B3139;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding: 0 4px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #F0B90B, #FFD966);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo span {
+            font-size: 30px;
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: #F0B90B;
+        }
+        .badge {
+            background: #2B3139;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 12px;
+            color: #F0B90B;
+            font-weight: 600;
+            border: 1px solid #3B424B;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .stat-card {
+            background: #1E2329;
+            border-radius: 16px;
+            padding: 6px 8px;
+            border: 1px solid #2B3139;
+            text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .stat-card.highlight {
+            border-color: #F0B90B;
+            box-shadow: 0 0 20px rgba(240, 185, 11, 0.15);
+        }
+        .stat-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #848E9C;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #F0B90B;
+            margin-top: 2px;
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .stat-value .emoji-icon {
+            font-size: 18px;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .canvas-wrap {
+            flex: 1;
+            background: #0F1117;
+            border-radius: 20px;
+            padding: 4px;
+            border: 1px solid #2B3139;
+            touch-action: none;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        canvas#gameCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 300px;
+            aspect-ratio: 1 / 2;
+            border-radius: 16px;
+            background: #0F1117;
+            touch-action: none;
+            cursor: pointer;
+            image-rendering: pixelated;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 76px;
+            background: #1E2329;
+            border-radius: 20px;
+            padding: 12px 6px;
+            border: 1px solid #2B3139;
+            align-items: center;
+        }
+
+        .next-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #848E9C;
+            font-weight: 500;
+        }
+        .next-canvas-wrap {
+            background: #0F1117;
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid #2B3139;
+        }
+        canvas#nextCanvas {
+            display: block;
+            width: 64px;
+            height: 64px;
+            background: #0F1117;
+            border-radius: 10px;
+            image-rendering: pixelated;
+        }
+
+        .level-badge {
+            background: #2B3139;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: #F0B90B;
+            font-weight: 600;
+            width: 100%;
+            border: 1px solid #3B424B;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 30px;
+            padding: 6px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #848E9C;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:active {
+            transform: scale(0.94);
+            background: #2A313C;
+        }
+        .btn.active {
+            background: #F0B90B;
+            color: #0B0E11;
+            border-color: #F0B90B;
+            box-shadow: 0 0 24px rgba(240, 185, 11, 0.25);
+        }
+        .btn.active:active {
+            background: #d49f0a;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .action-btn {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-weight: 700;
+            font-size: 16px;
+            color: #F0B90B;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .action-btn:active {
+            transform: scale(0.92);
+            background: #2A313C;
+        }
+        .action-btn .emoji {
+            font-size: 20px;
+        }
+
+        .status {
+            background: #1E2329;
+            border-radius: 30px;
+            padding: 5px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #F0B90B;
+            border-left: 4px solid #F0B90B;
+            text-align: center;
+            min-width: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: 1px solid #2B3139;
+        }
+
+        .mobile-controls {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .mobile-btn {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 14px;
+            padding: 12px 0;
+            font-size: 24px;
+            color: #EAECEF;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.1s;
+            text-align: center;
+        }
+        .mobile-btn:active {
+            transform: scale(0.90);
+            background: #2A313C;
+        }
+        .mobile-btn.rotate {
+            color: #F0B90B;
+        }
+        .mobile-btn.drop {
+            color: #FF6B6B;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 10px;
+            color: #5E6673;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 0 4px;
+        }
+        .footer .key {
+            display: inline-block;
+            background: #1E2329;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #848E9C;
+            font-size: 10px;
+            border: 1px solid #2B3139;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(6px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #1E2329;
+            border-radius: 28px;
+            max-width: 440px;
+            width: 100%;
+            max-height: 80vh;
+            padding: 24px;
+            border: 1px solid #2B3139;
+            box-shadow: 0 24px 56px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .modal-header h2 {
+            color: #F0B90B;
+            font-size: 22px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #848E9C;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0 8px;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #F0B90B;
+        }
+        .modal-content {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #2B3139;
+            border-radius: 6px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #F0B90B;
+            border-radius: 6px;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0F1117;
+            padding: 8px 16px;
+            border-radius: 14px;
+            border-left: 4px solid #F0B90B;
+            color: #EAECEF;
+            font-size: 14px;
+            margin-bottom: 6px;
+            gap: 10px;
+        }
+        .record-item .score {
+            font-weight: 700;
+            color: #F0B90B;
+            font-size: 16px;
+        }
+        .record-item .date {
+            color: #848E9C;
+            font-size: 11px;
+        }
+        .record-item .mode-tag {
+            background: #2B3139;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            color: #848E9C;
+        }
+        .record-item .medal {
+            font-size: 20px;
+        }
+        .empty {
+            color: #5E6673;
+            text-align: center;
+            padding: 30px 0;
+            font-size: 15px;
+        }
+
+        .help-content {
+            color: #EAECEF;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .help-content h3 {
+            color: #F0B90B;
+            margin: 14px 0 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .help-content ul {
+            padding-left: 22px;
+            margin: 4px 0 10px;
+        }
+        .help-content li {
+            margin-bottom: 4px;
+        }
+        .help-content .key {
+            display: inline-block;
+            background: #2B3139;
+            padding: 0 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #F0B90B;
+            font-size: 12px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1E2329;
+            border: 1px solid #F0B90B;
+            border-radius: 24px;
+            padding: 12px 28px;
+            color: #F0B90B;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            max-width: 92%;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        .toast.show {
+            display: flex;
+            animation: slideUp 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .game-wrapper {
+                padding: 12px 10px 10px;
+                border-radius: 24px;
+            }
+            .stat-value {
+                font-size: 18px;
+            }
+            .stat-card {
+                padding: 4px 6px;
+            }
+            .btn {
+                font-size: 11px;
+                padding: 4px 12px;
+            }
+            .action-btn {
+                font-size: 14px;
+                padding: 4px 10px;
+            }
+            .status {
+                font-size: 11px;
+                padding: 4px 12px;
+                min-width: 80px;
+            }
+            .footer {
+                font-size: 9px;
+                gap: 8px;
+            }
+            .modal {
+                padding: 18px;
+            }
+            .logo {
+                font-size: 22px;
+            }
+            .badge {
+                font-size: 10px;
+                padding: 2px 12px;
+            }
+            .header {
+                margin-bottom: 10px;
+            }
+            .stats {
+                gap: 5px;
+                margin-bottom: 10px;
+            }
+            .controls {
+                gap: 4px;
+                margin-bottom: 6px;
+            }
+            .canvas-wrap {
+                padding: 3px;
+            }
+            .action-row {
+                gap: 5px;
+            }
+            .side-panel {
+                min-width: 64px;
+                padding: 10px 4px;
+            }
+            .next-canvas-wrap canvas {
+                width: 54px;
+                height: 54px;
+            }
+            .mobile-controls {
+                gap: 4px;
+            }
+            .mobile-btn {
+                padding: 10px 0;
+                font-size: 20px;
+            }
+            .game-area {
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stat-value {
+                font-size: 15px;
+            }
+            .stat-label {
+                font-size: 7px;
+            }
+            .btn {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            .action-btn {
+                font-size: 12px;
+                padding: 3px 8px;
+            }
+            .side-panel {
+                min-width: 54px;
+            }
+            .level-badge {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="logo"><span>🧩</span> BINANCE</div>
+            <span class="badge">⚡ TETRIS 3.0</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card highlight">
+                <div class="stat-label">📊 ОЧКИ</div>
+                <div class="stat-value" id="scoreDisplay"><span class="emoji-icon">🔢</span> 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">📈 ЛИНИИ</div>
+                <div class="stat-value" id="linesDisplay"><span class="emoji-icon">📏</span> 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🏆 РЕКОРД</div>
+                <div class="stat-value" id="bestDisplay"><span class="emoji-icon">👑</span> 0</div>
+            </div>
+            <div class="stat-card" id="timerCard" style="display:none;">
+                <div class="stat-label">⏱️ ВРЕМЯ</div>
+                <div class="stat-value" id="timerDisplay"><span class="emoji-icon">⏳</span> 60</div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="canvas-wrap">
+                <canvas id="gameCanvas" width="300" height="600"></canvas>
+            </div>
+            <div class="side-panel">
+                <div class="next-label">⬇️ СЛЕДУЮЩАЯ</div>
+                <div class="next-canvas-wrap">
+                    <canvas id="nextCanvas" width="64" height="64"></canvas>
+                </div>
+                <div class="level-badge" id="levelDisplay">УРОВЕНЬ 1</div>
+                <div style="font-size:11px; color:#848E9C;" id="comboDisplay">🔥 КОМБО: 0</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn active" data-mode="classic"><span class="emoji">🎯</span> Классика</button>
+            <button class="btn" data-mode="timed"><span class="emoji">⏱️</span> На время</button>
+            <!-- Кнопка "Препятствия" удалена -->
+        </div>
+
+        <div class="action-row">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="action-btn" id="restartBtn"><span class="emoji">🔄</span></button>
+                <button class="action-btn" id="recordsBtn"><span class="emoji">🏆</span></button>
+                <button class="action-btn" id="helpBtn"><span class="emoji">❓</span></button>
+            </div>
+            <div class="status" id="statusText">🟢 В ИГРЕ</div>
+        </div>
+
+        <div class="mobile-controls">
+            <div class="mobile-btn" id="moveLeft">◀</div>
+            <div class="mobile-btn" id="moveRight">▶</div>
+            <div class="mobile-btn rotate" id="rotateBtn">↻</div>
+            <div class="mobile-btn" id="moveDown">▼</div>
+            <div class="mobile-btn drop" id="hardDrop">⬇⬇</div>
+        </div>
+
+        <div class="footer">
+            <span><span class="key">← →</span> Движение</span>
+            <span><span class="key">↑</span> Поворот</span>
+            <span><span class="key">↓</span> Ускорение</span>
+            <span><span class="key">␣</span> Пауза</span>
+            <span><span class="key">R</span> Рестарт</span>
+        </div>
+    </div>
+
+    <!-- Модалки -->
+    <div class="modal-overlay" id="recordsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>🏆 РЕКОРДЫ</h2>
+                <button class="modal-close" id="modalClose">✕</button>
+            </div>
+            <div class="modal-content" id="recordsList"><div class="empty">📭 Нет рекордов</div></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📖 О РЕЖИМАХ</h2>
+                <button class="modal-close" id="helpClose">✕</button>
+            </div>
+            <div class="modal-content help-content">
+                <h3>🎯 Режимы игры</h3>
+                <ul>
+                    <li><strong>🎯 Классика</strong> – бесконечная игра, скорость растёт с каждым уровнем.</li>
+                    <li><strong>⏱️ На время</strong> – 60 секунд, нужно набрать максимум очков.</li>
+                </ul>
+                <h3>🎮 Управление (мобильное)</h3>
+                <ul>
+                    <li><strong>◀ ▶</strong> – движение влево/вправо</li>
+                    <li><strong>↻</strong> – поворот фигуры</li>
+                    <li><strong>▼</strong> – мягкое ускорение (движение вниз на одну клетку)</li>
+                    <li><strong>⬇⬇</strong> – мгновенный сброс до конца</li>
+                </ul>
+                <p>На клавиатуре: <span class="key">← →</span> <span class="key">↑</span> <span class="key">↓</span> <span class="key">␣</span> <span class="key">R</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+    <script>
+        // ========== Звук ==========
+        class SoundManager {
+            constructor() {
+                this.enabled = true;
+                try { this.ctx = new(window.AudioContext || window.webkitAudioContext)(); } catch (_) { this.enabled = false; }
+            }
+            play(freq, dur = 0.1, type = 'square', vol = 0.15) {
+                if (!this.enabled) return;
+                try {
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.value = vol;
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + dur);
+                } catch (_) {}
+            }
+            move() { this.play(200, 0.04, 'sine', 0.08); }
+            rotate() { this.play(300, 0.06, 'sine', 0.1); }
+            drop() { this.play(120, 0.12, 'sawtooth', 0.12); }
+            line() { this.play(500, 0.15, 'square', 0.1); }
+            gameOver() { this.play(150, 0.4, 'sawtooth', 0.15);
+                setTimeout(() => this.play(100, 0.5, 'sawtooth', 0.1), 200); }
+            pause() { this.play(400, 0.05, 'sine', 0.06); }
+            bonus() { this.play(800, 0.2, 'sine', 0.15); }
+        }
+
+        // ========== Хранилище ==========
+        class StorageManager {
+            static getBest() { return parseInt(localStorage.getItem('tetrisBest')) || 0; }
+            static setBest(v) { localStorage.setItem('tetrisBest', String(v)); }
+            static getRecords() { try { return JSON.parse(localStorage.getItem('tetrisRecords')) || []; } catch { return []; } }
+            static saveRecord(score, mode) {
+                const recs = this.getRecords();
+                const modeNames = { classic: 'Классика', timed: 'На время' };
+                recs.push({ score, mode: modeNames[mode] || mode, date: new Date().toLocaleString() });
+                recs.sort((a, b) => b.score - a.score);
+                if (recs.length > 10) recs.length = 10;
+                localStorage.setItem('tetrisRecords', JSON.stringify(recs));
+                if (score > this.getBest()) this.setBest(score);
+            }
+            static getAchievements() { try { return JSON.parse(localStorage.getItem('tetrisAchievements')) || {}; } catch { return {}; } }
+            static saveAchievements(ach) { localStorage.setItem('tetrisAchievements', JSON.stringify(ach)); }
+        }
+
+        // ========== Фигура ==========
+        class Piece {
+            static get SHAPES() {
+                return [
+                    { shape: [
+                            [0, 0, 0, 0],
+                            [1, 1, 1, 1],
+                            [0, 0, 0, 0],
+                            [0, 0, 0, 0]
+                        ], color: '#00F0F0' },
+                    { shape: [
+                            [1, 1],
+                            [1, 1]
+                        ], color: '#F0F000' },
+                    { shape: [
+                            [0, 1, 0],
+                            [1, 1, 1],
+                            [0, 0, 0]
+                        ], color: '#A000F0' },
+                    { shape: [
+                            [0, 1, 1],
+                            [1, 1, 0],
+                            [0, 0, 0]
+                        ], color: '#00F000' },
+                    { shape: [
+                            [1, 1, 0],
+                            [0, 1, 1],
+                            [0, 0, 0]
+                        ], color: '#F00000' },
+                    { shape: [
+                            [1, 0, 0],
+                            [1, 1, 1],
+                            [0, 0, 0]
+                        ], color: '#0000F0' },
+                    { shape: [
+                            [0, 0, 1],
+                            [1, 1, 1],
+                            [0, 0, 0]
+                        ], color: '#F0A000' }
+                ];
+            }
+            constructor(data) {
+                this.shape = data.shape.map(r => [...r]);
+                this.color = data.color;
+                this.x = 0;
+                this.y = 0;
+            }
+            static random() { return new Piece(Piece.SHAPES[Math.floor(Math.random() * Piece.SHAPES.length)]); }
+            getWidth() { return this.shape[0].length; }
+            getHeight() { return this.shape.length; }
+            rotate() {
+                const n = this.shape.length;
+                const r = Array.from({ length: n }, () => Array(n).fill(0));
+                for (let i = 0; i < n; i++)
+                    for (let j = 0; j < n; j++) r[j][n - 1 - i] = this.shape[i][j];
+                return r;
+            }
+        }
+
+        // ========== Доска ==========
+        class Board {
+            constructor(cols, rows) {
+                this.cols = cols;
+                this.rows = rows;
+                this.grid = [];
+                this.clear();
+            }
+            clear() { this.grid = Array.from({ length: this.rows }, () => new Array(this.cols).fill(0)); }
+            isValid(shape, ox, oy) {
+                for (let r = 0; r < shape.length; r++)
+                    for (let c = 0; c < shape[0].length; c++) {
+                        if (shape[r][c] !== 0) {
+                            const x = ox + c,
+                                y = oy + r;
+                            if (x < 0 || x >= this.cols || y >= this.rows || y < 0) return false;
+                            if (y >= 0 && this.grid[y][x] !== 0) return false;
+                        }
+                    }
+                return true;
+            }
+            lock(shape, ox, oy, color) {
+                for (let r = 0; r < shape.length; r++)
+                    for (let c = 0; c < shape[0].length; c++) {
+                        if (shape[r][c] !== 0) {
+                            const x = ox + c,
+                                y = oy + r;
+                            if (y >= 0 && y < this.rows && x >= 0 && x < this.cols)
+                                this.grid[y][x] = color;
+                        }
+                    }
+            }
+            clearFullRows() {
+                let cleared = 0;
+                for (let row = this.rows - 1; row >= 0; ) {
+                    if (this.grid[row].every(cell => cell !== 0)) {
+                        this.grid.splice(row, 1);
+                        this.grid.unshift(new Array(this.cols).fill(0));
+                        cleared++;
+                    } else row--;
+                }
+                return cleared;
+            }
+            isFull() {
+                for (let r = 0; r < this.rows; r++)
+                    for (let c = 0; c < this.cols; c++)
+                        if (this.grid[r][c] === 0) return false;
+                return true;
+            }
+            // Удалены методы, связанные с препятствиями, так как они не используются
+        }
+
+        // ========== Основной класс игры ==========
+        class TetrisGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.nextCanvas = document.getElementById('nextCanvas');
+                this.nextCtx = this.nextCanvas.getContext('2d');
+                this.scoreEl = document.getElementById('scoreDisplay');
+                this.linesEl = document.getElementById('linesDisplay');
+                this.bestEl = document.getElementById('bestDisplay');
+                this.levelEl = document.getElementById('levelDisplay');
+                this.statusEl = document.getElementById('statusText');
+                this.timerCard = document.getElementById('timerCard');
+                this.timerDisplay = document.getElementById('timerDisplay');
+                this.toast = document.getElementById('toast');
+                this.toastMsg = document.getElementById('toastMsg');
+                this.comboDisplay = document.getElementById('comboDisplay');
+
+                this.COLS = 10;
+                this.ROWS = 20;
+                this.BLOCK = this.canvas.width / this.COLS; // 30
+
+                this.board = new Board(this.COLS, this.ROWS);
+                this.current = null;
+                this.next = null;
+                this.score = 0;
+                this.lines = 0;
+                this.level = 1;
+                this.dropInterval = 1000;
+                this.gameActive = false;
+                this.paused = false;
+                this.mode = 'classic';
+                this.timeLeft = 60;
+                this.gameOverFlag = false;
+                this.combo = 0;
+                this.bonusAvailable = false;
+                this.isClearing = false;
+                this.clearingRows = [];
+
+                this.intervalId = null;
+                this.timerId = null;
+                this.obstacleId = null; // больше не используется
+
+                this.sound = new SoundManager();
+                this.achievements = StorageManager.getAchievements();
+                this.bestScore = StorageManager.getBest();
+
+                this.toastTimeout = null;
+
+                this._bindEvents();
+                this._initUI();
+                this.reset();
+                this._startLoop();
+            }
+
+            _initUI() {
+                this.bestEl.innerHTML = `<span class="emoji-icon">👑</span> ${this.bestScore}`;
+                this._updateUI();
+            }
+
+            _updateUI() {
+                this.scoreEl.innerHTML = `<span class="emoji-icon">🔢</span> ${this.score}`;
+                this.linesEl.innerHTML = `<span class="emoji-icon">📏</span> ${this.lines}`;
+                this.levelEl.textContent = `УРОВЕНЬ ${this.level}`;
+                this.comboDisplay.textContent = `🔥 КОМБО: ${this.combo}`;
+                if (this.score > this.bestScore) {
+                    this.bestScore = this.score;
+                    StorageManager.setBest(this.bestScore);
+                    this.bestEl.innerHTML = `<span class="emoji-icon">👑</span> ${this.bestScore}`;
+                }
+            }
+
+            _clearIntervals() {
+                if (this.intervalId) clearInterval(this.intervalId);
+                if (this.timerId) clearInterval(this.timerId);
+                if (this.obstacleId) clearInterval(this.obstacleId);
+                this.intervalId = this.timerId = this.obstacleId = null;
+            }
+
+            reset() {
+                this._clearIntervals();
+                this.board.clear();
+                this.score = 0;
+                this.lines = 0;
+                this.level = 1;
+                this.dropInterval = 1000;
+                this.gameActive = true;
+                this.paused = false;
+                this.gameOverFlag = false;
+                this.timeLeft = 60;
+                this.combo = 0;
+                this.bonusAvailable = false;
+                this.isClearing = false;
+                this.clearingRows = [];
+
+                if (this.mode === 'timed') {
+                    this.timerCard.style.display = 'block';
+                    this.timerDisplay.innerHTML = `<span class="emoji-icon">⏳</span> 60`;
+                } else {
+                    this.timerCard.style.display = 'none';
+                }
+                this.statusEl.textContent = '🟢 В ИГРЕ';
+
+                this.next = Piece.random();
+                this._spawn();
+
+                if (this.gameActive) {
+                    this._resetLoop();
+                    if (this.mode === 'timed') this._startTimer();
+                    // Таймер для препятствий удалён
+                }
+                this._updateUI();
+                this._draw();
+            }
+
+            _spawn() {
+                if (!this.next) this.next = Piece.random();
+                this.current = new Piece({
+                    shape: this.next.shape.map(r => [...r]),
+                    color: this.next.color
+                });
+                this.current.x = Math.floor((this.COLS - this.current.getWidth()) / 2);
+                this.current.y = 0;
+                this.next = Piece.random();
+
+                if (!this.board.isValid(this.current.shape, this.current.x, this.current.y)) {
+                    this.gameActive = false;
+                    this.gameOverFlag = true;
+                    this._clearIntervals();
+                    this.statusEl.textContent = '💥 GAME OVER';
+                    this.sound.gameOver();
+                    StorageManager.saveRecord(this.score, this.mode);
+                    this._checkAchievements();
+                    this._updateUI();
+                    this._draw();
+                }
+            }
+
+            _resetLoop() {
+                if (this.intervalId) clearInterval(this.intervalId);
+                const interval = Math.max(80, this.dropInterval);
+                this.intervalId = setInterval(() => {
+                    if (!this.gameActive || this.paused || this.isClearing) return;
+                    this._move(0, 1);
+                }, interval);
+            }
+
+            _startTimer() {
+                if (this.timerId) clearInterval(this.timerId);
+                this.timerId = setInterval(() => {
+                    this.timeLeft--;
+                    this.timerDisplay.innerHTML = `<span class="emoji-icon">⏳</span> ${this.timeLeft}`;
+                    if (this.timeLeft <= 0) {
+                        this._clearIntervals();
+                        this.gameActive = false;
+                        this.gameOverFlag = true;
+                        this.statusEl.textContent = '⏰ ВРЕМЯ ВЫШЛО';
+                        this.sound.gameOver();
+                        StorageManager.saveRecord(this.score, this.mode);
+                        this._checkAchievements();
+                        this._updateUI();
+                        this._draw();
+                    }
+                }, 1000);
+            }
+
+            // ---------- Действия ----------
+            _move(dx, dy) {
+                if (!this.gameActive || this.paused || !this.current || this.isClearing) return false;
+                if (this.board.isValid(this.current.shape, this.current.x + dx, this.current.y + dy)) {
+                    this.current.x += dx;
+                    this.current.y += dy;
+                    if (dx !== 0) this.sound.move();
+                    this._draw();
+                    return true;
+                }
+                if (dy === 1) {
+                    this._lock();
+                }
+                return false;
+            }
+
+            _rotate() {
+                if (!this.gameActive || this.paused || !this.current || this.isClearing) return;
+                const rotated = this.current.rotate();
+                if (this.board.isValid(rotated, this.current.x, this.current.y)) {
+                    this.current.shape = rotated;
+                    this.sound.rotate();
+                } else {
+                    for (let dx of [0, -1, 1, -2, 2]) {
+                        if (this.board.isValid(rotated, this.current.x + dx, this.current.y)) {
+                            this.current.shape = rotated;
+                            this.current.x += dx;
+                            this.sound.rotate();
+                            break;
+                        }
+                    }
+                }
+                this._draw();
+            }
+
+            _hardDrop() {
+                if (!this.gameActive || this.paused || !this.current || this.isClearing) return;
+                while (this.board.isValid(this.current.shape, this.current.x, this.current.y + 1)) {
+                    this.current.y++;
+                }
+                this.sound.drop();
+                this._lock();
+            }
+
+            _lock() {
+                if (!this.current || this.isClearing) return;
+                this.board.lock(this.current.shape, this.current.x, this.current.y, this.current.color);
+
+                if (this.board.isFull() && !this.achievements.full) {
+                    this.achievements.full = true;
+                    StorageManager.saveAchievements(this.achievements);
+                    this._showToast('👑', 'Абсолютный чемпион!');
+                }
+
+                const cleared = this.board.clearFullRows();
+                if (cleared > 0) {
+                    this.sound.line();
+                    this.combo += cleared;
+                    let addScore = 0;
+                    if (cleared === 1) addScore = 1;
+                    else if (cleared === 2) addScore = 3;
+                    else if (cleared === 3) addScore = 6;
+                    else if (cleared === 4) {
+                        addScore = 10;
+                        this.bonusAvailable = true;
+                        this.sound.bonus();
+                    }
+                    this.score += addScore;
+                    this.lines += cleared;
+                    this._updateUI();
+
+                    if (!this.achievements.firstLine && cleared >= 1) {
+                        this.achievements.firstLine = true;
+                        this._showToast('🧱', 'Первая линия!');
+                    }
+                    if (!this.achievements.lines10 && this.lines >= 10) {
+                        this.achievements.lines10 = true;
+                        this._showToast('🔟', '10 линий!');
+                    }
+                    if (!this.achievements.lines50 && this.lines >= 50) {
+                        this.achievements.lines50 = true;
+                        this._showToast('💪', '50 линий!');
+                    }
+                    if (!this.achievements.lines100 && this.lines >= 100) {
+                        this.achievements.lines100 = true;
+                        this._showToast('🏅', '100 линий!');
+                    }
+                    if (!this.achievements.tetris && cleared === 4) {
+                        this.achievements.tetris = true;
+                        this._showToast('⚡', 'Тетрис!');
+                    }
+                    StorageManager.saveAchievements(this.achievements);
+
+                    const newLevel = Math.floor(this.lines / 10) + 1;
+                    if (newLevel !== this.level) {
+                        this.level = newLevel;
+                        this.dropInterval = Math.max(80, 1000 - (this.level - 1) * 80);
+                        this._updateUI();
+                        this._resetLoop();
+                    }
+
+                    // Бонусы (очистка препятствий) больше не нужны, но оставим для разнообразия
+                    // Можно оставить просто как награду за тетрис, но без препятствий — не актуально
+                    // Поэтому убираем вызов _activateBonus()
+                    // if (this.bonusAvailable) {
+                    //     this._activateBonus();
+                    //     this.bonusAvailable = false;
+                    // }
+
+                    this.combo = 0;
+                } else {
+                    this.combo = 0;
+                }
+
+                this._spawn();
+                this._draw();
+            }
+
+            // Метод бонусов удалён за ненадобностью
+
+            togglePause() {
+                if (!this.gameActive) return;
+                this.paused = !this.paused;
+                this.sound.pause();
+                if (this.paused) {
+                    this.statusEl.textContent = '⏸️ ПАУЗА';
+                    this._clearIntervals();
+                } else {
+                    this.statusEl.textContent = '🟢 В ИГРЕ';
+                    this._resetLoop();
+                    if (this.mode === 'timed') this._startTimer();
+                }
+                this._draw();
+            }
+
+            _checkAchievements() {
+                if (!this.achievements.timed && this.mode === 'timed' && this.score >= 30) {
+                    this.achievements.timed = true;
+                    this._showToast('⏱️', 'Спринтер!');
+                }
+                // Достижение obstacle удалено
+                StorageManager.saveAchievements(this.achievements);
+            }
+
+            // ---------- Отрисовка ----------
+            _draw() {
+                const ctx = this.ctx;
+                const w = this.canvas.width,
+                    h = this.canvas.height;
+                const bs = this.BLOCK;
+
+                ctx.clearRect(0, 0, w, h);
+
+                // Фон
+                const grad = ctx.createRadialGradient(w / 2, h / 2, 30, w / 2, h / 2, 380);
+                grad.addColorStop(0, '#1A1F2E');
+                grad.addColorStop(1, '#0B0E11');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Закреплённые блоки
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        const color = this.board.grid[r][c];
+                        if (color !== 0) {
+                            const x = c * bs,
+                                y = r * bs;
+                            ctx.fillStyle = color;
+                            ctx.shadowBlur = 8;
+                            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                            ctx.fillRect(x, y, bs, bs);
+                            ctx.shadowBlur = 0;
+                            ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                            ctx.fillRect(x + 2, y + 2, bs / 3, 2);
+                        }
+                    }
+                }
+
+                // Ghost
+                if (this.current && this.gameActive) {
+                    let ghostY = this.current.y;
+                    while (this.board.isValid(this.current.shape, this.current.x, ghostY + 1)) ghostY++;
+                    const shape = this.current.shape;
+                    const offX = this.current.x;
+                    const offY = ghostY;
+                    for (let r = 0; r < shape.length; r++) {
+                        for (let c = 0; c < shape[0].length; c++) {
+                            if (shape[r][c] !== 0) {
+                                const x = (offX + c) * bs,
+                                    y = (offY + r) * bs;
+                                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                                ctx.fillRect(x, y, bs, bs);
+                                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                                ctx.lineWidth = 1;
+                                ctx.strokeRect(x + 0.5, y + 0.5, bs - 1, bs - 1);
+                            }
+                        }
+                    }
+                }
+
+                // Текущая фигура
+                if (this.current && this.gameActive) {
+                    const shape = this.current.shape;
+                    const offX = this.current.x;
+                    const offY = this.current.y;
+                    for (let r = 0; r < shape.length; r++) {
+                        for (let c = 0; c < shape[0].length; c++) {
+                            if (shape[r][c] !== 0) {
+                                const x = (offX + c) * bs,
+                                    y = (offY + r) * bs;
+                                ctx.fillStyle = this.current.color;
+                                ctx.shadowBlur = 12;
+                                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                                ctx.fillRect(x, y, bs, bs);
+                                ctx.shadowBlur = 0;
+                                ctx.fillStyle = 'rgba(255,255,255,0.12)';
+                                ctx.fillRect(x + 2, y + 2, bs / 3, 2);
+                            }
+                        }
+                    }
+                }
+
+                // Сетка поверх блоков
+                ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+                ctx.lineWidth = 0.5;
+                for (let r = 0; r < this.ROWS; r++) {
+                    for (let c = 0; c < this.COLS; c++) {
+                        ctx.strokeRect(c * bs, r * bs, bs, bs);
+                    }
+                }
+
+                // Рамка поля (золотая)
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(240, 185, 11, 0.3)';
+                ctx.strokeStyle = '#F0B90B';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(0, 0, w, h);
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(240, 185, 11, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(2, 2, w - 4, h - 4);
+                ctx.restore();
+
+                // Предупреждение о заполнении
+                if (this.gameActive) {
+                    let fullCount = 0;
+                    for (let r = 0; r < 4; r++)
+                        for (let c = 0; c < this.COLS; c++) {
+                            if (this.board.grid[r][c] !== 0) fullCount++;
+                        }
+                    if (fullCount > 20) {
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(255,0,0,0.6)';
+                        ctx.lineWidth = 6;
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = 'rgba(255,0,0,0.4)';
+                        ctx.strokeRect(0, 0, w, h);
+                        ctx.restore();
+                    }
+                }
+
+                // Пауза
+                if (this.paused && this.gameActive) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.font = 'bold 44px "Segoe UI Emoji", "Apple Color Emoji"';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = '#F0B90B';
+                    ctx.fillStyle = '#F0B90B';
+                    ctx.fillText('⏸️', w / 2, h / 2 - 30);
+                    ctx.font = 'bold 22px "Inter", monospace';
+                    ctx.fillStyle = '#EAECEF';
+                    ctx.shadowBlur = 0;
+                    ctx.fillText('ПАУЗА', w / 2, h / 2 + 40);
+                }
+
+                // Game Over
+                if (!this.gameActive && this.gameOverFlag) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = '#F0B90B';
+                    let emoji = '💥',
+                        msg = 'GAME OVER';
+                    if (this.statusEl.textContent.includes('ВРЕМЯ ВЫШЛО')) { emoji = '⏰';
+                        msg = 'ВРЕМЯ ВЫШЛО'; }
+                    ctx.font = `bold 60px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.fillStyle = '#F0B90B';
+                    ctx.fillText(emoji, w / 2, h / 2 - 30);
+                    ctx.font = 'bold 26px "Inter", monospace';
+                    ctx.fillStyle = '#EAECEF';
+                    ctx.shadowBlur = 0;
+                    ctx.fillText(msg, w / 2, h / 2 + 40);
+                    ctx.font = '14px "Inter", monospace';
+                    ctx.fillStyle = '#848E9C';
+                    ctx.fillText('нажми R для рестарта', w / 2, h / 2 + 80);
+                }
+
+                // Следующая фигура
+                this.nextCtx.clearRect(0, 0, 64, 64);
+                if (this.next) {
+                    const shape = this.next.shape;
+                    const color = this.next.color;
+                    const size = 64 / 4;
+                    const offX = (64 - shape[0].length * size) / 2;
+                    const offY = (64 - shape.length * size) / 2;
+                    for (let r = 0; r < shape.length; r++)
+                        for (let c = 0; c < shape[0].length; c++) {
+                            if (shape[r][c] !== 0) {
+                                const x = offX + c * size,
+                                    y = offY + r * size;
+                                this.nextCtx.fillStyle = color;
+                                this.nextCtx.shadowBlur = 6;
+                                this.nextCtx.shadowColor = 'rgba(0,0,0,0.5)';
+                                this.nextCtx.fillRect(x + 1, y + 1, size - 2, size - 2);
+                                this.nextCtx.shadowBlur = 0;
+                                this.nextCtx.fillStyle = 'rgba(255,255,255,0.08)';
+                                this.nextCtx.fillRect(x + 2, y + 2, size / 3, 2);
+                            }
+                        }
+                }
+            }
+
+            _showToast(icon, msg) {
+                this.toastMsg.textContent = `${icon} ${msg}`;
+                this.toast.classList.add('show');
+                clearTimeout(this.toastTimeout);
+                this.toastTimeout = setTimeout(() => this.toast.classList.remove('show'), 3000);
+            }
+
+            _startLoop() {
+                const loop = () => { this._draw();
+                    requestAnimationFrame(loop); };
+                loop();
+            }
+
+            _bindEvents() {
+                document.addEventListener('keydown', (e) => {
+                    const k = e.key;
+                    if (k === 'ArrowLeft') { e.preventDefault();
+                        this._move(-1, 0); } else if (k === 'ArrowRight') { e.preventDefault();
+                        this._move(1, 0); } else if (k === 'ArrowDown') { e.preventDefault();
+                        this._move(0, 1); } else if (k === 'ArrowUp') { e.preventDefault();
+                        this._rotate(); } else if (k === ' ' || k === 'Space') { e.preventDefault();
+                        this.togglePause(); } else if (k === 'r' || k === 'R') { e.preventDefault();
+                        this.reset(); } else if (k === 'Enter') { e.preventDefault();
+                        this._hardDrop(); }
+                });
+
+                const canvas = this.canvas;
+                let touchStartX = 0,
+                    touchStartY = 0;
+                let lastTap = 0,
+                    lastTapX = 0,
+                    lastTapY = 0;
+
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const t = e.touches[0];
+                    if (!t) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const cx = (t.clientX - rect.left);
+                    const cy = (t.clientY - rect.top);
+                    const now = Date.now();
+                    const dt = now - lastTap;
+                    const dx = cx - lastTapX,
+                        dy = cy - lastTapY;
+                    if (dt < 300 && Math.sqrt(dx * dx + dy * dy) < 25) {
+                        this.togglePause();
+                        lastTap = 0;
+                        return;
+                    }
+                    lastTap = now;
+                    lastTapX = cx;
+                    lastTapY = cy;
+                    touchStartX = cx;
+                    touchStartY = cy;
+                }, { passive: false });
+
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (touchStartX === 0 && touchStartY === 0) return;
+                    const t = e.changedTouches[0];
+                    if (!t) return;
+                    const rect = canvas.getBoundingClientRect();
+                    const ex = (t.clientX - rect.left);
+                    const ey = (t.clientY - rect.top);
+                    const dx = ex - touchStartX;
+                    const dy = ey - touchStartY;
+                    if (Math.abs(dx) < 15 && Math.abs(dy) < 15) return;
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        this._move(dx > 0 ? 1 : -1, 0);
+                    } else {
+                        if (dy > 0) this._move(0, 1);
+                        else this._rotate();
+                    }
+                    touchStartX = touchStartY = 0;
+                }, { passive: false });
+
+                canvas.addEventListener('dblclick', (e) => { e.preventDefault();
+                    this.togglePause(); });
+
+                const bind = (id, cb) => {
+                    const el = document.getElementById(id);
+                    const handler = (e) => { e.preventDefault();
+                        cb(); };
+                    el.addEventListener('click', handler);
+                    el.addEventListener('touchstart', handler, { passive: false });
+                };
+                bind('moveLeft', () => this._move(-1, 0));
+                bind('moveRight', () => this._move(1, 0));
+                bind('rotateBtn', () => this._rotate());
+                bind('moveDown', () => this._move(0, 1));
+                bind('hardDrop', () => this._hardDrop());
+
+                document.querySelectorAll('[data-mode]').forEach(btn => {
+                    const handler = (e) => {
+                        e.preventDefault();
+                        document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.mode = btn.dataset.mode;
+                        if (this.mode === 'timed') {
+                            this.timerCard.style.display = 'block';
+                            this.timerDisplay.innerHTML = `<span class="emoji-icon">⏳</span> 60`;
+                        } else {
+                            this.timerCard.style.display = 'none';
+                        }
+                        this.reset();
+                    };
+                    btn.addEventListener('click', handler);
+                    btn.addEventListener('touchstart', handler, { passive: false });
+                });
+
+                document.getElementById('restartBtn').addEventListener('click', () => this.reset());
+                document.getElementById('restartBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                    this.reset(); });
+
+                document.getElementById('recordsBtn').addEventListener('click', () => this._showRecords());
+                document.getElementById('recordsBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                    this._showRecords(); });
+
+                document.getElementById('modalClose').addEventListener('click', () => {
+                    document.getElementById('recordsModal').classList.remove('active');
+                });
+                document.getElementById('recordsModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) document.getElementById('recordsModal').classList.remove('active');
+                });
+
+                document.getElementById('helpBtn').addEventListener('click', () => {
+                    document.getElementById('helpModal').classList.add('active');
+                });
+                document.getElementById('helpBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                    document.getElementById('helpModal').classList.add('active'); });
+                document.getElementById('helpClose').addEventListener('click', () => {
+                    document.getElementById('helpModal').classList.remove('active');
+                });
+                document.getElementById('helpModal').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) document.getElementById('helpModal').classList.remove('active');
+                });
+            }
+
+            _showRecords() {
+                const recs = StorageManager.getRecords();
+                const list = document.getElementById('recordsList');
+                if (!recs.length) {
+                    list.innerHTML = '<div class="empty">📭 Нет рекордов. Сыграйте!</div>';
+                } else {
+                    let html = '';
+                    const medals = ['🥇', '🥈', '🥉'];
+                    recs.forEach((r, i) => {
+                        const medal = i < 3 ? medals[i] : `${i+1}.`;
+                        html += `<div class="record-item">
+                            <span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                                <span class="medal">${medal}</span>
+                                <span class="score">${r.score}</span>
+                                <span class="mode-tag">${r.mode}</span>
+                            </span>
+                            <span class="date">${r.date}</span>
+                        </div>`;
+                    });
+                    list.innerHTML = html;
+                }
+                document.getElementById('recordsModal').classList.add('active');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new TetrisGame();
+            window.__game = game;
+        });
+    </script>
+</body>
+</html>
