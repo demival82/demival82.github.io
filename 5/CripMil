@@ -1,0 +1,652 @@
+   
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кто хочет стать крипто-миллионером</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2f 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .game-container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(10, 14, 23, 0.9);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            padding: 24px;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.7), 0 0 0 2px #f3ba2f inset;
+            border: 1px solid #ffd966;
+            position: relative;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #f3ba2f;
+            font-weight: bold;
+            font-size: 1.3rem;
+            background: #1e2335;
+            padding: 20px 25px;
+            border-radius: 60px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 0 #0b0e1a;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .help-btn {
+            background: #3f4a62;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1.1rem;
+            border: 1px solid #f3ba2f;
+            transition: 0.2s;
+        }
+        .help-btn:hover {
+            background: #5a6a8a;
+        }
+        .money-ladder {
+            background: #121624;
+            border-radius: 30px;
+            padding: 15px;
+            color: #f0b90b;
+            font-weight: 600;
+            border: 1px solid #3a4055;
+        }
+        .ladder-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 20px;
+            margin: 4px 0;
+            border-radius: 40px;
+            background: #1b212e;
+            font-size: 1rem;
+        }
+        .ladder-item.current {
+            background: #f3ba2f;
+            color: #0b0e1a;
+            font-weight: 800;
+            transform: scale(1.02);
+            box-shadow: 0 0 12px gold;
+        }
+        .question-area {
+            background: #1e2538;
+            border-radius: 40px;
+            padding: 30px 20px;
+            margin: 20px 0;
+            border: 2px solid #f3ba2f70;
+            box-shadow: inset 0 -5px 0 #0f121b;
+        }
+        .question-text {
+            color: white;
+            font-size: 1.7rem;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 30px 0 20px;
+        }
+        .answer-btn {
+            background: #262e40;
+            border: 2px solid #3d465b;
+            border-radius: 60px;
+            padding: 20px 10px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.15s;
+            text-align: left;
+            padding-left: 30px;
+            box-shadow: 0 8px 0 #121724;
+            letter-spacing: 0.3px;
+        }
+        .answer-btn:hover:not(:disabled) {
+            background: #323d55;
+            border-color: #f3ba2f;
+        }
+        .answer-btn.selected {
+            background: #f3ba2f;
+            color: black;
+            border-color: white;
+            box-shadow: 0 8px 0 #b37b0b;
+        }
+        .answer-btn.correct {
+            background: #2ecc71 !important;
+            border-color: white !important;
+            color: black;
+        }
+        .answer-btn.wrong {
+            background: #e74c3c !important;
+            border-color: #ffb8b8 !important;
+            color: white;
+        }
+        .answer-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .hint-panel {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 25px 0 10px;
+        }
+        .hint-btn {
+            background: #2b3347;
+            border: none;
+            border-radius: 60px;
+            padding: 16px 30px;
+            font-weight: bold;
+            color: #f3ba2f;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 0 #151b26;
+            transition: 0.1s;
+            cursor: pointer;
+            flex: 1;
+            max-width: 200px;
+            border: 1px solid #5c6a82;
+        }
+        .hint-btn:active { transform: translateY(4px); box-shadow: none; }
+        .hint-btn:disabled { opacity: 0.3; transform: none; pointer-events: none; }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .next-btn {
+            background: #f3ba2f;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 50px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #0b0e1a;
+            box-shadow: 0 8px 0 #a87c1b;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .next-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #a87c1b; }
+        .next-btn:disabled { opacity: 0.3; transform: none; pointer-events: none; }
+        .game-status {
+            color: #ffd966;
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: #1b2130;
+            padding: 12px 25px;
+            border-radius: 60px;
+        }
+        .restart-btn {
+            background: #3f4a62;
+            border: none;
+            border-radius: 40px;
+            padding: 10px 25px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .win-message {
+            text-align: center;
+            color: gold;
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 30px 0;
+            text-shadow: 0 0 20px orange;
+        }
+
+        /* Модальное окно справки */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #1e2538;
+            border: 3px solid #f3ba2f;
+            border-radius: 60px;
+            padding: 40px;
+            max-width: 550px;
+            width: 90%;
+            color: white;
+            box-shadow: 0 30px 50px black;
+        }
+        .modal-content h2 {
+            color: #f3ba2f;
+            font-size: 2.2rem;
+            margin-top: 0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .modal-content p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            padding-left: 20px;
+            border-left: 4px solid #f3ba2f;
+        }
+        .modal-content ul {
+            font-size: 1.2rem;
+            list-style-type: none;
+            padding: 0;
+        }
+        .modal-content li {
+            margin: 20px 0;
+            padding-left: 35px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23f3ba2f"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>') left center no-repeat;
+            background-size: 24px;
+        }
+        .modal-close {
+            background: #f3ba2f;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 40px;
+            font-weight: 800;
+            font-size: 1.4rem;
+            color: #0b0e1a;
+            cursor: pointer;
+            display: block;
+            margin: 30px auto 0;
+            width: fit-content;
+            box-shadow: 0 8px 0 #a87c1b;
+            transition: 0.1s;
+        }
+        .modal-close:active {
+            transform: translateY(5px);
+            box-shadow: 0 3px 0 #a87c1b;
+        }
+
+        @media (max-width: 600px) {
+            .answers-grid { grid-template-columns: 1fr; }
+            .question-text { font-size: 1.3rem; }
+            .modal-content { padding: 25px; }
+            .modal-content p { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+    <div class="header">
+        <div class="header-left">
+            <span>🏆 КРИПТО-МИЛЛИОНЕР</span>
+            <button class="help-btn" id="helpBtn">📘 Справка</button>
+        </div>
+        <span class="game-status" id="levelDisplay">Вопрос 1 / 15</span>
+    </div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <!-- Левая часть: вопросы и ответы -->
+        <div style="flex: 2; min-width: 280px;">
+            <div class="question-area">
+                <div class="question-text" id="questionText">Загрузка...</div>
+            </div>
+            <div class="answers-grid" id="answersContainer"></div>
+
+            <div class="hint-panel">
+                <button class="hint-btn" id="hint5050">50:50</button>
+                <button class="hint-btn" id="hintCall">Звонок другу</button>
+                <button class="hint-btn" id="hintAudience">Помощь зала</button>
+            </div>
+
+            <div class="footer">
+                <button class="restart-btn" id="restartBtn">🔄 Заново</button>
+                <button class="next-btn" id="nextBtn" disabled>➡️ Далее</button>
+            </div>
+            <div id="messageArea" style="color: #ffb347; text-align: center; margin-top: 20px; min-height: 30px; font-weight: 500;"></div>
+        </div>
+
+        <!-- Правая часть: лестница сумм (сверху вниз) -->
+        <div class="money-ladder" style="flex: 1; min-width: 200px;" id="ladderContainer"></div>
+    </div>
+    <div id="winMessage" class="win-message"></div>
+</div>
+
+<!-- Модальное окно справки -->
+<div class="modal" id="helpModal">
+    <div class="modal-content">
+        <h2>📘 Как играть</h2>
+        <p><strong>Цель:</strong> ответить правильно на все 50 вопросов и выиграть 1 000 000 $. Лестница сумм справа показывает призовые уровни.</p>
+        <ul>
+            <li><strong>Управление:</strong> нажимайте на один из четырёх вариантов ответа. Если ответ верный, станет доступна кнопка «Далее». Если нет — игра завершится.</li>
+            <li><strong>Подсказки:</strong> в игре доступны три классические подсказки — «50:50», «Звонок другу» и «Помощь зала». Используйте их в трудные моменты, но помните, что каждую можно применить только один раз.</li>
+        </ul>
+        <button class="modal-close" id="closeHelp">Понятно!</button>
+    </div>
+</div>
+
+<script>
+(function() {
+    // ================== 50 ВОПРОСОВ =========
+    const allQuestions = [
+        // уровень 1 (100$)
+        { question: "Какой самый первый и известный криптовалютный протокол?", answers: ["Ethereum", "Bitcoin", "Litecoin", "Dogecoin"], correct: 1 },
+        { question: "Кто создал Биткоин (под псевдонимом)?", answers: ["Vitalik Buterin", "Nick Szabo", "Satoshi Nakamoto", "Hal Finney"], correct: 2 },
+        { question: "Что означает аббревиатура BTC?", answers: ["Bitcoin Token", "Bytecoin", "Bitcoin", "Blockchain Tech Coin"], correct: 2 },
+        { question: "Какой консенсус использует Биткоин?", answers: ["Proof-of-Stake", "Proof-of-Work", "DPoS", "PoA"], correct: 1 },
+        { question: "Как называется процесс создания новых блоков в Биткоине?", answers: ["Майнинг", "Фарминг", "Стейкинг", "Трейдинг"], correct: 0 },
+        // уровень 6 (500$)
+        { question: "Какая криптобиржа самая большая по объёму торгов?", answers: ["Coinbase", "Kraken", "Binance", "KuCoin"], correct: 2 },
+        { question: "Что такое Ethereum?", answers: ["Кошелёк", "Децентрализованная платформа", "Стабильная монета", "Биржа"], correct: 1 },
+        { question: "Какой токен является нативным для сети Binance Smart Chain?", answers: ["BNB", "BUSD", "CAKE", "XRP"], correct: 0 },
+        { question: "Как расшифровывается DeFi?", answers: ["Digital Finance", "Decentralized Finance", "Derivative Finance", "Direct Finance"], correct: 1 },
+        { question: "Что такое NFT?", answers: ["New Financial Tool", "Non-Fungible Token", "Network File Transfer", "Non-Formal Trade"], correct: 1 },
+        // уровень 11 (2000$)
+        { question: "Какой алгоритм хеширования использует Биткоин?", answers: ["SHA-256", "Scrypt", "Ethash", "Blake2b"], correct: 0 },
+        { question: "Какой максимальный лимит эмиссии Биткоина?", answers: ["21 миллион", "18 миллионов", "100 миллионов", "Не ограничен"], correct: 0 },
+        { question: "Какой токен используется для газа в сети Ethereum?", answers: ["ETH", "GAS", "WEI", "ERC-20"], correct: 0 },
+        { question: "Что означает аббревиатура DEX?", answers: ["Digital Exchange", "Decentralized Exchange", "Derivative EX", "Direct EX"], correct: 1 },
+        { question: "Какая монета была создана как мем про собаку?", answers: ["Shiba Inu", "Dogecoin", "Akita", "Husky"], correct: 1 },
+        // уровень 16 (5000$)
+        { question: "Кто основал Ethereum?", answers: ["Vitalik Buterin", "Charles Hoskinson", "Gavin Wood", "Все трое"], correct: 3 },
+        { question: "Что такое смарт-контракт?", answers: ["Бумажный договор", "Код на блокчейне", "Аппаратный кошелек", "Биржевой ордер"], correct: 1 },
+        { question: "Как называется первая криптовалюта с поддержкой смарт-контрактов?", answers: ["Bitcoin", "Ethereum", "Cardano", "Solana"], correct: 1 },
+        { question: "Какой тип графика используется в техническом анализе?", answers: ["Японские свечи", "Круги", "Столбцы", "Точки"], correct: 0 },
+        { question: "Что такое холодный кошелек?", answers: ["Кошелек без интернета", "Ледяной кошелек", "Мобильный кошелек", "Кошелек биржи"], correct: 0 },
+        // уровень 21 (15000$)
+        { question: "Что обозначает термин 'HODL'?", answers: ["Hold", "Sell", "Trade", "Leverage"], correct: 0 },
+        { question: "Какая сеть использует алгоритм Tangle?", answers: ["IOTA", "Nano", "Cardano", "Polkadot"], correct: 0 },
+        { question: "Кто создал Binance?", answers: ["CZ (Changpeng Zhao)", "Brian Armstrong", "Sam Bankman-Fried", "Tyler Winklevoss"], correct: 0 },
+        { question: "Какой год появления Биткоина?", answers: ["2008", "2009", "2010", "2011"], correct: 1 },
+        { question: "Что такое 'белая книга' (whitepaper) в крипте?", answers: ["Документ с описанием проекта", "Рекламный буклет", "Бумага белого цвета", "Код проекта"], correct: 0 },
+        // уровень 26 (50000$)
+        { question: "Какой консенсус у Cardano?", answers: ["Ouroboros", "Aurora", "Nakamoto", "Ghost"], correct: 0 },
+        { question: "Какой токен используется в сети Solana?", answers: ["SOL", "ADA", "DOT", "MATIC"], correct: 0 },
+        { question: "Какой блокчейн первый использовал PoS?", answers: ["Peercoin", "Ethereum", "NXT", "Blackcoin"], correct: 0 },
+        { question: "Что такое ATH?", answers: ["All Time High", "Auto Top Hash", "Average True High", "Asset Transfer Hash"], correct: 0 },
+        { question: "Что обозначает 'FUD'?", answers: ["Fear, Uncertainty, Doubt", "Fiat USD", "Final Utility Drop", "Fast Unstake Data"], correct: 0 },
+        // уровень 31 (100000$)
+        { question: "Какой алгоритм у Litecoin?", answers: ["Scrypt", "SHA-256", "Ethash", "X11"], correct: 0 },
+        { question: "Какой из языков используется для смарт-контрактов Ethereum?", answers: ["Solidity", "Python", "Java", "C++"], correct: 0 },
+        { question: "Что такое мемпул?", answers: ["Пул майнеров", "Очередь неподтвержденных транзакций", "Тип кошелька", "Форум"], correct: 1 },
+        { question: "Какой блокчейн использует 50 валидаторов (Ethereum 2.0)?", answers: ["Ethereum", "Solana", "Avalanche", "Near"], correct: 0 },
+        { question: "Что такое 'газ' в Ethereum?", answers: ["Плата за вычисления", "Вид топлива", "Токен", "Сеть"], correct: 0 },
+        // уровень 36 (250000$)
+        { question: "Кто такой 'кит' в криптомире?", answers: ["Крупный держатель", "Кит-маскот", "Разработчик", "Майнер"], correct: 0 },
+        { question: "Что такое 'REKT'?", answers: ["Разорение, убытки", "Рект (имя)", "Аббревиатура", "Тип ордера"], correct: 0 },
+        { question: "Какой токен принадлежит сети Chainlink?", answers: ["LINK", "UNI", "AAVE", "YFI"], correct: 0 },
+        { question: "Что такое 'стейкинг'?", answers: ["Заморозка монет для дохода", "Продажа", "Покупка", "Майнинг"], correct: 0 },
+        { question: "В каком году произошёл халвинг Биткоина (последний)?", answers: ["2020", "2021", "2022", "2024"], correct: 3 },
+        // уровень 41 (500000$)
+        { question: "Что означает 'DYOR'?", answers: ["Do Your Own Research", "Don't Yell On Reddit", "Digital Yield Open Return", "Dump Your Own Risk"], correct: 0 },
+        { question: "Какой протокол является основой для Uniswap?", answers: ["AMM (Automated Market Maker)", "Order book", "OTC", "DEX"], correct: 0 },
+        { question: "Какая сеть использует язык Rust?", answers: ["Solana", "Ethereum", "Bitcoin", "Dogecoin"], correct: 0 },
+        { question: "Что такое 'орфановый блок'?", answers: ["Блок, не принятый сетью", "Без родителей", "Сирота", "Пустой"], correct: 0 },
+        { question: "Какой токен был запущен как 'монета-убийца Ethereum'?", answers: ["Solana", "Cardano", "Polkadot", "Все выше"], correct: 3 },
+        // уровень 46 (750000$)
+        { question: "Сколько сатоши в одном биткоине?", answers: ["100 млн", "10 млн", "1 млн", "1000"], correct: 0 },
+        { question: "Кто такой Hal Finney?", answers: ["Получатель первой транзакции BTC", "Создатель Биткоина", "Майнер", "Хакер"], correct: 0 },
+        { question: "Что такое 'Taproot'?", answers: ["Апгрейд Биткоина", "Новый токен", "Биржа", "Кошелек"], correct: 0 },
+        { question: "Какой блокчейн первым запустил EVM?", answers: ["Ethereum", "Binance Smart Chain", "Polygon", "Avalanche"], correct: 0 },
+        { question: "Что обозначает 'GM' в криптосообществе?", answers: ["Good Morning", "General Manager", "Giga Money", "Go Moon"], correct: 0 },
+    ];
+    // Используем все 50 вопросов
+    const questions = allQuestions;
+
+    // Лестница сумм сверху (1 млн) вниз (100)
+    const moneyLevels = [
+        "💎 1 000 000",
+        "💰 500 000",
+        "💰 250 000",
+        "💰 100 000",
+        "💰 50 000",
+        "💰 25 000",
+        "💰 15 000",
+        "💰 10 000",
+        "💰 5 000",
+        "💰 2 000",
+        "💰 1 000",
+        "💰 500",
+        "💰 200",
+        "💰 100"
+    ]; // 14 ступеней (вопросов 15, первый вопрос = 100$)
+
+    // Текущее состояние
+    let currentQuestionIndex = 0;         // 0-49
+    let selectedAnswer = null;
+    let correctAnswerIndex = -1;
+    let hintsUsed = { fifty: false, call: false, audience: false };
+    let gameActive = true;
+    let canSelect = true;
+    let fiftyFiftyRemoved = [];
+
+    // Элементы
+    const questionEl = document.getElementById('questionText');
+    const answersDiv = document.getElementById('answersContainer');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const messageArea = document.getElementById('messageArea');
+    const winMessageDiv = document.getElementById('winMessage');
+    const ladderContainer = document.getElementById('ladderContainer');
+    const hint5050 = document.getElementById('hint5050');
+    const hintCall = document.getElementById('hintCall');
+    const hintAudience = document.getElementById('hintAudience');
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const closeHelp = document.getElementById('closeHelp');
+
+    // Открыть/закрыть справку
+    helpBtn.addEventListener('click', () => {
+        helpModal.classList.add('active');
+    });
+    closeHelp.addEventListener('click', () => {
+        helpModal.classList.remove('active');
+    });
+    window.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            helpModal.classList.remove('active');
+        }
+    });
+
+    // Построить лестницу (сверху вниз: 1млн ... 100)
+    function renderLadder() {
+        let html = '';
+        for (let i = 0; i < moneyLevels.length; i++) {
+            let className = 'ladder-item';
+            // вопрос 1 (индекс 0) = 100$ (последний уровень, индекс 13)
+            // вопрос 14 (индекс 13) = 1млн (первый уровень, индекс 0)
+            const questionMoneyIndex = moneyLevels.length - 1 - currentQuestionIndex;
+            if (i === questionMoneyIndex) {
+                className += ' current';
+            }
+            html += `<div class="${className}"><span>${moneyLevels[i]}</span></div>`;
+        }
+        ladderContainer.innerHTML = html;
+    }
+
+    // Загрузить вопрос
+    function loadQuestion() {
+        winMessageDiv.innerText = '';
+        messageArea.innerText = '';
+        if (currentQuestionIndex >= questions.length) {
+            // выигрыш
+            gameActive = false;
+            questionEl.innerText = "ПОБЕДА! ВЫ СТАЛИ КРИПТО-МИЛЛИОНЕРОМ! 🎉";
+            answersDiv.innerHTML = '';
+            nextBtn.disabled = true;
+            levelDisplay.innerText = 'МИЛЛИОНЕР';
+            launchConfetti();
+            winMessageDiv.innerText = '🏆 1 000 000 $ 🏆';
+            return;
+        }
+        const q = questions[currentQuestionIndex];
+        questionEl.innerText = q.question;
+        correctAnswerIndex = q.correct;
+        selectedAnswer = null;
+        canSelect = true;
+        fiftyFiftyRemoved = [];
+
+        // сброс кнопок подсказок активность
+        hint5050.disabled = hintsUsed.fifty;
+        hintCall.disabled = hintsUsed.call;
+        hintAudience.disabled = hintsUsed.audience;
+
+        // отрисовка ответов
+        let answersHtml = '';
+        const letters = ['A', 'B', 'C', 'D'];
+        q.answers.forEach((ans, idx) => {
+            answersHtml += `<button class="answer-btn" data-index="${idx}">${letters[idx]}: ${ans}</button>`;
+        });
+        answersDiv.innerHTML = answersHtml;
+
+        // навесить обработчики
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            btn.addEventListener('click', answerClickHandler);
+        });
+
+        levelDisplay.innerText = `Вопрос ${currentQuestionIndex+1} / 50`;
+        nextBtn.disabled = true;
+        renderLadder();
+    }
+
+    // Обработчик ответа
+    function answerClickHandler(e) {
+        if (!gameActive || !canSelect) return;
+        const btn = e.currentTarget;
+        const idx = parseInt(btn.dataset.index);
+        if (selectedAnswer !== null) return; // уже выбрано
+
+        selectedAnswer = idx;
+        const q = questions[currentQuestionIndex];
+        const isCorrect = (idx === q.correct);
+
+        // визуал
+        document.querySelectorAll('.answer-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        canSelect = false;
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            messageArea.innerText = '✅ Верно!';
+            // переход дальше
+            nextBtn.disabled = false;
+        } else {
+            btn.classList.add('wrong');
+            // показать правильный
+            document.querySelectorAll('.answer-btn')[q.correct].classList.add('correct');
+            messageArea.innerText = '❌ Неверно. Игра окончена.';
+            gameActive = false;
+            nextBtn.disabled = true;
+            // заблокировать остальное
+            document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+            hint5050.disabled = true;
+            hintCall.disabled = true;
+            hintAudience.disabled = true;
+            levelDisplay.innerText = 'ПОРАЖЕНИЕ';
+        }
+    }
+
+    // Подсказки
+    hint5050.addEventListener('click', () => {
+        if (hintsUsed.fifty || !gameActive || !canSelect) return;
+        hintsUsed.fifty = true;
+        hint5050.disabled = true;
+        const q = questions[currentQuestionIndex];
+        let toRemove = [];
+        for (let i = 0; i < q.answers.length; i++) {
+            if (i !== q.correct && toRemove.length < 2) toRemove.push(i);
+        }
+        // скрыть кнопки
+        document.querySelectorAll('.answer-btn').forEach(btn => {
+            let idx = parseInt(btn.dataset.index);
+            if (toRemove.includes(idx)) {
+                btn.style.visibility = 'hidden';
+                btn.disabled = true;
+                fiftyFiftyRemoved.push(idx);
+            }
+        });
+        messageArea.innerText = 'Подсказка 50:50 использована';
+    });
+
+    hintCall.addEventListener('click', () => {
+        if (hintsUsed.call || !gameActive || !canSelect) return;
+        hintsUsed.call = true;
+        hintCall.disabled = true;
+        const q = questions[currentQuestionIndex];
+        let correct = q.correct;
+        let answers = q.answers;
+        let friendSays = `Друг думает, что правильный ответ: ${String.fromCharCode(65+correct)} (${answers[correct]})`;
+        messageArea.innerText = friendSays;
+    });
+
+    hintAudience.addEventListener('click', () => {
+        if (hintsUsed.audience || !gameActive || !canSelect) return;
+        hintsUsed.audience = true;
+        hintAudience.disabled = true;
+        const q = questions[currentQuestionIndex];
+        // псевдо-статистика
+        let others = [0,0,0,0];
+        others[q.correct] = 70;
+        let rem = 30;
+        for (let i=0;i<4;i++) if(i!==q.correct) { others[i] = Math.floor(rem/3); rem -= others[i]; }
+        messageArea.innerText = `Зал голосует: A:${others[0]}% B:${others[1]}% C:${others[2]}% D:${others[3]}%`;
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (!gameActive) return;
+        if (selectedAnswer === null) return;
+        // переход к след вопросу
+        currentQuestionIndex++;
+        loadQuestion();
+    });
+
+    restartBtn.addEventListener('click', () => {
+        currentQuestionIndex = 0;
+        hintsUsed = { fifty: false, call: false, audience: false };
+        gameActive = true;
+        canSelect = true;
+        loadQuestion();
+        winMessageDiv.innerText = '';
+    });
+
+    function launchConfetti() {
+        if (typeof confetti === 'function') {
+            confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: ['#f3ba2f', '#000', '#fff'] });
+        }
+    }
+
+    // инициализация
+    loadQuestion();
+    // проверка CDN confetti
+    if (typeof confetti === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1';
+        document.head.appendChild(script);
+    }
+})();
+</script>
+</body>
+</html>
