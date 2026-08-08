@@ -1,0 +1,948 @@
+   
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор треугольника</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .input-section, .results {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .export-btn {
+            background-color: #27ae60;
+        }
+        .export-btn:hover {
+            background-color: #2ecc71;
+        }
+        .export-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            align-items: center;
+        }
+        .export-controls select {
+            width: auto;
+            flex: 1;
+            margin-top: 0;
+        }
+        .export-controls button {
+            margin-top: 0;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background-color: #e8f4fc;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .warning {
+            color: orange;
+            font-weight: bold;
+        }
+
+        /* Стили для загрузочной заставки */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease-out;
+        }
+        .splash-content {
+            text-align: center;
+            color: white;
+        }
+        .splash-content h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Загрузочная заставка -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <h1>📐 Калькулятор треугольника</h1>
+            <div class="loader"></div>
+            <p>Загрузка...</p>
+        </div>
+    </div>
+
+    <h1>Калькулятор треугольника</h1>
+    
+    <div class="container">
+        <div class="input-section">
+            <h2>Входные параметры</h2>
+            
+            <label for="inputType">Выберите известные параметры:</label>
+            <select id="inputType" onchange="updateInputFields()">
+                <option value="3sides">3 стороны (a, b, c)</option>
+                <option value="2sidesAngle">2 стороны и угол между ними (a, b, γ)</option>
+                <option value="2anglesSide">2 угла и сторона между ними (α, β, c)</option>
+                <option value="2sidesOpposite">2 стороны и угол напротив одной из них (a, b, α)</option>
+                <option value="rightHypLeg">Прямоугольный: гипотенуза и катет (c, a)</option>
+                <option value="right2Legs">Прямоугольный: 2 катета (a, b)</option>
+                <option value="area2sidesAngle">Площадь и 2 стороны (S, a, b)</option>
+                <option value="areaSideHeight">Площадь, сторона и высота к ней (S, a, hₐ)</option>
+                <option value="side2heights">Сторона и 2 высоты (a, hₐ, hᵦ)</option>
+                <option value="side2medians">Сторона и 2 медианы (a, mₐ, mᵦ)</option>
+                <option value="side2bisectors">Сторона и 2 биссектрисы (a, lₐ, lᵦ)</option>
+                <option value="3heights">3 высоты (hₐ, hᵦ, h꜀)</option>
+                <option value="3medians">3 медианы (mₐ, mᵦ, m꜀)</option>
+                <option value="perimeterAreaSide">Периметр, площадь и сторона (P, S, a)</option>
+                <option value="inradiusArea">Радиус вписанной окружности и площадь (r, S)</option>
+                <option value="circumradiusArea">Радиус описанной окружности и площадь (R, S)</option>
+            </select>
+            
+            <div id="inputFields">
+                <!-- Поля будут динамически обновляться -->
+                <label for="sideA">Сторона a:</label>
+                <input type="number" id="sideA" step="any" min="0">
+                
+                <label for="sideB">Сторона b:</label>
+                <input type="number" id="sideB" step="any" min="0">
+                
+                <label for="sideC">Сторона c:</label>
+                <input type="number" id="sideC" step="any" min="0">
+            </div>
+            
+            <div class="export-controls">
+                <select id="exportFormat">
+                    <option value="json">JSON</option>
+                    <option value="txt">TXT (отчёт)</option>
+                </select>
+                <button class="export-btn" onclick="exportResults()">📎 Экспорт</button>
+            </div>
+            <button onclick="calculateTriangle()">Рассчитать</button>
+        </div>
+        
+        <div class="results">
+            <h2>Результаты</h2>
+            <div id="errorMessage" class="error"></div>
+            <div id="warningMessage" class="warning"></div>
+            <div id="resultsContainer">
+                <div class="result-item">Площадь: <span id="areaResult">-</span></div>
+                <div class="result-item">Периметр: <span id="perimeterResult">-</span></div>
+                <div class="result-item">Полупериметр: <span id="semiperimeterResult">-</span></div>
+                <div class="result-item">Сторона a: <span id="sideAResult">-</span></div>
+                <div class="result-item">Сторона b: <span id="sideBResult">-</span></div>
+                <div class="result-item">Сторона c: <span id="sideCResult">-</span></div>
+                <div class="result-item">Угол α: <span id="angleAlphaResult">-</span></div>
+                <div class="result-item">Угол β: <span id="angleBetaResult">-</span></div>
+                <div class="result-item">Угол γ: <span id="angleGammaResult">-</span></div>
+                <div class="result-item">Высота ha: <span id="heightAResult">-</span></div>
+                <div class="result-item">Высота hb: <span id="heightBResult">-</span></div>
+                <div class="result-item">Высота hc: <span id="heightCResult">-</span></div>
+                <div class="result-item">Медиана ma: <span id="medianAResult">-</span></div>
+                <div class="result-item">Медиана mb: <span id="medianBResult">-</span></div>
+                <div class="result-item">Медиана mc: <span id="medianCResult">-</span></div>
+                <div class="result-item">Биссектриса la: <span id="bisectorAResult">-</span></div>
+                <div class="result-item">Биссектриса lb: <span id="bisectorBResult">-</span></div>
+                <div class="result-item">Биссектриса lc: <span id="bisectorCResult">-</span></div>
+                <div class="result-item">Радиус описанной окружности (R): <span id="circumradiusResult">-</span></div>
+                <div class="result-item">Радиус вписанной окружности (r): <span id="inradiusResult">-</span></div>
+                <div class="result-item">Тип треугольника: <span id="triangleTypeResult">-</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Скрыть заставку через 5 секунд
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const splash = document.getElementById('splashScreen');
+                splash.classList.add('fade-out');
+                setTimeout(function() {
+                    splash.style.display = 'none';
+                }, 800);
+            }, 5000);
+        });
+
+        // Функция экспорта результатов в зависимости от выбранного формата
+        function exportResults() {
+            const format = document.getElementById('exportFormat').value;
+            if (format === 'json') {
+                exportJSON();
+            } else if (format === 'txt') {
+                exportTXT();
+            }
+        }
+
+        function exportJSON() {
+            const resultFields = [
+                'areaResult', 'perimeterResult', 'semiperimeterResult',
+                'sideAResult', 'sideBResult', 'sideCResult',
+                'angleAlphaResult', 'angleBetaResult', 'angleGammaResult',
+                'heightAResult', 'heightBResult', 'heightCResult',
+                'medianAResult', 'medianBResult', 'medianCResult',
+                'bisectorAResult', 'bisectorBResult', 'bisectorCResult',
+                'circumradiusResult', 'inradiusResult', 'triangleTypeResult'
+            ];
+            
+            let results = {};
+            let hasData = false;
+            
+            for (let field of resultFields) {
+                let value = document.getElementById(field).textContent;
+                if (value !== '-') hasData = true;
+                results[field] = value;
+            }
+            
+            if (!hasData) {
+                alert('Нет данных для экспорта. Сначала выполните расчёт треугольника.');
+                return;
+            }
+            
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                calculator: "Калькулятор треугольника",
+                results: results
+            };
+            
+            const jsonStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonStr], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `triangle_results_${new Date().toISOString().slice(0,19)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportTXT() {
+            // Сбор всех значений
+            const fields = {
+                'Площадь': 'areaResult',
+                'Периметр': 'perimeterResult',
+                'Полупериметр': 'semiperimeterResult',
+                'Сторона a': 'sideAResult',
+                'Сторона b': 'sideBResult',
+                'Сторона c': 'sideCResult',
+                'Угол α': 'angleAlphaResult',
+                'Угол β': 'angleBetaResult',
+                'Угол γ': 'angleGammaResult',
+                'Высота ha': 'heightAResult',
+                'Высота hb': 'heightBResult',
+                'Высота hc': 'heightCResult',
+                'Медиана ma': 'medianAResult',
+                'Медиана mb': 'medianBResult',
+                'Медиана mc': 'medianCResult',
+                'Биссектриса la': 'bisectorAResult',
+                'Биссектриса lb': 'bisectorBResult',
+                'Биссектриса lc': 'bisectorCResult',
+                'Радиус описанной окружности (R)': 'circumradiusResult',
+                'Радиус вписанной окружности (r)': 'inradiusResult',
+                'Тип треугольника': 'triangleTypeResult'
+            };
+            
+            let hasData = false;
+            let lines = [];
+            lines.push("========================================");
+            lines.push("РЕЗУЛЬТАТЫ РАСЧЁТА ТРЕУГОЛЬНИКА");
+            lines.push("========================================");
+            lines.push(`Дата и время: ${new Date().toLocaleString()}`);
+            lines.push("");
+            
+            for (let [label, id] of Object.entries(fields)) {
+                let value = document.getElementById(id).textContent;
+                if (value !== '-') hasData = true;
+                lines.push(`${label}: ${value}`);
+            }
+            
+            if (!hasData) {
+                alert('Нет данных для экспорта. Сначала выполните расчёт треугольника.');
+                return;
+            }
+            
+            lines.push("");
+            lines.push("========================================");
+            lines.push("Калькулятор треугольника | Сгенерировано автоматически");
+            
+            const txtContent = lines.join("\n");
+            const blob = new Blob([txtContent], {type: "text/plain;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `triangle_report_${new Date().toISOString().slice(0,19)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Вспомогательные функции (без изменений)
+        function getPositiveNumber(id) {
+            const value = parseFloat(document.getElementById(id).value);
+            if (isNaN(value) || value <= 0) return null;
+            return value;
+        }
+
+        function getNumber(id, allowZero = false) {
+            const value = parseFloat(document.getElementById(id).value);
+            if (isNaN(value)) return null;
+            if (!allowZero && value <= 0) return null;
+            if (allowZero && value < 0) return null;
+            return value;
+        }
+
+        function updateInputFields() {
+            const inputType = document.getElementById('inputType').value;
+            const inputFields = document.getElementById('inputFields');
+            inputFields.innerHTML = '';
+            
+            switch(inputType) {
+                case '3sides':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="sideB">Сторона b:</label>
+                        <input type="number" id="sideB" step="any" min="0">
+                        <label for="sideC">Сторона c:</label>
+                        <input type="number" id="sideC" step="any" min="0">
+                    `;
+                    break;
+                case '2sidesAngle':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="sideB">Сторона b:</label>
+                        <input type="number" id="sideB" step="any" min="0">
+                        <label for="angleGamma">Угол γ между a и b (в градусах):</label>
+                        <input type="number" id="angleGamma" step="any" min="0" max="180">
+                    `;
+                    break;
+                case '2anglesSide':
+                    inputFields.innerHTML = `
+                        <label for="angleAlpha">Угол α:</label>
+                        <input type="number" id="angleAlpha" step="any" min="0" max="180">
+                        <label for="angleBeta">Угол β:</label>
+                        <input type="number" id="angleBeta" step="any" min="0" max="180">
+                        <label for="sideC">Сторона c между α и β:</label>
+                        <input type="number" id="sideC" step="any" min="0">
+                    `;
+                    break;
+                case '2sidesOpposite':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="sideB">Сторона b:</label>
+                        <input type="number" id="sideB" step="any" min="0">
+                        <label for="angleAlpha">Угол α напротив стороны a (в градусах):</label>
+                        <input type="number" id="angleAlpha" step="any" min="0" max="180">
+                    `;
+                    break;
+                case 'rightHypLeg':
+                    inputFields.innerHTML = `
+                        <label for="sideC">Гипотенуза c:</label>
+                        <input type="number" id="sideC" step="any" min="0">
+                        <label for="sideA">Катет a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                    `;
+                    break;
+                case 'right2Legs':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Катет a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="sideB">Катет b:</label>
+                        <input type="number" id="sideB" step="any" min="0">
+                    `;
+                    break;
+                case 'area2sidesAngle':
+                    inputFields.innerHTML = `
+                        <label for="area">Площадь (S):</label>
+                        <input type="number" id="area" step="any" min="0">
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="sideB">Сторона b:</label>
+                        <input type="number" id="sideB" step="any" min="0">
+                    `;
+                    break;
+                case 'areaSideHeight':
+                    inputFields.innerHTML = `
+                        <label for="area">Площадь (S):</label>
+                        <input type="number" id="area" step="any" min="0">
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="heightA">Высота к стороне a (hₐ):</label>
+                        <input type="number" id="heightA" step="any" min="0">
+                    `;
+                    break;
+                case 'side2heights':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="heightA">Высота к стороне a (hₐ):</label>
+                        <input type="number" id="heightA" step="any" min="0">
+                        <label for="heightB">Высота к стороне b (hᵦ):</label>
+                        <input type="number" id="heightB" step="any" min="0">
+                    `;
+                    break;
+                case 'side2medians':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="medianA">Медиана к стороне a (mₐ):</label>
+                        <input type="number" id="medianA" step="any" min="0">
+                        <label for="medianB">Медиана к стороне b (mᵦ):</label>
+                        <input type="number" id="medianB" step="any" min="0">
+                    `;
+                    break;
+                case 'side2bisectors':
+                    inputFields.innerHTML = `
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                        <label for="bisectorA">Биссектриса к стороне a (lₐ):</label>
+                        <input type="number" id="bisectorA" step="any" min="0">
+                        <label for="bisectorB">Биссектриса к стороне b (lᵦ):</label>
+                        <input type="number" id="bisectorB" step="any" min="0">
+                    `;
+                    break;
+                case '3heights':
+                    inputFields.innerHTML = `
+                        <label for="heightA">Высота ha:</label>
+                        <input type="number" id="heightA" step="any" min="0">
+                        <label for="heightB">Высота hb:</label>
+                        <input type="number" id="heightB" step="any" min="0">
+                        <label for="heightC">Высота hc:</label>
+                        <input type="number" id="heightC" step="any" min="0">
+                    `;
+                    break;
+                case '3medians':
+                    inputFields.innerHTML = `
+                        <label for="medianA">Медиана ma:</label>
+                        <input type="number" id="medianA" step="any" min="0">
+                        <label for="medianB">Медиана mb:</label>
+                        <input type="number" id="medianB" step="any" min="0">
+                        <label for="medianC">Медиана mc:</label>
+                        <input type="number" id="medianC" step="any" min="0">
+                    `;
+                    break;
+                case 'perimeterAreaSide':
+                    inputFields.innerHTML = `
+                        <label for="perimeter">Периметр (P):</label>
+                        <input type="number" id="perimeter" step="any" min="0">
+                        <label for="area">Площадь (S):</label>
+                        <input type="number" id="area" step="any" min="0">
+                        <label for="sideA">Сторона a:</label>
+                        <input type="number" id="sideA" step="any" min="0">
+                    `;
+                    break;
+                case 'inradiusArea':
+                    inputFields.innerHTML = `
+                        <label for="inradius">Радиус вписанной окружности (r):</label>
+                        <input type="number" id="inradius" step="any" min="0">
+                        <label for="area">Площадь (S):</label>
+                        <input type="number" id="area" step="any" min="0">
+                    `;
+                    break;
+                case 'circumradiusArea':
+                    inputFields.innerHTML = `
+                        <label for="circumradius">Радиус описанной окружности (R):</label>
+                        <input type="number" id="circumradius" step="any" min="0">
+                        <label for="area">Площадь (S):</label>
+                        <input type="number" id="area" step="any" min="0">
+                    `;
+                    break;
+            }
+        }
+        
+        function calculateTriangle() {
+            const inputType = document.getElementById('inputType').value;
+            let a, b, c, alpha, beta, gamma, area, perimeter, semiperimeter;
+            
+            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('warningMessage').textContent = '';
+            
+            try {
+                switch(inputType) {
+                    case '3sides': {
+                        a = getPositiveNumber('sideA');
+                        b = getPositiveNumber('sideB');
+                        c = getPositiveNumber('sideC');
+                        if (a === null || b === null || c === null) throw new Error("Все стороны должны быть положительными числами");
+                        if (a + b <= c || a + c <= b || b + c <= a) throw new Error("Треугольник с такими сторонами не существует");
+                        
+                        semiperimeter = (a + b + c) / 2;
+                        area = Math.sqrt(semiperimeter * (semiperimeter - a) * (semiperimeter - b) * (semiperimeter - c));
+                        perimeter = a + b + c;
+                        
+                        alpha = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                        beta = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                        gamma = 180 - alpha - beta;
+                        break;
+                    }
+                    case '2sidesAngle': {
+                        a = getPositiveNumber('sideA');
+                        b = getPositiveNumber('sideB');
+                        const gammaDeg = getNumber('angleGamma', false);
+                        if (a === null || b === null || gammaDeg === null) throw new Error("Стороны и угол должны быть положительными числами");
+                        if (gammaDeg >= 180) throw new Error("Угол должен быть меньше 180 градусов");
+                        
+                        const gammaRad = gammaDeg * Math.PI / 180;
+                        area = 0.5 * a * b * Math.sin(gammaRad);
+                        c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(gammaRad));
+                        
+                        const sinAlpha = a * Math.sin(gammaRad) / c;
+                        if (sinAlpha > 1 + 1e-10) throw new Error("Невозможно вычислить углы (проверьте данные)");
+                        const alpha1 = Math.asin(Math.min(1, sinAlpha)) * 180 / Math.PI;
+                        const alpha2 = 180 - alpha1;
+                        let beta1 = 180 - alpha1 - gammaDeg;
+                        let beta2 = 180 - alpha2 - gammaDeg;
+                        if (beta1 > 0 && beta1 < 180) {
+                            alpha = alpha1;
+                            beta = beta1;
+                        } else if (beta2 > 0 && beta2 < 180) {
+                            alpha = alpha2;
+                            beta = beta2;
+                        } else {
+                            throw new Error("Не удалось определить углы");
+                        }
+                        gamma = gammaDeg;
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case '2anglesSide': {
+                        const alphaDeg = getNumber('angleAlpha', false);
+                        const betaDeg = getNumber('angleBeta', false);
+                        c = getPositiveNumber('sideC');
+                        if (alphaDeg === null || betaDeg === null || c === null) throw new Error("Все значения должны быть положительными числами");
+                        if (alphaDeg + betaDeg >= 180) throw new Error("Сумма двух углов должна быть меньше 180 градусов");
+                        
+                        gamma = 180 - alphaDeg - betaDeg;
+                        alpha = alphaDeg;
+                        beta = betaDeg;
+                        const gammaRad = gamma * Math.PI / 180;
+                        const alphaRad = alpha * Math.PI / 180;
+                        a = c * Math.sin(alphaRad) / Math.sin(gammaRad);
+                        b = c * Math.sin(betaDeg * Math.PI / 180) / Math.sin(gammaRad);
+                        
+                        area = 0.5 * a * b * Math.sin(gammaRad);
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case '2sidesOpposite': {
+                        a = getPositiveNumber('sideA');
+                        b = getPositiveNumber('sideB');
+                        const alphaDeg = getNumber('angleAlpha', false);
+                        if (a === null || b === null || alphaDeg === null) throw new Error("Все значения должны быть положительными числами");
+                        if (alphaDeg >= 180) throw new Error("Угол должен быть меньше 180 градусов");
+                        
+                        const sinBeta = b * Math.sin(alphaDeg * Math.PI / 180) / a;
+                        if (sinBeta > 1 + 1e-10) throw new Error("Треугольник с такими параметрами не существует");
+                        const beta1 = Math.asin(Math.min(1, sinBeta)) * 180 / Math.PI;
+                        const beta2 = 180 - beta1;
+                        let betaSelected = null, gammaSelected = null, cSelected = null;
+                        for (let betaTry of [beta1, beta2]) {
+                            const gammaTry = 180 - alphaDeg - betaTry;
+                            if (gammaTry > 0 && gammaTry < 180) {
+                                const cTry = a * Math.sin(gammaTry * Math.PI / 180) / Math.sin(alphaDeg * Math.PI / 180);
+                                if (cTry > 0) {
+                                    betaSelected = betaTry;
+                                    gammaSelected = gammaTry;
+                                    cSelected = cTry;
+                                    break;
+                                }
+                            }
+                        }
+                        if (betaSelected === null) throw new Error("Треугольник с такими параметрами не существует");
+                        alpha = alphaDeg;
+                        beta = betaSelected;
+                        gamma = gammaSelected;
+                        c = cSelected;
+                        area = 0.5 * a * b * Math.sin(gamma * Math.PI / 180);
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case 'rightHypLeg': {
+                        c = getPositiveNumber('sideC');
+                        a = getPositiveNumber('sideA');
+                        if (c === null || a === null) throw new Error("Гипотенуза и катет должны быть положительными числами");
+                        if (a >= c) throw new Error("Катет должен быть меньше гипотенузы");
+                        
+                        b = Math.sqrt(c*c - a*a);
+                        alpha = Math.asin(a / c) * 180 / Math.PI;
+                        beta = 90 - alpha;
+                        gamma = 90;
+                        area = 0.5 * a * b;
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case 'right2Legs': {
+                        a = getPositiveNumber('sideA');
+                        b = getPositiveNumber('sideB');
+                        if (a === null || b === null) throw new Error("Оба катета должны быть положительными числами");
+                        
+                        c = Math.sqrt(a*a + b*b);
+                        alpha = Math.atan(a / b) * 180 / Math.PI;
+                        beta = 90 - alpha;
+                        gamma = 90;
+                        area = 0.5 * a * b;
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case 'area2sidesAngle': {
+                        area = getPositiveNumber('area');
+                        a = getPositiveNumber('sideA');
+                        b = getPositiveNumber('sideB');
+                        if (area === null || a === null || b === null) throw new Error("Все значения должны быть положительными числами");
+                        
+                        const sinGamma = 2 * area / (a * b);
+                        if (sinGamma > 1 + 1e-10) throw new Error("Невозможно построить треугольник: площадь слишком велика");
+                        const gamma1 = Math.asin(Math.min(1, sinGamma)) * 180 / Math.PI;
+                        const gamma2 = 180 - gamma1;
+                        let gammaSelected = null, cSelected = null, alphaSelected = null, betaSelected = null;
+                        for (let g of [gamma1, gamma2]) {
+                            const cTry = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(g * Math.PI / 180));
+                            if (cTry <= 0) continue;
+                            const sinAlpha = a * Math.sin(g * Math.PI / 180) / cTry;
+                            if (sinAlpha > 1 + 1e-10) continue;
+                            const alphaTry = Math.asin(Math.min(1, sinAlpha)) * 180 / Math.PI;
+                            const alphaTry2 = 180 - alphaTry;
+                            let betaTry = 180 - alphaTry - g;
+                            if (betaTry > 0 && betaTry < 180) {
+                                gammaSelected = g;
+                                cSelected = cTry;
+                                alphaSelected = alphaTry;
+                                betaSelected = betaTry;
+                                break;
+                            }
+                            betaTry = 180 - alphaTry2 - g;
+                            if (betaTry > 0 && betaTry < 180) {
+                                gammaSelected = g;
+                                cSelected = cTry;
+                                alphaSelected = alphaTry2;
+                                betaSelected = betaTry;
+                                break;
+                            }
+                        }
+                        if (gammaSelected === null) throw new Error("Не удалось однозначно определить треугольник");
+                        gamma = gammaSelected;
+                        c = cSelected;
+                        alpha = alphaSelected;
+                        beta = betaSelected;
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case 'areaSideHeight': {
+                        const areaVal = getPositiveNumber('area');
+                        const sideA = getPositiveNumber('sideA');
+                        const heightA = getPositiveNumber('heightA');
+                        if (areaVal === null || sideA === null || heightA === null) throw new Error("Все значения должны быть положительными числами");
+                        if (Math.abs(areaVal - 0.5 * sideA * heightA) > 1e-8) throw new Error("Площадь не соответствует произведению стороны и высоты (S = ½·a·hₐ)");
+                        throw new Error("Недостаточно данных для однозначного определения треугольника. Требуется дополнительная информация (например, ещё одна сторона или угол).");
+                    }
+                    case 'side2heights': {
+                        a = getPositiveNumber('sideA');
+                        const ha = getPositiveNumber('heightA');
+                        const hb = getPositiveNumber('heightB');
+                        if (a === null || ha === null || hb === null) throw new Error("Все значения должны быть положительными числами");
+                        
+                        const areaFromA = 0.5 * a * ha;
+                        b = 2 * areaFromA / hb;
+                        const sinGamma = ha * hb / (a * b);
+                        if (sinGamma > 1 + 1e-10 || sinGamma <= 0) throw new Error("Невозможно построить треугольник с заданными параметрами");
+                        gamma = Math.asin(Math.min(1, sinGamma)) * 180 / Math.PI;
+                        let c1 = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(gamma * Math.PI/180));
+                        let c2 = Math.sqrt(a*a + b*b - 2*a*b*Math.cos((180-gamma) * Math.PI/180));
+                        let cSelected = null;
+                        let gammaSelected = null;
+                        for (let g of [gamma, 180-gamma]) {
+                            const cTry = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(g * Math.PI/180));
+                            if (cTry > 0 && (a + b > cTry) && (a + cTry > b) && (b + cTry > a)) {
+                                gammaSelected = g;
+                                cSelected = cTry;
+                                break;
+                            }
+                        }
+                        if (gammaSelected === null) throw new Error("Невозможно построить треугольник");
+                        gamma = gammaSelected;
+                        c = cSelected;
+                        alpha = Math.asin(ha / b) * 180 / Math.PI;
+                        beta = 180 - alpha - gamma;
+                        area = areaFromA;
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case 'side2medians': {
+                        a = getPositiveNumber('sideA');
+                        const ma = getPositiveNumber('medianA');
+                        const mb = getPositiveNumber('medianB');
+                        if (a === null || ma === null || mb === null) throw new Error("Все значения должны быть положительными числами");
+                        
+                        const bSquared = (4*ma*ma - 4*mb*mb + 3*a*a) / 3;
+                        if (bSquared <= 0) throw new Error("Невозможно построить треугольник");
+                        b = Math.sqrt(bSquared);
+                        const cSquared = (4*ma*ma + a*a - 2*b*b) / 2;
+                        if (cSquared <= 0) throw new Error("Невозможно построить треугольник");
+                        c = Math.sqrt(cSquared);
+                        
+                        if (a + b <= c || a + c <= b || b + c <= a) throw new Error("Треугольник не существует");
+                        semiperimeter = (a + b + c) / 2;
+                        area = Math.sqrt(semiperimeter * (semiperimeter - a) * (semiperimeter - b) * (semiperimeter - c));
+                        perimeter = a + b + c;
+                        alpha = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                        beta = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                        gamma = 180 - alpha - beta;
+                        break;
+                    }
+                    case 'side2bisectors': {
+                        a = getPositiveNumber('sideA');
+                        const la = getPositiveNumber('bisectorA');
+                        const lb = getPositiveNumber('bisectorB');
+                        if (a === null || la === null || lb === null) throw new Error("Все значения должны быть положительными числами");
+                        document.getElementById('warningMessage').textContent = "Внимание: Для произвольного треугольника решение сложное. Показаны результаты для равнобедренного треугольника (b = a).";
+                        b = a;
+                        const cosHalfAlpha = la / a;
+                        if (cosHalfAlpha <= 0 || cosHalfAlpha > 1) throw new Error("Невозможно построить треугольник");
+                        alpha = 2 * Math.acos(cosHalfAlpha) * 180 / Math.PI;
+                        beta = alpha;
+                        gamma = 180 - alpha - beta;
+                        if (gamma <= 0) throw new Error("Углы не образуют треугольник");
+                        c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(gamma * Math.PI / 180));
+                        area = 0.5 * a * b * Math.sin(gamma * Math.PI / 180);
+                        perimeter = a + b + c;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    case '3heights': {
+                        const ha = getPositiveNumber('heightA');
+                        const hb = getPositiveNumber('heightB');
+                        const hc = getPositiveNumber('heightC');
+                        if (ha === null || hb === null || hc === null) throw new Error("Все высоты должны быть положительными числами");
+                        
+                        const invHa = 1/ha, invHb = 1/hb, invHc = 1/hc;
+                        const k = invHa + invHb + invHc;
+                        const p = -invHa + invHb + invHc;
+                        const q = invHa - invHb + invHc;
+                        const r = invHa + invHb - invHc;
+                        if (p <= 0 || q <= 0 || r <= 0) throw new Error("Невозможно построить треугольник с заданными высотами");
+                        area = 1 / Math.sqrt(k * p * q * r);
+                        a = 2 * area / ha;
+                        b = 2 * area / hb;
+                        c = 2 * area / hc;
+                        if (a + b <= c || a + c <= b || b + c <= a) throw new Error("Треугольник не существует");
+                        semiperimeter = (a + b + c) / 2;
+                        perimeter = a + b + c;
+                        alpha = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                        beta = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                        gamma = 180 - alpha - beta;
+                        break;
+                    }
+                    case '3medians': {
+                        const ma = getPositiveNumber('medianA');
+                        const mb = getPositiveNumber('medianB');
+                        const mc = getPositiveNumber('medianC');
+                        if (ma === null || mb === null || mc === null) throw new Error("Все медианы должны быть положительными числами");
+                        
+                        a = (2/3) * Math.sqrt(2*mb*mb + 2*mc*mc - ma*ma);
+                        b = (2/3) * Math.sqrt(2*ma*ma + 2*mc*mc - mb*mb);
+                        c = (2/3) * Math.sqrt(2*ma*ma + 2*mb*mb - mc*mc);
+                        if (a + b <= c || a + c <= b || b + c <= a) throw new Error("Треугольник не существует");
+                        semiperimeter = (a + b + c) / 2;
+                        area = Math.sqrt(semiperimeter * (semiperimeter - a) * (semiperimeter - b) * (semiperimeter - c));
+                        perimeter = a + b + c;
+                        alpha = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                        beta = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                        gamma = 180 - alpha - beta;
+                        break;
+                    }
+                    case 'perimeterAreaSide': {
+                        const P = getPositiveNumber('perimeter');
+                        const S = getPositiveNumber('area');
+                        const sideA = getPositiveNumber('sideA');
+                        if (P === null || S === null || sideA === null) throw new Error("Все значения должны быть положительными числами");
+                        if (sideA >= P) throw new Error("Сторона не может быть больше или равна периметру");
+                        
+                        const s = P / 2;
+                        const D = s * (s - sideA);
+                        if (D <= 0) throw new Error("Невозможно построить треугольник");
+                        const sum = sideA;
+                        const discriminant = sum*sum - 4 * (S*S) / D;
+                        if (discriminant < 0) throw new Error("Невозможно построить треугольник");
+                        const x1 = (sum + Math.sqrt(discriminant)) / 2;
+                        const x2 = (sum - Math.sqrt(discriminant)) / 2;
+                        const s_minus_b = x1;
+                        const s_minus_c = x2;
+                        b = s - s_minus_b;
+                        c = s - s_minus_c;
+                        a = sideA;
+                        if (a + b <= c || a + c <= b || b + c <= a) throw new Error("Треугольник не существует");
+                        semiperimeter = s;
+                        perimeter = P;
+                        area = S;
+                        alpha = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                        beta = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                        gamma = 180 - alpha - beta;
+                        break;
+                    }
+                    case 'inradiusArea': {
+                        const r = getPositiveNumber('inradius');
+                        const S = getPositiveNumber('area');
+                        if (r === null || S === null) throw new Error("Радиус и площадь должны быть положительными числами");
+                        
+                        semiperimeter = S / r;
+                        perimeter = 2 * semiperimeter;
+                        document.getElementById('warningMessage').textContent = "Внимание: Расчет неоднозначен. Показаны результаты для равностороннего треугольника.";
+                        a = perimeter / 3;
+                        b = a;
+                        c = a;
+                        alpha = beta = gamma = 60;
+                        area = S;
+                        break;
+                    }
+                    case 'circumradiusArea': {
+                        const R = getPositiveNumber('circumradius');
+                        const S = getPositiveNumber('area');
+                        if (R === null || S === null) throw new Error("Радиус и площадь должны быть положительными числами");
+                        
+                        a = Math.pow(4 * S * R, 1/3);
+                        b = a;
+                        c = a;
+                        document.getElementById('warningMessage').textContent = "Внимание: Расчет неоднозначен. Показаны результаты для равностороннего треугольника.";
+                        alpha = beta = gamma = 60;
+                        area = S;
+                        perimeter = 3 * a;
+                        semiperimeter = perimeter / 2;
+                        break;
+                    }
+                    default:
+                        throw new Error("Неизвестный тип входных данных");
+                }
+                
+                if (typeof perimeter === 'undefined') perimeter = a + b + c;
+                if (typeof semiperimeter === 'undefined') semiperimeter = perimeter / 2;
+                if (typeof area === 'undefined') area = Math.sqrt(semiperimeter * (semiperimeter - a) * (semiperimeter - b) * (semiperimeter - c));
+                
+                const heightA = 2 * area / a;
+                const heightB = 2 * area / b;
+                const heightC = 2 * area / c;
+                const medianA = 0.5 * Math.sqrt(2*b*b + 2*c*c - a*a);
+                const medianB = 0.5 * Math.sqrt(2*a*a + 2*c*c - b*b);
+                const medianC = 0.5 * Math.sqrt(2*a*a + 2*b*b - c*c);
+                const bisectorA = (2 * b * c * Math.cos(alpha * Math.PI / 360)) / (b + c);
+                const bisectorB = (2 * a * c * Math.cos(beta * Math.PI / 360)) / (a + c);
+                const bisectorC = (2 * a * b * Math.cos(gamma * Math.PI / 360)) / (a + b);
+                const circumradius = (a * b * c) / (4 * area);
+                const inradius = area / semiperimeter;
+                
+                let triangleType = "";
+                if (Math.abs(a - b) < 1e-8 && Math.abs(b - c) < 1e-8) triangleType = "Равносторонний";
+                else if (Math.abs(a - b) < 1e-8 || Math.abs(b - c) < 1e-8 || Math.abs(a - c) < 1e-8) triangleType = "Равнобедренный";
+                else triangleType = "Разносторонний";
+                if (Math.abs(gamma - 90) < 1e-6) triangleType += ", прямоугольный";
+                else if (gamma > 90) triangleType += ", тупоугольный";
+                else triangleType += ", остроугольный";
+                
+                document.getElementById('areaResult').textContent = area.toFixed(6);
+                document.getElementById('perimeterResult').textContent = perimeter.toFixed(6);
+                document.getElementById('semiperimeterResult').textContent = semiperimeter.toFixed(6);
+                document.getElementById('sideAResult').textContent = a.toFixed(6);
+                document.getElementById('sideBResult').textContent = b.toFixed(6);
+                document.getElementById('sideCResult').textContent = c.toFixed(6);
+                document.getElementById('angleAlphaResult').textContent = alpha.toFixed(6) + "°";
+                document.getElementById('angleBetaResult').textContent = beta.toFixed(6) + "°";
+                document.getElementById('angleGammaResult').textContent = gamma.toFixed(6) + "°";
+                document.getElementById('heightAResult').textContent = heightA.toFixed(6);
+                document.getElementById('heightBResult').textContent = heightB.toFixed(6);
+                document.getElementById('heightCResult').textContent = heightC.toFixed(6);
+                document.getElementById('medianAResult').textContent = medianA.toFixed(6);
+                document.getElementById('medianBResult').textContent = medianB.toFixed(6);
+                document.getElementById('medianCResult').textContent = medianC.toFixed(6);
+                document.getElementById('bisectorAResult').textContent = bisectorA.toFixed(6);
+                document.getElementById('bisectorBResult').textContent = bisectorB.toFixed(6);
+                document.getElementById('bisectorCResult').textContent = bisectorC.toFixed(6);
+                document.getElementById('circumradiusResult').textContent = circumradius.toFixed(6);
+                document.getElementById('inradiusResult').textContent = inradius.toFixed(6);
+                document.getElementById('triangleTypeResult').textContent = triangleType;
+                
+            } catch (error) {
+                document.getElementById('errorMessage').textContent = error.message;
+                const resultSpans = document.querySelectorAll('#resultsContainer span');
+                resultSpans.forEach(span => span.textContent = '-');
+            }
+        }
+        
+        window.onload = updateInputFields;
+    </script>
+</body>
+</html>
