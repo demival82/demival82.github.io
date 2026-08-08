@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate USB – Менеджер USB и создатель загрузочных USB-накопителей</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            background: #f8f9fc;
+            color: #1a2634;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px 35px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0b1e2e;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+            border-bottom: 4px solid #2d7aff;
+            padding-bottom: 15px;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.8rem;
+            color: #0b1e2e;
+            border-left: 6px solid #2d7aff;
+            padding-left: 16px;
+        }
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.6rem;
+            margin-bottom: 0.5rem;
+            color: #1f3a57;
+        }
+        p {
+            margin-bottom: 1rem;
+        }
+        ul, ol {
+            margin: 0.6rem 0 1.2rem 1.8rem;
+        }
+        li {
+            margin-bottom: 0.4rem;
+        }
+        .highlight {
+            background: #eef4ff;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            font-weight: 500;
+            color: #1a4f8b;
+        }
+        .badge {
+            display: inline-block;
+            background: #2d7aff;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+            margin-right: 6px;
+        }
+        .badge-pro {
+            background: #f5b342;
+        }
+        .note-box {
+            background: #f0f3f8;
+            border-radius: 16px;
+            padding: 1.2rem 1.8rem;
+            margin: 1.5rem 0;
+            border-left: 4px solid #2d7aff;
+        }
+        .note-box strong {
+            color: #0b1e2e;
+        }
+        .note-box ul.app-info-list {
+            list-style: none;
+            margin: 0.5rem 0 0 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.3rem 1.5rem;
+        }
+        .note-box ul.app-info-list li {
+            margin-bottom: 0.2rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem 2rem;
+            margin: 0.8rem 0 1.5rem 0;
+        }
+        .feature-grid li {
+            list-style: none;
+            padding-left: 1.8rem;
+            position: relative;
+        }
+        .feature-grid li::before {
+            content: "▸";
+            color: #2d7aff;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        hr {
+            border: none;
+            border-top: 2px dashed #dce3ed;
+            margin: 2rem 0;
+        }
+        .download-section {
+            text-align: center;
+            margin: 2rem 0 1.8rem;
+        }
+        .download-btn {
+            display: inline-block;
+            background: #2d7aff;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 0.9rem 2.8rem;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(45, 122, 255, 0.35);
+            transition: all 0.2s ease;
+        }
+        .download-btn:hover {
+            background: #1a5fd9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(45, 122, 255, 0.45);
+        }
+        .download-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(45, 122, 255, 0.3);
+        }
+        .footer-note {
+            background: #fafbfc;
+            border-radius: 16px;
+            padding: 1rem 1.6rem;
+            margin-top: 2rem;
+            border: 1px solid #e6ecf3;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 650px) {
+            .container { padding: 20px; }
+            h1 { font-size: 1.7rem; }
+            h2 { font-size: 1.3rem; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .note-box ul.app-info-list { grid-template-columns: 1fr; }
+            .download-btn { font-size: 1rem; padding: 0.7rem 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <h1>🔌 Ultimate USB – Менеджер USB и создатель загрузочных USB-накопителей</h1>
+
+        <p style="font-size: 1.1rem; margin-top: 0.5rem;">
+            Превратите ваше устройство Android в мощную замену ПК! Создавайте загрузочные USB-накопители,
+            форматируйте диски, управляйте разделами и организуйте ретро-игры для консолей (PS2/PS3) прямо со своего телефона.
+        </p>
+
+        <!-- Блок с информацией о приложении -->
+        <div class="note-box">
+            <h3 style="margin-top: 0; border-left: none; padding-left: 0;">ℹ️ О приложении</h3>
+            <ul class="app-info-list">
+                <li><strong>Версия:</strong> 12.0.0</li>
+                <li><strong>Последнее обновление:</strong> 5 авг. 2026 г.</li>
+                <li><strong>Кол-во скачиваний:</strong> >1 000 000</li>
+                <li><strong>Размер файла:</strong> 43,58 MB</li>
+                <li><strong>Требуемая ОС:</strong> Android 7.0+</li>
+                <li><strong>Разработчик:</strong> MixApplications</li>
+                <li><strong>Дата выпуска:</strong> 10 мая 2023 г.</li>
+            </ul>
+        </div>
+
+        <!-- Кнопка скачивания -->
+        <div class="download-section">
+            <a href="https://play.google.com/store/apps/details?id=com.mixapplications.ultimateusb" target="_blank" class="download-btn">
+                📲 Скачать Ultimate USB
+            </a>
+        </div>
+
+        <p>
+            <strong>Ultimate USB</strong> – это незаменимый набор инструментов, предназначенный для управления USB-накопителями
+            в дороге. Большинство функций работают безупречно без root-доступа (<span class="highlight">root требуется только для внутреннего слота для SD-карты</span>).
+        </p>
+
+        <h2>🌟 Почему выбрать Ultimate USB?</h2>
+        <p>Ремонтируйте ПК, устанавливайте операционные системы и настраивайте игровые консоли, используя только свой телефон Android и USB OTG-кабель. Он быстрый, надежный и обладает функциями уровня настольного компьютера.</p>
+
+        <hr>
+
+        <h2>🛠️ Создание загрузочных USB-накопителей и запись образов</h2>
+
+        <h3>• Ventoy (неофициально)</h3>
+        <p><strong>Ventoy</strong> — это программа для создания мультизагрузочной флешки. Её главная суперспособность: вам не нужно перезаписывать флешку каждый раз, когда вы хотите загрузить новый образ.</p>
+        <p>Вот главные сценарии, для чего он нужен:</p>
+        <ul>
+            <li><strong>Хранение нескольких ОС на одной флешке.</strong> Вы копируете туда ISO-файлы Windows, Linux (Ubuntu, Mint, Debian) и утилит (например, Kali). При загрузке вам просто покажут красивый список — выбираете нужную и устанавливаете.</li>
+            <li><strong>Экономия времени и ресурсов.</strong> В отличие от Rufus или UltraISO, вам не нужно форматировать носитель под каждый новый образ. Просто скопировали новый ISO во внутреннюю память флешки — и он сразу появился в загрузочном меню.</li>
+            <li><strong>Загрузка "на лету".</strong> Поддерживаются не только ISO, но и образы WIM, IMG, VHD(x), а также файлы EFI.</li>
+            <li><strong>Совместимость.</strong> Работает на любых компьютерах — как на старых (Legacy BIOS), так и на новых (UEFI/Secure Boot).</li>
+            <li><strong>Сохранение изменений (Persistence).</strong> Для Linux-дистрибутивов можно выделить отдельное пространство, чтобы сохранять файлы и настройки между сессиями.</li>
+        </ul>
+        <p>Коротко: Ventoy превращает обычную флешку в универсальный "карманный склад" установочных систем, где не нужно мучиться с перезаписями — просто закинул и поехал.</p>
+
+        <h3>• Запись ISO-образов (ISO2USB / DROFUS)</h3>
+        <p>Запись образов ОС (Windows, Linux, Apple DMG, Raspberry Pi, DOS). Включает обход Windows 11, автоматическую настройку и разделение файлов .wim для FAT32.</p>
+
+        <h3>• Запись RAW-файлов</h3>
+        <p>Запись RAW-файлов образов на USB-устройства побайтно с абсолютной точностью.</p>
+
+        <hr>
+
+        <h2>🧹 Расширенное управление дисками</h2>
+        <ul class="feature-grid">
+            <li><strong>Форматирование USB:</strong> Быстрое форматирование в FAT16, FAT32, EXFAT, NTFS, EXT2, EXT3 и EXT4.</li>
+            <li><strong>Мастер создания разделов:</strong> Расширенные инструменты для создания, удаления и управления разделами GPT/MBR.</li>
+            <li><strong>Дефрагментация USB:</strong> Оптимизируйте ваши диски FAT32 и EXFAT для повышения производительности чтения/записи.</li>
+            <li><strong>Очистка USB:</strong> Надежно и навсегда удалите все данные и разделы с вашего USB-накопителя.</li>
+            <li><strong>Резервное копирование и восстановление:</strong> Создавайте полные, побайтовые резервные копии образов вашего USB-устройства.</li>
+        </ul>
+
+        <hr>
+
+        <h2>🎮 Инструменты для ретро-игр (PS2 и PS3)</h2>
+
+        <h3>• Утилиты для PS2 на USB</h3>
+        <p>Управление играми PS2 (добавление ISO, удаление, организация). Полная поддержка ISO-образов размером более 4 ГБ, создание плейлистов OPL, восстановление поврежденных файлов .ul, импорт разделенных игр и загрузка игровых ART-файлов.</p>
+
+        <h3>• Инструменты для PS3 ISO</h3>
+        <p>Создание ISO-образов из папок, извлечение, патчинг целевых версий CFW, разделение больших ISO-образов для FAT32, объединение сегментов файлов, автоматическое переименование и извлечение SFO/значков.</p>
+
+        <h3>• Конвертер игр</h3>
+        <p>Мгновенное преобразование между форматами ISO, ZSO, CSO, BIN/CUE и VCD.</p>
+
+        <hr>
+
+        <h2>📁 Управление файлами и хранение</h2>
+        <ul>
+            <li><strong>Файловый менеджер USB:</strong> Простой и быстрый файловый менеджер USB для просмотра, копирования, удаления и перемещения файлов.</li>
+            <li><strong>Монтаж разделов:</strong> Монтирование нераспределенных или скрытых разделов в качестве внешнего хранилища.</li>
+            <li><strong>Извлечение архивов:</strong> Извлечение популярных форматов, включая 7z, RAR, ZIP, ISO, TAR, GZip, BZip2, WIM, LZMA, CAB, DEB, RPM.</li>
+        </ul>
+
+        <hr>
+
+        <h2>📊 Диагностика и информация</h2>
+        <ul>
+            <li><strong>Информация об устройстве:</strong> Просмотр подробной информации об USB-устройстве и диагностических данных.</li>
+            <li><strong>Бенчмарк:</strong> Измерение скорости последовательного и случайного чтения/записи.</li>
+        </ul>
+
+        <hr>
+
+        <h2>🔌 Поддерживаемое оборудование</h2>
+        <p>Поддерживает USB-флеш-накопители, портативные SSD-накопители, SD-адаптеры и OTG-концентраторы.</p>
+        <div class="note-box">
+            <strong>Примечание:</strong> Жесткие диски официально не поддерживаются из-за высоких требований к питанию мобильных устройств.
+        </div>
+
+        <hr>
+
+        <h2>💰 Прозрачная система наград</h2>
+        <p>Основные функции остаются полностью <strong>БЕСПЛАТНЫМИ</strong>. Для выполнения сложных задач требуются монеты, которые вы можете заработать совершенно <strong>БЕСПЛАТНО</strong>, просматривая короткие рекламные ролики.</p>
+
+        <h3>• Бесплатные действия</h3>
+        <ul>
+            <li>копирование/загрузка ISO-образов Ventoy, запись Linux/DMG, запись RAW, очистка USB, монтирование, резервное копирование/восстановление, дефрагментация, файловый менеджер, извлечение файлов, конвертер игр и большинство инструментов для PS2/PS3.</li>
+        </ul>
+
+        <h3>• Действия с монетами</h3>
+        <ul>
+            <li>установка Ventoy, запись ISO-образов Windows, форматирование USB и мастер создания разделов.</li>
+        </ul>
+
+        <hr>
+
+        <h2>👑 Преимущества Pro-версии</h2>
+        <p>Обновите до Pro-версии, чтобы мгновенно удалить всю рекламу, разблокировать неограниченный доступ ко всем функциям, отключить систему монет и использовать приложение полностью в автономном режиме.</p>
+
+        <hr>
+
+        <h2>⚠️ Важные замечания</h2>
+        <ul>
+            <li><strong>Держите приложение на переднем плане:</strong> операции приостанавливаются при сворачивании приложения для обеспечения стабильности USB.</li>
+            <li><strong>Требования к рекламе:</strong> для загрузки рекламы требуется интернет (если не Pro-версия). Отключите блокировщики рекламы для бесплатной версии.</li>
+            <li><strong>Устранение неполадок:</strong> Если ваш USB-накопитель не распознается, проверьте его на компьютере или отформатируйте в FAT32.</li>
+        </ul>
+
+        <div class="footer-note">
+            <p style="margin-bottom: 0; font-size: 0.95rem; color: #3a4a5e;">
+                ⚡ Ultimate USB – всё необходимое для управления дисками и ретро-играми на Android.
+            </p>
+        </div>
+
+    </div>
+</body>
+</html>
