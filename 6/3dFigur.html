@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Морфинг кубов в октаэдры</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0b0b16;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+        }
+
+        /* ─── Загрузочный экран ──────────────────────────────── */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0b0b16;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            z-index: 1000;
+            transition: opacity 1.2s ease, visibility 1.2s ease;
+            pointer-events: none;
+            text-align: center;
+            padding: 20px;
+        }
+        #loading.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        #loading span {
+            display: inline-block;
+            padding: 16px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+            background: rgba(11, 11, 22, 0.6);
+            box-shadow: 0 0 60px rgba(68, 136, 255, 0.05);
+        }
+        #loading .loader {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #4facfe;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ─── Остальные стили ──────────────────────────────────── */
+        .info {
+            position: fixed;
+            bottom: 32px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .info span {
+            display: inline-block;
+            padding: 8px 24px;
+            background: rgba(11, 11, 22, 0.6);
+            backdrop-filter: blur(6px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .badge {
+            position: fixed;
+            top: 28px;
+            right: 32px;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            pointer-events: none;
+            text-align: right;
+            line-height: 1.6;
+            z-index: 10;
+        }
+        .badge strong {
+            display: block;
+            font-size: 36px;
+            font-weight: 200;
+            color: rgba(255, 255, 255, 0.15);
+            letter-spacing: 0;
+        }
+        .badge small {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.08);
+            letter-spacing: 2px;
+        }
+        @media (max-width: 600px) {
+            .badge {
+                top: 20px;
+                right: 20px;
+                font-size: 11px;
+            }
+            .badge strong {
+                font-size: 24px;
+            }
+            .info {
+                bottom: 20px;
+                font-size: 10px;
+            }
+            .info span {
+                padding: 4px 16px;
+            }
+            #loading {
+                font-size: 16px;
+            }
+            #loading span {
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Загрузочный экран -->
+    <div id="loading">
+        <span>
+            <span class="loader"></span>
+            Пожалуйста ожидайте. Идёт загрузка данных...
+        </span>
+    </div>
+
+    <!-- Основной интерфейс -->
+    <div class="badge">1600 <strong>МОРФИНГ</strong><small>кубы → октаэдры</small></div>
+    <div class="info"><span>✦ <strong>Перетащите</strong> · <strong>Скролл</strong> · <strong>Клик</strong> — автовращение ✦</span></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ─── Масштаб ──────────────────────────────────────────────
+        const SCALE = 100;
+
+        // ─── Сцена, камера, рендерер ──────────────────────────────
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x070714);
+        scene.fog = new THREE.FogExp2(0x070714, 0.0003);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50 * SCALE);
+        camera.position.set(12 * SCALE, 8 * SCALE, 12 * SCALE);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        renderer.shadowMap.enabled = false;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        document.body.prepend(renderer.domElement);
+
+        // ─── Пост-обработка ──────────────────────────────────────
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.15, 0.4, 0.1
+        );
+        composer.addPass(bloomPass);
+
+        // ─── Управление ────────────────────────────────────────────
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.6;
+        controls.minDistance = 5 * SCALE;
+        controls.maxDistance = 30 * SCALE;
+        controls.target.set(0, 0, 0);
+        controls.update();
+
+        // ─── Освещение ──────────────────────────────────────────────
+        scene.add(new THREE.AmbientLight(0x334466, 0.6));
+
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 2.0);
+        mainLight.position.set(5 * SCALE, 10 * SCALE, 5 * SCALE);
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.6);
+        fillLight.position.set(-3 * SCALE, 1 * SCALE, -4 * SCALE);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0xff8844, 0.5);
+        rimLight.position.set(-2 * SCALE, -3 * SCALE, 6 * SCALE);
+        scene.add(rimLight);
+
+        const movingLight = new THREE.PointLight(0xff4488, 0.8, 20 * SCALE);
+        scene.add(movingLight);
+
+        // ─── Генерация градиентных текстур (кеш) ────────────────
+        const textureCache = new Map();
+
+        function getGradientTexture(color1, color2, angle = 135) {
+            const key = `${color1}|${color2}|${angle}`;
+            if (textureCache.has(key)) return textureCache.get(key);
+            const size = 128;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            const rad = (angle * Math.PI) / 180;
+            const cx = size / 2,
+                cy = size / 2,
+                r = size * 0.75;
+            const x1 = cx - r * Math.cos(rad),
+                y1 = cy - r * Math.sin(rad);
+            const x2 = cx + r * Math.cos(rad),
+                y2 = cy + r * Math.sin(rad);
+            const grad = ctx.createLinearGradient(x1, y1, x2, y2);
+            grad.addColorStop(0, color1);
+            grad.addColorStop(0.5, color1);
+            grad.addColorStop(1, color2);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, size, size);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            textureCache.set(key, texture);
+            return texture;
+        }
+
+        // ─── Цветовые схемы ──────────────────────────────────────
+        const allSchemes = [
+            { c1: '#f093fb', c2: '#f5576c' },
+            { c1: '#4facfe', c2: '#00f2fe' },
+            { c1: '#43e97b', c2: '#38f9d7' },
+            { c1: '#fa709a', c2: '#fee140' },
+            { c1: '#a18cd1', c2: '#fbc2eb' },
+            { c1: '#fccb90', c2: '#d57eeb' },
+            { c1: '#ff6b6b', c2: '#ffd93d' },
+            { c1: '#6bcb77', c2: '#4d96ff' },
+            { c1: '#ff9a9e', c2: '#fad0c4' },
+            { c1: '#a8edea', c2: '#fed6e3' },
+            { c1: '#d4fc79', c2: '#96e6a1' },
+            { c1: '#fbc2eb', c2: '#a6c1ee' },
+        ];
+
+        // ─── Параметры куба ──────────────────────────────────────
+        const cubeSize = 0.35 * SCALE;
+        const gap = 0.03 * SCALE;
+        const spacing = cubeSize + gap;
+        const half = cubeSize / 2;
+
+        // ─── СОЗДАНИЕ ОБЩЕЙ ГЕОМЕТРИИ С МОРФ-ТАРГЕТОМ ────────────
+        const segments = 4;
+        const baseGeo = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize, segments, segments, segments);
+        const posAttr = baseGeo.attributes.position;
+        const vertex = new THREE.Vector3();
+        const targetPos = new Float32Array(posAttr.array.length);
+
+        for (let i = 0; i < posAttr.array.length; i += 3) {
+            vertex.set(posAttr.array[i], posAttr.array[i + 1], posAttr.array[i + 2]);
+            const sum = Math.abs(vertex.x) + Math.abs(vertex.y) + Math.abs(vertex.z);
+            if (sum > 0.0001) {
+                const scale = half / sum;
+                targetPos[i] = vertex.x * scale;
+                targetPos[i + 1] = vertex.y * scale;
+                targetPos[i + 2] = vertex.z * scale;
+            } else {
+                targetPos[i] = 0;
+                targetPos[i + 1] = 0;
+                targetPos[i + 2] = 0;
+            }
+        }
+
+        baseGeo.morphAttributes.position = [
+            new THREE.BufferAttribute(targetPos, 3)
+        ];
+        baseGeo.morphTargetsRelative = false;
+
+        // ─── Фабрика кластера с морфингом ──────────────────────
+        function createCluster(gridX, gridY, gridZ, centerOffset, schemeStart) {
+            const group = new THREE.Group();
+            scene.add(group);
+
+            const total = gridX * gridY * gridZ;
+            const meshes = [];
+
+            for (let ix = 0; ix < gridX; ix++) {
+                for (let iy = 0; iy < gridY; iy++) {
+                    for (let iz = 0; iz < gridZ; iz++) {
+                        const idx = (ix * gridY * gridZ) + (iy * gridZ) + iz;
+                        const schemeIdx = (schemeStart + idx) % allSchemes.length;
+                        const scheme = allSchemes[schemeIdx];
+                        const tex = getGradientTexture(scheme.c1, scheme.c2, 135 + idx * 7);
+
+                        const material = new THREE.MeshPhysicalMaterial({
+                            map: tex,
+                            roughness: 0.25,
+                            metalness: 0.2,
+                            clearcoat: 0.4,
+                            clearcoatRoughness: 0.3,
+                            emissive: new THREE.Color(scheme.c1).multiplyScalar(0.15),
+                            emissiveIntensity: 0.3,
+                        });
+
+                        const mesh = new THREE.Mesh(baseGeo, material);
+                        const posX = (ix - (gridX - 1) / 2) * spacing;
+                        const posY = (iy - (gridY - 1) / 2) * spacing;
+                        const posZ = (iz - (gridZ - 1) / 2) * spacing;
+                        mesh.position.set(posX, posY, posZ).add(centerOffset);
+
+                        mesh.morphTargetInfluences = [0];
+
+                        group.add(mesh);
+                        meshes.push({
+                            mesh,
+                            basePos: new THREE.Vector3(posX, posY, posZ),
+                            offset: centerOffset.clone(),
+                            material,
+                            phaseOffset: idx * 0.3 + schemeStart * 0.5,
+                            idx,
+                        });
+                    }
+                }
+            }
+
+            function setMorphWeight(weight) {
+                meshes.forEach(item => {
+                    item.mesh.morphTargetInfluences[0] = weight;
+                });
+            }
+
+            function updateColors(time, baseHueOffset) {
+                meshes.forEach((item) => {
+                    const i = item.idx;
+                    const hue = (i / total + time * 0.015 + baseHueOffset * 0.1) % 1.0;
+                    const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+                    item.material.emissive.copy(color);
+                    item.material.emissiveIntensity = 0.2 + 0.15 * Math.sin(time * 0.7 + i * 0.5 + baseHueOffset);
+                });
+            }
+
+            return {
+                group,
+                meshes,
+                setMorphWeight,
+                updateColors,
+                offset: centerOffset.clone(),
+            };
+        }
+
+        // ─── СОЗДАЁМ ДВА КЛАСТЕРА ──────────────────────────────
+        const gridX = 10,
+            gridY = 10,
+            gridZ = 8;
+        const clusterDistance = 6 * SCALE;
+
+        const cluster1 = createCluster(gridX, gridY, gridZ,
+            new THREE.Vector3(-clusterDistance / 2, 0, 0), 0
+        );
+        const cluster2 = createCluster(gridX, gridY, gridZ,
+            new THREE.Vector3(clusterDistance / 2, 0, 0), 6
+        );
+
+        // ─── Фоновые частицы ──────────────────────────────────────
+        const particleCount = 800;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(particleCount * 3);
+        const pColors = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            const radius = (5 + Math.random() * 15) * SCALE;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            pPos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            pPos[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            pPos[i * 3 + 2] = radius * Math.cos(phi);
+            const color = new THREE.Color().setHSL(0.6 + Math.random() * 0.3, 0.8, 0.5);
+            pColors[i * 3] = color.r;
+            pColors[i * 3 + 1] = color.g;
+            pColors[i * 3 + 2] = color.b;
+        }
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+        pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+
+        const pMat = new THREE.PointsMaterial({
+            size: 0.03 * SCALE,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true,
+            vertexColors: true,
+        });
+        const particles = new THREE.Points(pGeo, pMat);
+        scene.add(particles);
+
+        // ─── Анимация морфинга ──────────────────────────────────
+        let morphProgress = 0;
+        let morphDirection = 1;
+        const morphSpeed = 0.003;
+
+        // ─── Скрываем загрузочный экран после первого кадра ──
+        const loadingEl = document.getElementById('loading');
+
+        // ─── Анимационный цикл ──────────────────────────────────
+        const clock = new THREE.Clock();
+
+        function animate() {
+            const t = clock.getElapsedTime();
+
+            morphProgress += morphDirection * morphSpeed;
+            if (morphProgress >= 1) {
+                morphProgress = 1;
+                morphDirection = -1;
+            } else if (morphProgress <= 0) {
+                morphProgress = 0;
+                morphDirection = 1;
+            }
+
+            const weight = morphProgress;
+            cluster1.setMorphWeight(weight);
+            cluster2.setMorphWeight(weight);
+
+            const clusters = [cluster1, cluster2];
+            clusters.forEach((cluster, idx) => {
+                cluster.updateColors(t, idx * 0.4);
+            });
+
+            movingLight.position.set(
+                Math.cos(t * 0.15) * 8 * SCALE,
+                Math.sin(t * 0.2) * 4 * SCALE,
+                Math.sin(t * 0.15 + 0.5) * 8 * SCALE
+            );
+            movingLight.color.setHSL(0.6 + Math.sin(t * 0.08) * 0.2, 0.8, 0.5);
+
+            particles.rotation.y = t * 0.008;
+            particles.rotation.x = Math.sin(t * 0.004) * 0.02;
+
+            controls.update();
+            composer.render();
+
+            // Скрываем загрузку после первого рендера
+            if (loadingEl && !loadingEl.classList.contains('hidden')) {
+                loadingEl.classList.add('hidden');
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // ─── Адаптация к размеру окна ────────────────────────────
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            composer.setSize(w, h);
+        });
+
+        renderer.domElement.addEventListener('click', () => {
+            controls.autoRotate = !controls.autoRotate;
+        });
+
+        console.log('✦ 1600 кубов плавно превращаются в октаэдры ✦');
+        console.log('Клик — автовращение вкл/выкл');
+    </script>
+</body>
+</html>
