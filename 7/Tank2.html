@@ -1,0 +1,3655 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>🎖️ ТАНКИ · 10 УРОВНЕЙ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            background: #0B0E11;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 10px;
+            touch-action: pan-y;
+        }
+        .game-wrapper {
+            max-width: 620px;
+            width: 100%;
+            background: #0B0E11;
+            border-radius: 28px;
+            padding: 14px 14px 12px;
+            border: 1px solid #2B3139;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 2px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #F0B90B, #FFD966);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            letter-spacing: 0.3px;
+        }
+        .logo span {
+            font-size: 24px;
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: #F0B90B;
+        }
+        .level-badge {
+            background: #2B3139;
+            padding: 2px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            color: #F0B90B;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            border: 1px solid #F0B90B33;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .level-badge .lvl-num {
+            background: #F0B90B;
+            color: #0B0E11;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+        }
+        .stats {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            background: #1E2329;
+            border-radius: 12px;
+            padding: 5px 8px;
+            border: 1px solid #2B3139;
+            text-align: center;
+            min-width: 60px;
+        }
+        .stat-card.highlight {
+            border-color: #F0B90B;
+            box-shadow: 0 0 16px rgba(240, 185, 11, 0.10);
+        }
+        .stat-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #848E9C;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #F0B90B;
+            margin-top: 1px;
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+        }
+        .stat-value .emoji-icon {
+            font-size: 16px;
+        }
+        .stat-value .hp-bar {
+            display: flex;
+            gap: 2px;
+            font-size: 14px;
+        }
+        .stat-value .hp-heart {
+            transition: all 0.2s;
+        }
+        .stat-value .hp-heart.lost {
+            opacity: 0.15;
+            transform: scale(0.8);
+        }
+        .canvas-wrap {
+            background: #0F1117;
+            border-radius: 16px;
+            padding: 3px;
+            border: 1px solid #2B3139;
+            margin-bottom: 10px;
+            touch-action: none;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+        canvas#gameCanvas {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 13px;
+            background: #0F1117;
+            touch-action: none;
+            cursor: pointer;
+            aspect-ratio: 1/1;
+        }
+        .minimap {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 90px;
+            height: 90px;
+            background: rgba(0, 0, 0, 0.78);
+            border-radius: 10px;
+            border: 1px solid rgba(240, 185, 11, 0.25);
+            pointer-events: none;
+            overflow: hidden;
+            backdrop-filter: blur(4px);
+        }
+        .minimap canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 10px;
+            image-rendering: auto;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .btn {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 30px;
+            padding: 4px 12px;
+            font-weight: 600;
+            font-size: 11px;
+            color: #848E9C;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex: 0 1 auto;
+        }
+        .btn:active {
+            transform: scale(0.94);
+            background: #2A313C;
+        }
+        .btn.active {
+            background: #F0B90B;
+            color: #0B0E11;
+            border-color: #F0B90B;
+            box-shadow: 0 0 24px rgba(240, 185, 11, 0.18);
+        }
+        .btn .emoji {
+            font-size: 13px;
+            line-height: 1;
+        }
+        .btn.disabled {
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .action-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+        .action-btn {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-weight: 700;
+            font-size: 14px;
+            color: #F0B90B;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .action-btn:active {
+            transform: scale(0.94);
+            background: #2A313C;
+        }
+        .action-btn .emoji {
+            font-size: 17px;
+        }
+        .action-btn.disabled {
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        .action-btn#restartBtn {
+            pointer-events: auto !important;
+            opacity: 1 !important;
+        }
+        .status {
+            background: #1E2329;
+            border-radius: 30px;
+            padding: 4px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #F0B90B;
+            border-left: 3px solid #F0B90B;
+            text-align: center;
+            min-width: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 9px;
+            color: #5E6673;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 0 2px;
+        }
+        .footer .key {
+            display: inline-block;
+            background: #1E2329;
+            padding: 0 5px;
+            border-radius: 3px;
+            font-weight: 600;
+            color: #848E9C;
+            font-size: 8px;
+            border: 1px solid #2B3139;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #1E2329;
+            border-radius: 24px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 80vh;
+            padding: 18px;
+            border: 1px solid #2B3139;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .modal-header h2 {
+            color: #F0B90B;
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #848E9C;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 6px;
+            transition: color 0.2s;
+        }
+        .modal-close:hover {
+            color: #F0B90B;
+        }
+        .modal-content {
+            overflow-y: auto;
+            flex: 1;
+            padding-right: 4px;
+        }
+        .modal-content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: #2B3139;
+            border-radius: 4px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #F0B90B;
+            border-radius: 4px;
+        }
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0F1117;
+            padding: 6px 12px;
+            border-radius: 12px;
+            border-left: 3px solid #F0B90B;
+            color: #EAECEF;
+            font-size: 12px;
+            margin-bottom: 4px;
+            gap: 6px;
+        }
+        .record-item .score {
+            font-weight: 700;
+            color: #F0B90B;
+            font-size: 14px;
+        }
+        .record-item .date {
+            color: #848E9C;
+            font-size: 10px;
+        }
+        .record-item .mode-tag {
+            background: #2B3139;
+            padding: 0 8px;
+            border-radius: 16px;
+            font-size: 9px;
+            color: #848E9C;
+        }
+        .record-item .medal {
+            font-size: 16px;
+        }
+        .empty {
+            color: #5E6673;
+            text-align: center;
+            padding: 24px 0;
+            font-size: 13px;
+        }
+        .help-content {
+            color: #EAECEF;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .help-content h3 {
+            color: #F0B90B;
+            margin: 8px 0 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+        .help-content ul {
+            padding-left: 18px;
+            margin: 3px 0 6px;
+        }
+        .help-content li {
+            margin-bottom: 2px;
+        }
+        .help-content .key {
+            display: inline-block;
+            background: #2B3139;
+            padding: 0 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #F0B90B;
+            font-size: 11px;
+        }
+        .help-content .bonus {
+            display: inline-block;
+            margin-right: 3px;
+            font-size: 15px;
+        }
+        .help-content p {
+            color: #848E9C;
+            font-size: 11px;
+            margin-top: 6px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1E2329;
+            border: 1px solid #F0B90B;
+            border-radius: 20px;
+            padding: 8px 20px;
+            color: #F0B90B;
+            font-weight: 600;
+            font-size: 13px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            max-width: 90%;
+            backdrop-filter: blur(8px);
+            text-align: center;
+        }
+        .toast.show {
+            display: flex;
+            animation: slideUp 0.35s ease-out;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .combo-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px;
+            font-weight: 800;
+            color: #F0B90B;
+            text-shadow: 0 0 40px rgba(240, 185, 11, 0.6), 0 4px 20px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
+            opacity: 0;
+            transition: none;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 1px;
+            z-index: 10;
+        }
+        .combo-popup.show {
+            animation: comboPop 0.9s ease-out forwards;
+        }
+        @keyframes comboPop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.3);
+            }
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -60%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -80%) scale(1);
+            }
+        }
+        .shoot-btn {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #F0B90B;
+            border: none;
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
+            color: #0B0E11;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(240, 185, 11, 0.3);
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            transition: transform 0.1s;
+            font-family: inherit;
+        }
+        .shoot-btn:active {
+            transform: translateX(-50%) scale(0.88);
+        }
+        .shoot-btn.hidden {
+            display: none !important;
+        }
+        @media (max-width: 480px) {
+            .shoot-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+                bottom: 10px;
+            }
+        }
+        .console-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+        .console-row input {
+            flex: 1;
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 11px;
+            color: #EAECEF;
+            font-family: inherit;
+            outline: none;
+            min-width: 0;
+        }
+        .console-row input:focus {
+            border-color: #F0B90B;
+        }
+        .console-row button {
+            background: #1E2329;
+            border: 1px solid #2B3139;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-weight: 600;
+            font-size: 11px;
+            color: #F0B90B;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        .console-row button:active {
+            transform: scale(0.94);
+            background: #2A313C;
+        }
+        .level-progress {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+            margin: 4px 0;
+            justify-content: center;
+        }
+        .level-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2B3139;
+            border: 1px solid #3A4149;
+            transition: all 0.3s;
+        }
+        .level-dot.active {
+            background: #F0B90B;
+            border-color: #F0B90B;
+            box-shadow: 0 0 12px rgba(240, 185, 11, 0.4);
+        }
+        .level-dot.completed {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .level-dot.locked {
+            opacity: 0.3;
+        }
+        #splashScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        #splashScreen.active {
+            display: flex;
+        }
+        .splash-content {
+            text-align: center;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        .splash-content h1 {
+            font-size: 4rem;
+            color: #F0B90B;
+            text-shadow: 0 0 60px rgba(240, 185, 11, 0.6), 0 0 120px rgba(240, 185, 11, 0.3);
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            letter-spacing: 4px;
+        }
+        .splash-content p {
+            color: #848E9C;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 2px;
+        }
+        .splash-content .lvl-info {
+            color: #F0B90B;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-top: 10px;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        @media (max-width: 480px) {
+            .splash-content h1 {
+                font-size: 2.5rem;
+            }
+            .splash-content p {
+                font-size: 1rem;
+            }
+            .splash-content .lvl-info {
+                font-size: 1.2rem;
+            }
+        }
+
+        .radar-btn.active-pulse {
+            animation: radarPulse 0.6s ease-in-out 3;
+            border-color: #00E676;
+            color: #00E676;
+            box-shadow: 0 0 30px rgba(0, 230, 118, 0.3);
+        }
+        @keyframes radarPulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.15);
+                opacity: 0.7;
+            }
+        }
+        .radar-btn.scanning {
+            background: #00E67622;
+            border-color: #00E676;
+            color: #00E676;
+        }
+        /* Индикатор базы */
+        .base-hud {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #1E2329;
+            border-radius: 12px;
+            padding: 2px 8px;
+            border: 1px solid #2B3139;
+            font-size: 11px;
+            color: #F0B90B;
+        }
+        .base-hud .hp {
+            color: #4CAF50;
+            font-weight: 700;
+        }
+        .base-hud .hp.low {
+            color: #F44336;
+        }
+
+        /* ----- Стили для оверлея "Сделано в Беларуси" (обновлённые) ----- */
+        .belarus-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 300;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(6px);
+            animation: overlayFade 0.3s ease-out;
+        }
+        .belarus-overlay.active {
+            display: flex;
+        }
+        @keyframes overlayFade {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .belarus-panel {
+            background: #16213e;
+            border-radius: 24px;
+            max-width: 520px;
+            width: 90%;
+            padding: 20px 20px 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            border: 1px solid #533483;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+
+        .belarus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #533483;
+            margin-bottom: 16px;
+        }
+        .belarus-header h2 {
+            color: #f5c842;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .belarus-header h2 span {
+            background: #e94560;
+            padding: 4px 14px;
+            border-radius: 30px;
+            color: #fff;
+            font-size: 18px;
+        }
+        .belarus-close {
+            background: none;
+            border: none;
+            color: #848E9C;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0 6px;
+            transition: color 0.2s;
+        }
+        .belarus-close:hover {
+            color: #f5c842;
+        }
+
+        .viewport {
+            width: 100%;
+            height: 400px;
+            background: #0f3460;
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #533483;
+        }
+
+        .scroll-content {
+            padding: 16px 20px;
+            color: #e0e0e0;
+            font-size: 16px;
+            line-height: 1.7;
+            letter-spacing: 0.3px;
+            will-change: transform;
+        }
+
+        .scroll-content p {
+            margin-bottom: 10px;
+        }
+
+        .scroll-content .role {
+            color: #e94560;
+            font-weight: 600;
+        }
+
+        .scroll-content .boss {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 2px dashed #533483;
+            font-size: 18px;
+            color: #f5c842;
+        }
+
+        .scroll-content .boss strong {
+            color: #fff;
+        }
+
+        .scroll-content .contact {
+            color: #7ec8e3;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .viewport::-webkit-scrollbar {
+            width: 6px;
+        }
+        .viewport::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .viewport::-webkit-scrollbar-thumb {
+            background: #533483;
+            border-radius: 10px;
+        }
+        .viewport {
+            scrollbar-width: thin;
+            scrollbar-color: #533483 transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splashScreen" class="active">
+        <div class="splash-content">
+            <h1>⚔️ Битва титанов</h1>
+            <p class="lvl-info" id="splashLevel">УРОВЕНЬ 1</p>
+            <p id="splashDesc">🌊 Карта: Океанский берег</p>
+            <p style="font-size:0.9rem; margin-top:10px; color:#5E6673;">Уничтожьте базу противника, чтобы победить!</p>
+        </div>
+    </div>
+
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="logo"><span>🎖️</span> TANK BATTLE</div>
+            <span class="level-badge"><span class="lvl-num" id="levelNum">1</span> УРОВЕНЬ</span>
+        </div>
+
+        <div class="level-progress" id="levelProgress"></div>
+
+        <div class="stats">
+            <div class="stat-card highlight">
+                <div class="stat-label">🎯 УБИЙСТВА</div>
+                <div class="stat-value" id="scoreDisplay"><span class="emoji-icon">💀</span> 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">🏆 РЕКОРД</div>
+                <div class="stat-value" id="bestDisplay"><span class="emoji-icon">👑</span> 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">❤️ ЖИЗНИ</div>
+                <div class="stat-value" id="hpDisplay"><span class="hp-bar" id="hpBar"></span></div>
+            </div>
+            <div class="stat-card" id="enemyCountCard">
+                <div class="stat-label">👾 ВРАГОВ</div>
+                <div class="stat-value" id="enemyCountDisplay"><span class="emoji-icon">👾</span> 0</div>
+            </div>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+            <canvas id="gameCanvas" width="800" height="800"></canvas>
+            <div class="minimap" id="minimapWrap">
+                <canvas id="minimapCanvas" width="100" height="100"></canvas>
+            </div>
+            <div class="combo-popup" id="comboPopup"></div>
+            <button class="shoot-btn" id="shootBtn">💥</button>
+        </div>
+
+        <div class="controls" id="controlsContainer">
+            <button class="btn active" data-mode="classic"><span class="emoji">🎯</span> Классика</button>
+            <button class="btn" data-mode="timed"><span class="emoji">⏱️</span> На время</button>
+            <button class="btn" data-mode="obstacle"><span class="emoji">🧱</span> Препятствия</button>
+            <button class="btn" data-mode="duel"><span class="emoji">🤖</span> Дуэль</button>
+        </div>
+
+        <div class="controls" id="sizeControls">
+            <button class="btn active" data-size="20"><span class="emoji">🟩</span> 20×20</button>
+            <button class="btn" data-size="25"><span class="emoji">🟦</span> 25×25</button>
+            <button class="btn" data-size="30"><span class="emoji">🟪</span> 30×30</button>
+        </div>
+
+        <div class="controls" id="densityControls">
+            <span style="color:#848E9C; font-size:11px; display:flex; align-items:center; gap:4px;">🧱 Плотность:</span>
+            <button class="btn" data-density="0.5"><span class="emoji">🟫</span> Низкая</button>
+            <button class="btn active" data-density="1.0"><span class="emoji">🟧</span> Средняя</button>
+            <button class="btn" data-density="1.5"><span class="emoji">🟥</span> Высокая</button>
+        </div>
+
+        <div class="action-row">
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                <button class="action-btn" id="restartBtn"><span class="emoji">🔄</span></button>
+                <button class="action-btn radar-btn" id="radarBtn"><span class="emoji">📡</span> Радар</button>
+                <button class="action-btn" id="recordsBtn"><span class="emoji">🏆</span></button>
+                <button class="action-btn" id="helpBtn"><span class="emoji">❓</span></button>
+                <!-- Новая кнопка "Сделано в Беларуси" -->
+                <button class="action-btn" id="belarusBtn"><span class="emoji">🇧🇾</span> Сделано в Беларуси</button>
+            </div>
+            <div style="display:flex;gap:5px;align-items:center;">
+                <span class="base-hud" id="baseHud">🏕 <span class="hp" id="baseHp">10</span></span>
+                <div class="status" id="statusText">🟢 В ИГРЕ</div>
+            </div>
+        </div>
+
+        <div class="console-row">
+            <input type="text" id="consoleInput" placeholder="Введите команду (good on / good off)" spellcheck="false" />
+            <button id="consoleBtn">Ввод</button>
+        </div>
+
+        <div class="footer">
+            <span><span class="key">↑↓←→</span> <span class="key">WASD</span> — движение</span>
+            <span>• <span class="key">␣</span> <span class="key">ENTER</span> — стрельба</span>
+            <span>• <span class="key">R</span> рестарт</span>
+            <span>• 🌍 10 уровней</span>
+            <span>• двойной тап/клик — пауза</span>
+            <span>• <span class="key">📡</span> радар</span>
+        </div>
+    </div>
+
+    <!-- Модальные окна (рекорды, справка) -->
+    <div class="modal-overlay" id="recordsModal">
+        <div class="modal">
+            <div class="modal-header"><h2>🏆 РЕКОРДЫ</h2><button class="modal-close" id="modalClose">✕</button></div>
+            <div class="modal-content" id="recordsList"><div class="empty">📭 Нет рекордов. Сыграйте!</div></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal">
+            <div class="modal-header"><h2>📖 СПРАВКА</h2><button class="modal-close" id="helpClose">✕</button></div>
+            <div class="modal-content help-content">
+                <h3>🎖️ Танковая битва — 10 уровней</h3>
+                <p>Уничтожьте вражескую базу (🏕) на каждом уровне! Враги охраняют её.</p>
+                <h3>🗺️ Стены и препятствия</h3>
+                <ul>
+                    <li><span style="font-size:20px;">🌊</span> Вода — непроходимая стена</li>
+                    <li><span style="font-size:20px;">🌲</span> Сосна — препятствие</li>
+                    <li><span style="font-size:20px;">🌳</span> Дуб — препятствие</li>
+                </ul>
+                <p><strong>🔹 Стены увеличены в 50 раз!</strong> Теперь карты заполнены плотными блоками, создавая сложные лабиринты.</p>
+                <p><strong>🔹 Настройка плотности стен:</strong> используйте кнопки «Низкая», «Средняя», «Высокая».</p>
+                <h3>🎮 Управление</h3>
+                <ul>
+                    <li><span class="key">↑ ↓ ← →</span> или <span class="key">W A S D</span> — движение</li>
+                    <li><span class="key">␣</span> или <span class="key">ENTER</span> — стрельба</li>
+                    <li><span class="key">R</span> — рестарт</li>
+                    <li><span class="key">📡</span> — радар (показывает ближайшего врага 5с)</li>
+                    <li><strong>🎮 Геймпад</strong> — стик/крестовина, A/B — стрельба</li>
+                    <li><strong>Двойной тап/клик</strong> по полю — пауза</li>
+                </ul>
+                <h3>⭐ 10 бонусов</h3>
+                <ul>
+                    <li><span class="bonus">❤️</span> Аптечка (+1 жизнь)</li>
+                    <li><span class="bonus">⚡</span> Ускорение (на 5с)</li>
+                    <li><span class="bonus">🛡️</span> Щит (блок 1 попадания)</li>
+                    <li><span class="bonus">💥</span> Усиленный снаряд (×2 урон)</li>
+                    <li><span class="bonus">⭐</span> Бонусные очки (+3)</li>
+                    <li><span class="bonus">🔥</span> Удвоение скорострельности (на 5с)</li>
+                    <li><span class="bonus">🌀</span> Замедление врагов (на 4с)</li>
+                    <li><span class="bonus">🔄</span> Регенерация (восстанавливает 1 HP за 3с)</li>
+                    <li><span class="bonus">💣</span> Ядерный снаряд (одноразовый, урон 5)</li>
+                    <li><span class="bonus">📦</span> Дополнительная жизнь (+1 макс. HP)</li>
+                </ul>
+                <h3>🚀 5 типов врагов + боссы</h3>
+                <p>На каждом уровне вас ждут враги разной сложности. На 5-м и 10-м уровне появляются супер-боссы!</p>
+                <h3>🛠️ Консоль</h3>
+                <p>Введите <span class="key">good on</span> — получить все бонусы.<br>
+                    <span class="key">good off</span> — вернуться в обычный режим.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Оверлей "Сделано в Беларуси" (новый) -->
+    <div class="belarus-overlay" id="belarusOverlay">
+        <div class="belarus-panel" id="belarusPanel">
+            <div class="belarus-header">
+                <h2><span>🇧🇾</span> Сделано в Беларуси</h2>
+                <button class="belarus-close" id="belarusClose">&times;</button>
+            </div>
+            <div class="viewport" id="viewport">
+                <div class="scroll-content" id="scrollContent">
+                    <!-- Здесь будет динамически вставлен список -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // =====================================================================
+            // DOM REFS
+            // =====================================================================
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const SIZE = 800;
+            const minimapCanvas = document.getElementById('minimapCanvas');
+            const minimapCtx = minimapCanvas.getContext('2d');
+            const MINIMAP_SIZE = 100;
+            const scoreEl = document.getElementById('scoreDisplay');
+            const bestEl = document.getElementById('bestDisplay');
+            const hpEl = document.getElementById('hpBar');
+            const statusEl = document.getElementById('statusText');
+            const enemyCountEl = document.getElementById('enemyCountDisplay');
+            const recordsModal = document.getElementById('recordsModal');
+            const recordsList = document.getElementById('recordsList');
+            const modalClose = document.getElementById('modalClose');
+            const helpModal = document.getElementById('helpModal');
+            const helpClose = document.getElementById('helpClose');
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const comboPopup = document.getElementById('comboPopup');
+            const canvasWrap = document.getElementById('canvasWrap');
+            const shootBtn = document.getElementById('shootBtn');
+            const consoleInput = document.getElementById('consoleInput');
+            const consoleBtn = document.getElementById('consoleBtn');
+            const splashScreen = document.getElementById('splashScreen');
+            const splashLevel = document.getElementById('splashLevel');
+            const splashDesc = document.getElementById('splashDesc');
+            const levelNum = document.getElementById('levelNum');
+            const levelProgress = document.getElementById('levelProgress');
+            const radarBtn = document.getElementById('radarBtn');
+            const baseHud = document.getElementById('baseHud');
+            const baseHpEl = document.getElementById('baseHp');
+
+            // Belarus
+            const belarusBtn = document.getElementById('belarusBtn');
+            const belarusOverlay = document.getElementById('belarusOverlay');
+            const belarusClose = document.getElementById('belarusClose');
+            const viewport = document.getElementById('viewport');
+            const scrollContent = document.getElementById('scrollContent');
+
+            // =====================================================================
+            // CONSTANTS
+            // =====================================================================
+            const VIEWPORT_MULTIPLIER = 10;
+            const DIRS = [
+                { dx: 0, dy: -1, dir: 'up' },
+                { dx: 0, dy: 1, dir: 'down' },
+                { dx: -1, dy: 0, dir: 'left' },
+                { dx: 1, dy: 0, dir: 'right' }
+            ];
+            const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
+            const POWERUP_TYPES = ['❤️', '⚡', '🛡️', '💥', '⭐', '🔥', '🌀', '🔄', '💣', '📦'];
+            const WALL_EMOJIS = ['🌊', '🌲', '🌳'];
+            const ENEMY_TYPES = [
+                { name: 'Scout', hp: 1, speed: 0.9, shootDelay: 1.8, sizeScale: 0.30, color: '#4CAF50', emoji: '🟢' },
+                { name: 'Soldier', hp: 2, speed: 0.65, shootDelay: 1.4, sizeScale: 0.38, color: '#2196F3', emoji: '🔵' },
+                { name: 'Heavy', hp: 4, speed: 0.45, shootDelay: 1.2, sizeScale: 0.45, color: '#FF9800', emoji: '🟠' },
+                { name: 'Elite', hp: 3, speed: 0.7, shootDelay: 0.9, sizeScale: 0.40, color: '#9C27B0', emoji: '🟣' },
+                { name: 'Sniper', hp: 2, speed: 0.5, shootDelay: 0.7, sizeScale: 0.35, color: '#F44336', emoji: '🔴' }
+            ];
+            const BOSS_TYPES = [
+                { name: 'Titan', hp: 15, speed: 0.30, shootDelay: 0.6, sizeScale: 0.70, color: '#FF6F00', emoji: '👹' },
+                { name: 'Goliath', hp: 20, speed: 0.25, shootDelay: 0.5, sizeScale: 0.80, color: '#D32F2F', emoji: '🐉' },
+                { name: 'Colossus', hp: 25, speed: 0.20, shootDelay: 0.4, sizeScale: 0.90, color: '#7B1FA2', emoji: '🗿' },
+                { name: 'Behemoth', hp: 30, speed: 0.18, shootDelay: 0.45, sizeScale: 1.00, color: '#4A148C', emoji: '🐘' },
+                { name: 'Leviathan', hp: 18, speed: 0.35, shootDelay: 0.55, sizeScale: 0.75, color: '#004D40', emoji: '🐋' }
+            ];
+
+            // =====================================================================
+            // LEVEL CONFIGURATION
+            // =====================================================================
+            const LEVEL_CONFIGS = [];
+            for (let lv = 1; lv <= 10; lv++) {
+                const baseViewport = 8 + lv * 2;
+                const viewport = Math.min(baseViewport, 30);
+                const field = viewport * VIEWPORT_MULTIPLIER;
+                const enemyCount = 4 + lv * 3;
+                const baseWallCount = (15 + lv * 8) * 50;
+                const baseBreakableCount = (10 + lv * 6) * 50;
+                const powerupCount = 3 + lv * 2;
+                const bossAt = (lv === 5 || lv === 10) ? 1 : 0;
+                const desc = [
+                    '🌊 Океанский берег',
+                    '🌲 Сосновый лес',
+                    '🌳 Дубовая роща',
+                    '🌲🌳 Смешанный лес',
+                    '🌳🌲 Лесная чаща',
+                    '🌊 Озеро',
+                    '🌲🌳 Заповедник',
+                    '🌳🌲 Лесопарк',
+                    '🌊🌲 Прибрежный лес',
+                    '🌳🌊🌲 Финальная битва'
+                ];
+                LEVEL_CONFIGS.push({
+                    level: lv,
+                    viewportSize: viewport,
+                    fieldSize: field,
+                    enemyCount: enemyCount,
+                    baseWallCount: baseWallCount,
+                    baseBreakableCount: baseBreakableCount,
+                    powerupCount: powerupCount,
+                    bossCount: bossAt,
+                    desc: desc[lv - 1] || `Уровень ${lv}`,
+                    wallEmojis: WALL_EMOJIS.slice(0, 3)
+                });
+            }
+
+            // =====================================================================
+            // STATE
+            // =====================================================================
+            let currentLevel = 1;
+            let viewportSize = LEVEL_CONFIGS[0].viewportSize;
+            let fieldSize = LEVEL_CONFIGS[0].fieldSize;
+            let cellSize = SIZE / viewportSize;
+            let levelEnemiesTotal = 0;
+            let levelEnemiesKilled = 0;
+            let levelCompleted = false;
+            let levelTransitioning = false;
+
+            let player = {
+                x: 0,
+                y: 0,
+                dir: 'up',
+                hp: 3,
+                maxHp: 5,
+                speed: 1.2,
+                shootCooldown: 0,
+                shootDelay: 0.35,
+                shield: false,
+                powerShot: false,
+                speedBoost: 0,
+                fireRateBoost: 0,
+                regenTimer: 0,
+                nukeShot: false,
+                extraLife: 0
+            };
+            let playerOld = { x: 0, y: 0 };
+
+            let enemies = [];
+            let bullets = [];
+            let powerups = [];
+            let obstacles = [];
+            let breakableWalls = [];
+            let walls = { l: 0, r: fieldSize - 1, t: 0, b: fieldSize - 1 };
+
+            let base = null; // { x, y, hp, maxHp, emoji, alive }
+
+            let score = 0;
+            let bestScore = parseInt(localStorage.getItem('tankBest')) || 0;
+            let gameActive = true;
+            let paused = false;
+            let showSplash = false;
+            let intervalId = null;
+            let animFrameId = null;
+            let mode = 'classic';
+            let timeLeft = 60;
+            let timerId = null;
+            let particles = [];
+            let camera = { x: 0, y: 0 };
+            let comboCount = 0;
+            let lastKillTime = 0;
+            const COMBO_WINDOW = 1800;
+            let tickInterval = 60;
+            let lastTickTime = 0;
+            let gameOverFlag = false;
+            let enemyDuel = null;
+            let isBossFight = false;
+            let bossSpawned = false;
+            let bossDefeated = false;
+
+            let wallDensityFactor = 1.0;
+
+            // =====================================================================
+            // RADAR STATE
+            // =====================================================================
+            let radarActive = false;
+            let radarTimer = 0;
+            let radarTarget = null;
+            const RADAR_DURATION = 5;
+
+            // =====================================================================
+            // SPLASH TIMER MANAGEMENT
+            // =====================================================================
+            let splashTimer = null;
+            let splashStartTime = 0;
+            const SPLASH_MAX_DURATION = 5000;
+
+            function showSplashWithTimer(duration, onHidden) {
+                if (splashTimer) {
+                    clearTimeout(splashTimer);
+                    splashTimer = null;
+                }
+                splashScreen.classList.add('active');
+                showSplash = true;
+                splashStartTime = performance.now();
+
+                splashTimer = setTimeout(() => {
+                    splashScreen.classList.remove('active');
+                    showSplash = false;
+                    splashTimer = null;
+                    if (typeof onHidden === 'function') onHidden();
+                }, duration);
+            }
+
+            function forceHideSplashIfStuck() {
+                if (showSplash && splashTimer) {
+                    const elapsed = performance.now() - splashStartTime;
+                    if (elapsed > SPLASH_MAX_DURATION) {
+                        splashScreen.classList.remove('active');
+                        showSplash = false;
+                        clearTimeout(splashTimer);
+                        splashTimer = null;
+                        showToast('⚠️', 'Заставка принудительно скрыта');
+                    }
+                }
+            }
+
+            // =====================================================================
+            // GOOD MODE
+            // =====================================================================
+            let goodMode = false;
+            let autoFireInterval = null;
+
+            function applyGoodMode() {
+                if (goodMode) return;
+                goodMode = true;
+                player.shield = true;
+                player.powerShot = true;
+                player.speedBoost = 99999;
+                player.fireRateBoost = 99999;
+                player.regenTimer = 99999;
+                player.nukeShot = true;
+                player.maxHp += 10;
+                player.hp = player.maxHp;
+                player.extraLife = 99;
+                updateHpBar();
+                showToast('👑', 'GOOD MODE ON! Все бонусы + автовыстрел');
+                if (autoFireInterval) clearInterval(autoFireInterval);
+                autoFireInterval = setInterval(() => {
+                    if (!gameActive || paused || showSplash) return;
+                    const dirs = ['up', 'down', 'left', 'right'];
+                    for (let d of dirs) {
+                        bullets.push({
+                            x: player.x,
+                            y: player.y,
+                            dir: d,
+                            speed: 4.5,
+                            isEnemy: false,
+                            damage: 5,
+                            life: 3.5,
+                            trail: [],
+                            size: 0.4
+                        });
+                    }
+                    spawnParticles(player.x, player.y, 5, '#FFD700', '💥');
+                }, 2000);
+            }
+
+            function removeGoodMode() {
+                if (!goodMode) return;
+                goodMode = false;
+                player.shield = false;
+                player.powerShot = false;
+                player.speedBoost = 0;
+                player.fireRateBoost = 0;
+                player.regenTimer = 0;
+                player.nukeShot = false;
+                player.maxHp = Math.max(5, player.maxHp - 10);
+                player.hp = Math.min(player.hp, player.maxHp);
+                player.extraLife = 0;
+                updateHpBar();
+                if (autoFireInterval) { clearInterval(autoFireInterval);
+                    autoFireInterval = null; }
+                showToast('🔁', 'GOOD MODE OFF');
+            }
+
+            function processConsoleCommand(cmd) {
+                const trimmed = cmd.trim().toLowerCase();
+                if (trimmed === 'good on') applyGoodMode();
+                else if (trimmed === 'good off') removeGoodMode();
+                else showToast('❓', 'Неизвестная команда. Доступно: good on, good off');
+                consoleInput.value = '';
+            }
+            consoleBtn.addEventListener('click', () => processConsoleCommand(consoleInput.value));
+            consoleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault();
+                    processConsoleCommand(consoleInput.value); } });
+
+            // =====================================================================
+            // UI
+            // =====================================================================
+            function setButtonsEnabled(enabled) {
+                document.querySelectorAll('.btn, .action-btn').forEach(btn => {
+                    if (btn.id === 'restartBtn' || btn.id === 'radarBtn') return;
+                    if (enabled) btn.classList.remove('disabled');
+                    else btn.classList.add('disabled');
+                });
+            }
+
+            let shootHidden = false;
+
+            function hideShootButton() {
+                if (!shootHidden) { shootBtn.classList.add('hidden');
+                    shootHidden = true; }
+            }
+
+            function checkGamepadOnStart() {
+                const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+                for (let p of pads) { if (p && p.connected) { hideShootButton(); return; } }
+            }
+
+            bestEl.innerHTML = `<span class="emoji-icon">👑</span> ${bestScore}`;
+
+            function updateHpBar() {
+                let html = '';
+                const h = Math.max(0, player.hp);
+                for (let i = 0; i < player.maxHp; i++) {
+                    html += `<span class="hp-heart${i >= h ? ' lost' : ''}">${i < h ? '❤️' : '🖤'}</span>`;
+                }
+                hpEl.innerHTML = html;
+            }
+
+            function updateScore() {
+                scoreEl.innerHTML = `<span class="emoji-icon">💀</span> ${score}`;
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestEl.innerHTML = `<span class="emoji-icon">👑</span> ${bestScore}`;
+                    localStorage.setItem('tankBest', String(bestScore));
+                }
+            }
+
+            function updateEnemyCount() {
+                const alive = enemies.filter(e => e.hp > 0).length;
+                enemyCountEl.innerHTML = `<span class="emoji-icon">👾</span> ${alive}`;
+            }
+
+            function updateBaseHud() {
+                if (base && base.alive) {
+                    baseHud.style.display = 'flex';
+                    baseHpEl.textContent = base.hp;
+                    baseHpEl.className = 'hp' + (base.hp / base.maxHp < 0.3 ? ' low' : '');
+                } else {
+                    baseHud.style.display = 'none';
+                }
+            }
+
+            function showToast(icon, msg) {
+                toastMsg.textContent = `${icon} ${msg}`;
+                toast.classList.add('show');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => toast.classList.remove('show'), 2800);
+            }
+            let toastTimeout = null;
+
+            function showComboPopup(count) {
+                if (count < 2) return;
+                const el = comboPopup;
+                el.textContent = `🔥 ×${count + 1} КОМБО!`;
+                el.className = 'combo-popup';
+                void el.offsetWidth;
+                el.className = 'combo-popup show';
+                setTimeout(() => { el.className = 'combo-popup'; }, 950);
+            }
+
+            function updateLevelUI() {
+                levelNum.textContent = currentLevel;
+                const dots = document.querySelectorAll('.level-dot');
+                dots.forEach((dot, idx) => {
+                    const lv = idx + 1;
+                    dot.classList.remove('active', 'completed', 'locked');
+                    if (lv === currentLevel) dot.classList.add('active');
+                    else if (lv < currentLevel) dot.classList.add('completed');
+                    else dot.classList.add('locked');
+                });
+            }
+
+            function buildLevelProgress() {
+                levelProgress.innerHTML = '';
+                for (let i = 1; i <= 10; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'level-dot';
+                    if (i === currentLevel) dot.classList.add('active');
+                    else if (i < currentLevel) dot.classList.add('completed');
+                    else dot.classList.add('locked');
+                    dot.title = `Уровень ${i}`;
+                    levelProgress.appendChild(dot);
+                }
+            }
+
+            // =====================================================================
+            // RADAR FUNCTIONS
+            // =====================================================================
+            function findNearestEnemy() {
+                let nearest = null;
+                let minDist = Infinity;
+                for (let e of enemies) {
+                    if (e.hp <= 0) continue;
+                    const d = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (d < minDist) {
+                        minDist = d;
+                        nearest = e;
+                    }
+                }
+                return nearest;
+            }
+
+            function activateRadar() {
+                if (!gameActive || paused || showSplash) {
+                    showToast('⛔', 'Радар недоступен');
+                    return;
+                }
+                if (radarActive) {
+                    showToast('📡', 'Радар уже активен');
+                    return;
+                }
+                const target = findNearestEnemy();
+                if (!target) {
+                    showToast('📡', 'Нет врагов для сканирования!');
+                    return;
+                }
+                radarActive = true;
+                radarTimer = RADAR_DURATION;
+                radarTarget = target;
+                radarBtn.classList.add('scanning', 'active-pulse');
+                showToast('📡', 'Радар активирован! Ближайший враг отмечен');
+                setTimeout(() => {
+                    radarBtn.classList.remove('active-pulse');
+                }, 1800);
+            }
+
+            function updateRadar(dt) {
+                if (!radarActive) return;
+                radarTimer -= dt;
+
+                if (!radarTarget || radarTarget.hp <= 0) {
+                    const newTarget = findNearestEnemy();
+                    if (newTarget) {
+                        radarTarget = newTarget;
+                        spawnParticles(radarTarget.x, radarTarget.y, 5, '#00E676', '📡');
+                    } else {
+                        radarActive = false;
+                        radarTarget = null;
+                        radarBtn.classList.remove('scanning');
+                        showToast('📡', 'Все враги уничтожены!');
+                        return;
+                    }
+                }
+
+                if (radarTimer <= 0) {
+                    radarActive = false;
+                    radarTarget = null;
+                    radarBtn.classList.remove('scanning');
+                    showToast('📡', 'Радар выключен');
+                }
+            }
+
+            function drawRadarArrow() {
+                if (!radarActive || !radarTarget || !gameActive) return;
+
+                const fromX = player.x;
+                const fromY = player.y;
+                const toX = radarTarget.x;
+                const toY = radarTarget.y;
+
+                const dx = toX - fromX;
+                const dy = toY - fromY;
+                const len = Math.hypot(dx, dy);
+                if (len < 0.01) return;
+
+                const fromV = worldToViewport(fromX, fromY);
+                const toV = worldToViewport(toX, toY);
+
+                const isOnScreen = isVisible(toX, toY);
+
+                let endX = toV.x;
+                let endY = toV.y;
+                if (!isOnScreen) {
+                    const angle = Math.atan2(dy, dx);
+                    const margin = 30;
+                    const halfW = SIZE / 2 - margin;
+                    const halfH = SIZE / 2 - margin;
+                    const tX = Math.abs(halfW / (Math.cos(angle) || 0.001));
+                    const tY = Math.abs(halfH / (Math.sin(angle) || 0.001));
+                    const t = Math.min(tX, tY);
+                    endX = SIZE / 2 + Math.cos(angle) * t;
+                    endY = SIZE / 2 + Math.sin(angle) * t;
+                }
+
+                const cx = fromV.x + cellSize / 2;
+                const cy = fromV.y + cellSize / 2;
+
+                const dirX = endX - cx;
+                const dirY = endY - cy;
+                const dirLen = Math.hypot(dirX, dirY);
+                if (dirLen < 1) return;
+
+                const normX = dirX / dirLen;
+                const normY = dirY / dirLen;
+
+                const arrowLen = Math.min(dirLen, 180);
+                const arrowHeadSize = 22;
+                const lineWidth = 5;
+
+                const pulse = 0.85 + 0.15 * Math.sin(performance.now() / 200);
+
+                ctx.save();
+                ctx.shadowBlur = 35;
+                ctx.shadowColor = 'rgba(0, 230, 118, 0.7)';
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                const tipX = cx + normX * arrowLen * pulse;
+                const tipY = cy + normY * arrowLen * pulse;
+                ctx.lineTo(tipX, tipY);
+                ctx.strokeStyle = 'rgba(0, 230, 118, 0.9)';
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+
+                ctx.shadowBlur = 55;
+                ctx.shadowColor = 'rgba(0, 230, 118, 0.3)';
+                ctx.strokeStyle = 'rgba(0, 230, 118, 0.3)';
+                ctx.lineWidth = lineWidth + 6;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(tipX, tipY);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                const headLen = arrowHeadSize * pulse;
+                const headAngle = 0.45;
+
+                const bx = tipX - normX * headLen * 0.2;
+                const by = tipY - normY * headLen * 0.2;
+
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(0, 230, 118, 0.6)';
+                ctx.fillStyle = '#00E676';
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(
+                    bx - normX * headLen * 0.5 + normY * headLen * 0.5,
+                    by - normY * headLen * 0.5 - normX * headLen * 0.5
+                );
+                ctx.lineTo(
+                    bx - normX * headLen * 0.5 - normY * headLen * 0.5,
+                    by - normY * headLen * 0.5 + normX * headLen * 0.5
+                );
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.shadowBlur = 50;
+                ctx.shadowColor = 'rgba(0, 230, 118, 0.2)';
+                ctx.fillStyle = 'rgba(0, 230, 118, 0.15)';
+                ctx.beginPath();
+                ctx.moveTo(tipX, tipY);
+                ctx.lineTo(
+                    bx - normX * headLen * 1.0 + normY * headLen * 1.0,
+                    by - normY * headLen * 1.0 - normX * headLen * 1.0
+                );
+                ctx.lineTo(
+                    bx - normX * headLen * 1.0 - normY * headLen * 1.0,
+                    by - normY * headLen * 1.0 + normX * headLen * 1.0
+                );
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
+
+                ctx.save();
+                const ringRadius = 35 + 15 * Math.sin(performance.now() / 400);
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0, 230, 118, 0.2)';
+                ctx.strokeStyle = 'rgba(0, 230, 118, 0.25)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 8]);
+                ctx.beginPath();
+                ctx.arc(cx, cy, ringRadius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const ringRadius2 = 55 + 15 * Math.sin(performance.now() / 500 + 1);
+                ctx.strokeStyle = 'rgba(0, 230, 118, 0.12)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(cx, cy, ringRadius2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+
+                ctx.save();
+                const labelX = tipX + normX * 20;
+                const labelY = tipY + normY * 20;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.font = 'bold 11px "Inter", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'rgba(0, 230, 118, 0.85)';
+                ctx.fillText('🎯', labelX - normX * 6, labelY - normY * 6 + 2);
+                ctx.font = '9px "Inter", monospace';
+                ctx.fillStyle = 'rgba(0, 230, 118, 0.7)';
+                ctx.fillText('ВРАГ', labelX + normX * 14, labelY + normY * 14);
+                ctx.shadowBlur = 0;
+                ctx.restore();
+
+                if (isOnScreen) {
+                    ctx.save();
+                    const markerPulse = 0.7 + 0.3 * Math.sin(performance.now() / 200);
+                    ctx.shadowBlur = 25;
+                    ctx.shadowColor = 'rgba(0, 230, 118, 0.5)';
+                    ctx.strokeStyle = `rgba(0, 230, 118, ${0.5 * markerPulse})`;
+                    ctx.lineWidth = 2;
+                    const mSize = 14 * markerPulse;
+                    ctx.beginPath();
+                    ctx.arc(toV.x + cellSize / 2, toV.y + cellSize / 2, mSize, 0, Math.PI * 2);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = `rgba(0, 230, 118, ${0.3 * markerPulse})`;
+                    ctx.lineWidth = 1.5;
+                    const crossSize = 8 * markerPulse;
+                    const cx2 = toV.x + cellSize / 2;
+                    const cy2 = toV.y + cellSize / 2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx2 - crossSize, cy2 - crossSize);
+                    ctx.lineTo(cx2 + crossSize, cy2 + crossSize);
+                    ctx.moveTo(cx2 + crossSize, cy2 - crossSize);
+                    ctx.lineTo(cx2 - crossSize, cy2 + crossSize);
+                    ctx.stroke();
+
+                    ctx.shadowBlur = 0;
+                    ctx.restore();
+                }
+            }
+
+            // =====================================================================
+            // INIT / RESET
+            // =====================================================================
+            function initPlayer() {
+                const cx = Math.floor(fieldSize / 2);
+                const cy = Math.floor(fieldSize / 2);
+                player.x = cx;
+                player.y = cy;
+                player.dir = 'up';
+                player.hp = Math.min(player.hp, player.maxHp);
+                if (player.hp <= 0) player.hp = 3;
+                player.shield = false;
+                player.powerShot = false;
+                player.speedBoost = 0;
+                player.fireRateBoost = 0;
+                player.regenTimer = 0;
+                player.nukeShot = false;
+                player.shootCooldown = 0;
+                player.speed = 1.2;
+                playerOld = { x: player.x, y: player.y };
+                updateCamera();
+                updateHpBar();
+            }
+
+            function updateCamera() {
+                const half = Math.floor(viewportSize / 2);
+                let cx = player.x - half,
+                    cy = player.y - half;
+                cx = Math.max(0, Math.min(fieldSize - viewportSize, cx));
+                cy = Math.max(0, Math.min(fieldSize - viewportSize, cy));
+                if (fieldSize <= viewportSize) { cx = Math.floor((fieldSize - viewportSize) / 2);
+                    cy = Math.floor((fieldSize - viewportSize) / 2); }
+                camera.x = cx;
+                camera.y = cy;
+            }
+
+            function worldToViewport(wx, wy) {
+                return { x: (wx - camera.x) * cellSize, y: (wy - camera.y) * cellSize };
+            }
+
+            function isVisible(wx, wy) {
+                return wx >= camera.x && wx < camera.x + viewportSize &&
+                    wy >= camera.y && wy < camera.y + viewportSize;
+            }
+
+            // =====================================================================
+            // COLLISION
+            // =====================================================================
+            function isOccupied(x, y, ignoreEnemy = false, ignorePlayer = false, ignoreBase = false) {
+                if (!ignorePlayer && Math.hypot(player.x - x, player.y - y) < 0.6) return true;
+                if (!ignoreEnemy)
+                    for (let e of enemies)
+                        if (Math.hypot(e.x - x, e.y - y) < 0.6) return true;
+                if (!ignoreBase && base && base.alive && Math.hypot(base.x - x, base.y - y) < 0.6) return true;
+                for (let o of obstacles)
+                    if (o.x === Math.round(x) && o.y === Math.round(y)) return true;
+                for (let w of breakableWalls)
+                    if (w.x === Math.round(x) && w.y === Math.round(y)) return true;
+                for (let p of powerups)
+                    if (Math.hypot(p.x - x, p.y - y) < 0.6) return true;
+                if (x < walls.l || x > walls.r || y < walls.t || y > walls.b) return true;
+                return false;
+            }
+
+            function isWall(x, y) {
+                const rx = Math.round(x),
+                    ry = Math.round(y);
+                for (let o of obstacles)
+                    if (o.x === rx && o.y === ry) return true;
+                for (let w of breakableWalls)
+                    if (w.x === rx && w.y === ry) return true;
+                if (x < walls.l || x > walls.r || y < walls.t || y > walls.b) return true;
+                return false;
+            }
+
+            function isBreakableWall(x, y) {
+                const rx = Math.round(x),
+                    ry = Math.round(y);
+                for (let w of breakableWalls) {
+                    if (w.x === rx && w.y === ry) return true;
+                }
+                return false;
+            }
+
+            function removeBreakableWall(x, y) {
+                const rx = Math.round(x),
+                    ry = Math.round(y);
+                for (let i = 0; i < breakableWalls.length; i++) {
+                    if (breakableWalls[i].x === rx && breakableWalls[i].y === ry) {
+                        breakableWalls.splice(i, 1);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function removeSolidWall(x, y) {
+                const rx = Math.round(x),
+                    ry = Math.round(y);
+                for (let i = 0; i < obstacles.length; i++) {
+                    if (obstacles[i].x === rx && obstacles[i].y === ry) {
+                        obstacles.splice(i, 1);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function randPos(ignoreEnemy = false, ignorePlayer = false, ignoreBase = false) {
+                for (let i = 0; i < 10000; i++) {
+                    const x = Math.floor(Math.random() * (walls.r - walls.l + 1)) + walls.l;
+                    const y = Math.floor(Math.random() * (walls.b - walls.t + 1)) + walls.t;
+                    if (!isOccupied(x, y, ignoreEnemy, ignorePlayer, ignoreBase)) return { x, y };
+                }
+                return null;
+            }
+
+            // =====================================================================
+            // MAP GENERATION
+            // =====================================================================
+            function generateLevelMap() {
+                const cfg = LEVEL_CONFIGS[currentLevel - 1];
+                obstacles = [];
+                breakableWalls = [];
+
+                const emojis = cfg.wallEmojis || WALL_EMOJIS;
+                const solidEmoji = emojis[0] || '🌊';
+                const breakableEmoji = emojis.length > 2 ? emojis[2] : '🌳';
+
+                const cx = Math.floor((walls.l + walls.r) / 2);
+                const cy = Math.floor((walls.t + walls.b) / 2);
+
+                const wallCount = Math.round(cfg.baseWallCount * wallDensityFactor);
+                const breakableCount = Math.round(cfg.baseBreakableCount * wallDensityFactor);
+
+                const solidTarget = Math.min(wallCount, (walls.r - walls.l + 1) * (walls.b - walls.t + 1) * 0.55);
+                const breakableTarget = Math.min(breakableCount, (walls.r - walls.l + 1) * (walls.b - walls.t + 1) * 0.45);
+
+                let attempts = 0;
+                const maxAttempts = 120000;
+
+                let placedSolid = 0;
+                while (placedSolid < solidTarget && attempts < maxAttempts) {
+                    attempts++;
+                    const bw = 2 + Math.floor(Math.random() * 4);
+                    const bh = 2 + Math.floor(Math.random() * 4);
+                    const x = Math.floor(Math.random() * (walls.r - walls.l - bw + 1)) + walls.l;
+                    const y = Math.floor(Math.random() * (walls.b - walls.t - bh + 1)) + walls.t;
+
+                    let free = true;
+                    let centerClear = true;
+                    for (let dx = 0; dx < bw; dx++) {
+                        for (let dy = 0; dy < bh; dy++) {
+                            const px = x + dx,
+                                py = y + dy;
+                            if (isOccupied(px, py, true, true, true)) { free = false; break; }
+                            if (Math.abs(px - cx) < 5 && Math.abs(py - cy) < 5) centerClear = false;
+                        }
+                        if (!free) break;
+                    }
+                    if (!free || !centerClear) continue;
+
+                    const emoji = emojis[Math.floor(Math.random() * emojis.length)] || solidEmoji;
+                    for (let dx = 0; dx < bw; dx++) {
+                        for (let dy = 0; dy < bh; dy++) {
+                            const px = x + dx,
+                                py = y + dy;
+                            obstacles.push({ x: px, y: py, emoji });
+                            placedSolid++;
+                        }
+                    }
+                }
+
+                while (placedSolid < solidTarget && attempts < maxAttempts * 2) {
+                    attempts++;
+                    const pos = randPos(true, true, true);
+                    if (pos) {
+                        const emoji = emojis[Math.floor(Math.random() * emojis.length)] || solidEmoji;
+                        obstacles.push({ x: pos.x, y: pos.y, emoji });
+                        placedSolid++;
+                    } else break;
+                }
+
+                let placedBreakable = 0;
+                attempts = 0;
+                while (placedBreakable < breakableTarget && attempts < maxAttempts) {
+                    attempts++;
+                    const bw = 1 + Math.floor(Math.random() * 3);
+                    const bh = 1 + Math.floor(Math.random() * 3);
+                    const x = Math.floor(Math.random() * (walls.r - walls.l - bw + 1)) + walls.l;
+                    const y = Math.floor(Math.random() * (walls.b - walls.t - bh + 1)) + walls.t;
+
+                    let free = true;
+                    let centerClear = true;
+                    for (let dx = 0; dx < bw; dx++) {
+                        for (let dy = 0; dy < bh; dy++) {
+                            const px = x + dx,
+                                py = y + dy;
+                            if (isOccupied(px, py, true, true, true)) { free = false; break; }
+                            if (Math.abs(px - cx) < 5 && Math.abs(py - cy) < 5) centerClear = false;
+                        }
+                        if (!free) break;
+                    }
+                    if (!free || !centerClear) continue;
+
+                    const emoji = emojis[Math.floor(Math.random() * emojis.length)] || breakableEmoji;
+                    for (let dx = 0; dx < bw; dx++) {
+                        for (let dy = 0; dy < bh; dy++) {
+                            const px = x + dx,
+                                py = y + dy;
+                            breakableWalls.push({ x: px, y: py, emoji });
+                            placedBreakable++;
+                        }
+                    }
+                }
+
+                while (placedBreakable < breakableTarget && attempts < maxAttempts * 2) {
+                    attempts++;
+                    const pos = randPos(true, true, true);
+                    if (pos) {
+                        const emoji = emojis[Math.floor(Math.random() * emojis.length)] || breakableEmoji;
+                        breakableWalls.push({ x: pos.x, y: pos.y, emoji });
+                        placedBreakable++;
+                    } else break;
+                }
+            }
+
+            // ----- НОВОЕ: размещение базы (с изменённым эмодзи) -----
+            function spawnBase() {
+                const maxHp = 10 + currentLevel * 3;
+                const pos = randPos(true, true, true);
+                if (!pos) {
+                    base = { x: walls.l + 2, y: walls.t + 2, hp: maxHp, maxHp: maxHp, emoji: '🏕', alive: true };
+                } else {
+                    base = { x: pos.x, y: pos.y, hp: maxHp, maxHp: maxHp, emoji: '🏕', alive: true };
+                }
+                while (Math.hypot(base.x - player.x, base.y - player.y) < 8) {
+                    const pos2 = randPos(true, true, true);
+                    if (pos2) { base.x = pos2.x;
+                        base.y = pos2.y; } else break;
+                }
+                updateBaseHud();
+            }
+
+            function generatePowerupsForLevel() {
+                powerups = [];
+                const cfg = LEVEL_CONFIGS[currentLevel - 1];
+                const total = Math.min(cfg.powerupCount, 30);
+                let placed = 0;
+                let attempts = 0;
+                while (placed < total && attempts < 5000) {
+                    attempts++;
+                    const x = Math.floor(Math.random() * (walls.r - walls.l + 1)) + walls.l;
+                    const y = Math.floor(Math.random() * (walls.b - walls.t + 1)) + walls.t;
+                    if (isOccupied(x, y, true, true, true)) continue;
+                    const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                    powerups.push({ x, y, type, timer: 20 });
+                    placed++;
+                }
+            }
+
+            function spawnPowerup(x, y) {
+                if (powerups.length >= 30) return;
+                const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                powerups.push({ x, y, type, timer: 12 });
+            }
+
+            function applyPowerup(type) {
+                switch (type) {
+                    case '❤️':
+                        player.hp = Math.min(player.hp + 1, player.maxHp);
+                        updateHpBar();
+                        showToast('❤️', '+1 жизнь!');
+                        break;
+                    case '⚡':
+                        player.speedBoost = 5;
+                        showToast('⚡', 'Ускорение!');
+                        break;
+                    case '🛡️':
+                        player.shield = true;
+                        showToast('🛡️', 'Щит активирован!');
+                        break;
+                    case '💥':
+                        player.powerShot = true;
+                        showToast('💥', 'Усиленный снаряд!');
+                        break;
+                    case '⭐':
+                        score += 3;
+                        updateScore();
+                        showToast('⭐', '+3 очка!');
+                        break;
+                    case '🔥':
+                        player.fireRateBoost = 5;
+                        showToast('🔥', 'Скорострельность +100%!');
+                        break;
+                    case '🌀':
+                        for (let e of enemies) e.speed *= 0.5;
+                        setTimeout(() => { for (let e of enemies) e.speed *= 2; }, 4000);
+                        showToast('🌀', 'Враги замедлены!');
+                        break;
+                    case '🔄':
+                        player.regenTimer = 3;
+                        showToast('🔄', 'Регенерация HP!');
+                        break;
+                    case '💣':
+                        player.nukeShot = true;
+                        showToast('💣', 'Ядерный снаряд! (×5 урон)');
+                        break;
+                    case '📦':
+                        player.maxHp += 1;
+                        player.hp = Math.min(player.hp + 1, player.maxHp);
+                        updateHpBar();
+                        showToast('📦', '+1 макс. HP!');
+                        break;
+                }
+            }
+
+            // =====================================================================
+            // SPAWN ENEMIES FOR LEVEL
+            // =====================================================================
+            function spawnLevelEnemies() {
+                enemies = [];
+                const cfg = LEVEL_CONFIGS[currentLevel - 1];
+                let total = cfg.enemyCount;
+
+                if (cfg.bossCount > 0) {
+                    isBossFight = true;
+                    bossSpawned = false;
+                    bossDefeated = false;
+                    total -= 1;
+                } else {
+                    isBossFight = false;
+                }
+
+                for (let i = 0; i < total; i++) {
+                    let typeIdx = Math.floor(Math.random() * ENEMY_TYPES.length);
+                    if (currentLevel > 5) typeIdx = Math.min(typeIdx + 1, ENEMY_TYPES.length - 1);
+                    if (currentLevel > 8) typeIdx = Math.min(typeIdx + 1, ENEMY_TYPES.length - 1);
+                    let type = ENEMY_TYPES[typeIdx];
+                    let pos = randPos(true, true, true);
+                    if (!pos) break;
+                    const e = {
+                        x: pos.x,
+                        y: pos.y,
+                        dir: ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)],
+                        hp: type.hp + Math.floor(currentLevel / 3),
+                        maxHp: type.hp + Math.floor(currentLevel / 3),
+                        speed: type.speed + (currentLevel - 1) * 0.02,
+                        shootDelay: type.shootDelay - (currentLevel - 1) * 0.02,
+                        shootCooldown: 0,
+                        moveTimer: 0,
+                        moveInterval: (1.5 + Math.random() * 2),
+                        state: 'chase',
+                        stateTimer: 0,
+                        hitFlash: 0,
+                        sizeScale: type.sizeScale,
+                        color: type.color,
+                        emoji: type.emoji,
+                        typeName: type.name,
+                        isBoss: false
+                    };
+                    enemies.push(e);
+                }
+
+                if (cfg.bossCount > 0) {
+                    const bType = BOSS_TYPES[(currentLevel - 1) % BOSS_TYPES.length];
+                    const pos = randPos(true, true, true);
+                    if (pos) {
+                        const e = {
+                            x: pos.x,
+                            y: pos.y,
+                            dir: 'up',
+                            hp: bType.hp + currentLevel * 2,
+                            maxHp: bType.hp + currentLevel * 2,
+                            speed: bType.speed + (currentLevel - 5) * 0.02,
+                            shootDelay: bType.shootDelay - (currentLevel - 5) * 0.02,
+                            shootCooldown: 0,
+                            moveTimer: 0,
+                            moveInterval: (1.0 + Math.random() * 1.0),
+                            state: 'chase',
+                            stateTimer: 0,
+                            hitFlash: 0,
+                            sizeScale: bType.sizeScale + (currentLevel - 5) * 0.03,
+                            color: bType.color,
+                            emoji: bType.emoji,
+                            typeName: bType.name,
+                            isBoss: true
+                        };
+                        enemies.push(e);
+                        bossSpawned = true;
+                        showToast('👑', `Босс ${bType.name} появился!`);
+                    }
+                }
+
+                levelEnemiesTotal = enemies.length;
+                levelEnemiesKilled = 0;
+                updateEnemyCount();
+            }
+
+            // =====================================================================
+            // UPDATE FUNCTIONS
+            // =====================================================================
+            function spawnParticles(x, y, count = 20, color = '#F0B90B', emoji = '💥') {
+                for (let i = 0; i < count; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const s = Math.random() * 3 + 0.5;
+                    particles.push({
+                        wx: x + (Math.random() - 0.5) * 0.4,
+                        wy: y + (Math.random() - 0.5) * 0.4,
+                        vx: Math.cos(a) * s,
+                        vy: Math.sin(a) * s - 0.5,
+                        life: 1,
+                        decay: 0.015 + Math.random() * 0.025,
+                        size: Math.random() * 6 + 4,
+                        color,
+                        emoji,
+                        isEmoji: true
+                    });
+                }
+            }
+
+            function updateParticles() {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.wx += p.vx * 0.1;
+                    p.wy += p.vy * 0.1;
+                    p.vy += 0.05;
+                    p.life -= p.decay;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+            }
+
+            // ----- Изменённая логика врагов (охрана базы) -----
+            function updateEnemies(dt) {
+                const cfg = LEVEL_CONFIGS[currentLevel - 1];
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const e = enemies[i];
+                    if (e.hitFlash > 0) e.hitFlash -= dt;
+
+                    e.moveTimer -= dt;
+                    if (e.moveTimer <= 0) {
+                        e.moveTimer = e.moveInterval * (0.5 + Math.random());
+                        const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                        const distToBase = base && base.alive ? Math.hypot(e.x - base.x, e.y - base.y) : Infinity;
+
+                        if (distToPlayer < 5 && Math.random() < 0.5) {
+                            e.state = 'attack';
+                        } else if (base && base.alive && distToBase > 2) {
+                            e.state = 'guard';
+                        } else if (distToPlayer < 8) {
+                            e.state = 'attack';
+                        } else {
+                            e.state = 'chase';
+                        }
+                        e.stateTimer = 0.5 + Math.random() * 0.5;
+                    }
+
+                    e.stateTimer -= dt;
+                    if (e.stateTimer <= 0) {
+                        if (base && base.alive) e.state = 'guard';
+                        else e.state = 'chase';
+                        e.stateTimer = 0.5 + Math.random() * 0.5;
+                    }
+
+                    let targetDir = e.dir;
+                    const dx = player.x - e.x,
+                        dy = player.y - e.y;
+                    const adx = Math.abs(dx),
+                        ady = Math.abs(dy);
+
+                    let targetX = player.x,
+                        targetY = player.y;
+                    if (e.state === 'guard' && base && base.alive) {
+                        targetX = base.x;
+                        targetY = base.y;
+                    } else if (e.state === 'attack') {
+                        targetX = player.x;
+                        targetY = player.y;
+                    } else {
+                        if (base && base.alive) {
+                            targetX = base.x;
+                            targetY = base.y;
+                        } else {
+                            targetX = player.x;
+                            targetY = player.y;
+                        }
+                    }
+
+                    const tdx = targetX - e.x,
+                        tdy = targetY - e.y;
+                    const tadx = Math.abs(tdx),
+                        tady = Math.abs(tdy);
+                    if (tadx > tady) targetDir = tdx > 0 ? 'right' : 'left';
+                    else targetDir = tdy > 0 ? 'down' : 'up';
+
+                    const dirs = ['up', 'down', 'left', 'right'];
+                    let bestDir = e.dir;
+                    let bestScore = -Infinity;
+                    for (let d of dirs) {
+                        if (d === OPPOSITE[e.dir]) continue;
+                        let score2 = 0;
+                        if (d === targetDir) score2 += 3;
+                        const nd = DIRS.find(x => x.dir === d);
+                        const nx = e.x + nd.dx,
+                            ny = e.y + nd.dy;
+                        if (!isOccupied(nx, ny, true, false, true)) score2 += 2;
+                        if (d === e.dir) score2 += 0.5;
+                        if (score2 > bestScore) { bestScore = score2;
+                            bestDir = d; }
+                    }
+                    e.dir = bestDir;
+                    const moveDir = DIRS.find(d => d.dir === e.dir);
+                    const spd = e.speed * 0.8;
+                    const nx = e.x + moveDir.dx * spd * dt * 1.5;
+                    const ny = e.y + moveDir.dy * spd * dt * 1.5;
+                    if (!isOccupied(Math.round(nx), Math.round(ny), true, false, true)) {
+                        e.x = nx;
+                        e.y = ny;
+                    } else if (!isOccupied(Math.round(e.x + moveDir.dx), Math.round(e.y + moveDir.dy), true, false, true)) {
+                        e.x += moveDir.dx * 0.1;
+                        e.y += moveDir.dy * 0.1;
+                    }
+
+                    e.x = Math.max(walls.l, Math.min(walls.r, e.x));
+                    e.y = Math.max(walls.t, Math.min(walls.b, e.y));
+
+                    e.shootCooldown -= dt;
+                    const distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (e.shootCooldown <= 0 && distToPlayer < 12 && (e.state === 'attack' || Math.random() < 0.04)) {
+                        e.shootCooldown = e.shootDelay;
+                        bullets.push({
+                            x: e.x,
+                            y: e.y,
+                            dir: e.dir,
+                            speed: 3.2,
+                            isEnemy: true,
+                            damage: 1,
+                            life: 4,
+                            trail: [],
+                            size: 0.25
+                        });
+                    }
+
+                    if (e.hp <= 0) {
+                        spawnParticles(e.x, e.y, 30, '#FF5722', '💥');
+                        if (Math.random() < 0.20) spawnPowerup(e.x, e.y);
+                        const now = performance.now();
+                        if (now - lastKillTime < COMBO_WINDOW) comboCount++;
+                        else comboCount = 0;
+                        lastKillTime = now;
+                        const mult = Math.min(comboCount + 1, 6);
+                        let pts = 1 * mult;
+                        if (e.isBoss) pts = 15 * mult;
+                        score += pts;
+                        updateScore();
+                        if (comboCount >= 2) showComboPopup(comboCount);
+                        levelEnemiesKilled++;
+                        updateEnemyCount();
+
+                        if (e.isBoss) {
+                            bossDefeated = true;
+                            showToast('🏆', `Босс ${e.typeName} повержен!`);
+                            spawnParticles(e.x, e.y, 50, '#FFD700', '👑');
+                            for (let i = 0; i < 3; i++) {
+                                const pos = randPos(true, true, true);
+                                if (pos) {
+                                    const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+                                    powerups.push({ x: pos.x, y: pos.y, type, timer: 20 });
+                                }
+                            }
+                        }
+
+                        enemies.splice(i, 1);
+
+                        if (enemies.filter(e => e.hp > 0).length === 0 && (!base || !base.alive)) {
+                            onLevelComplete();
+                        }
+                    }
+                }
+                updateEnemyCount();
+            }
+
+            // ----- Модифицируем пули для атаки базы -----
+            function updateBullets(dt) {
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    const b = bullets[i];
+                    b.life -= dt;
+                    if (b.life <= 0) { bullets.splice(i, 1); continue; }
+                    const dirData = DIRS.find(d => d.dir === b.dir);
+                    const speed = b.speed * (b.isEnemy ? 1 : 1);
+                    const newX = b.x + dirData.dx * speed * dt * 1.8;
+                    const newY = b.y + dirData.dy * speed * dt * 1.8;
+                    b.x = newX;
+                    b.y = newY;
+                    b.trail.push({ x: b.x, y: b.y, life: 0.5 });
+                    if (b.trail.length > 6) b.trail.shift();
+
+                    if (isWall(Math.round(b.x), Math.round(b.y))) {
+                        if (goodMode && !b.isEnemy) {
+                            const sx = Math.round(b.x),
+                                sy = Math.round(b.y);
+                            let wallRemoved = false;
+                            if (removeSolidWall(sx, sy)) wallRemoved = true;
+                            else if (removeBreakableWall(sx, sy)) wallRemoved = true;
+                            if (wallRemoved) {
+                                spawnParticles(sx, sy, 15, '#FFD700', '💥');
+                                bullets.splice(i, 1);
+                                continue;
+                            }
+                        }
+                        if (isBreakableWall(Math.round(b.x), Math.round(b.y))) {
+                            removeBreakableWall(Math.round(b.x), Math.round(b.y));
+                            spawnParticles(b.x, b.y, 10, '#8D6E63', '🧊');
+                            bullets.splice(i, 1);
+                            continue;
+                        } else {
+                            spawnParticles(b.x, b.y, 8, '#FFA500', '💥');
+                            bullets.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    // ---- Попадание в базу ----
+                    if (!b.isEnemy && base && base.alive) {
+                        if (Math.hypot(b.x - base.x, b.y - base.y) < 0.6) {
+                            let dmg = b.damage || 1;
+                            if (player.nukeShot) { dmg = 5;
+                                player.nukeShot = false;
+                                showToast('💣', 'Ядерный урон!'); }
+                            base.hp -= dmg;
+                            spawnParticles(b.x, b.y, 20, '#FF6F00', '💥');
+                            if (base.hp <= 0) {
+                                base.alive = false;
+                                base.hp = 0;
+                                spawnParticles(base.x, base.y, 50, '#FFD700', '🏕');
+                                showToast('🏆', 'База уничтожена!');
+                                updateBaseHud();
+                                for (let e of enemies) {
+                                    e.hp = 0;
+                                    spawnParticles(e.x, e.y, 15, '#FF5722', '💥');
+                                }
+                                enemies = [];
+                                updateEnemyCount();
+                                onLevelComplete();
+                            } else {
+                                updateBaseHud();
+                            }
+                            bullets.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    if (!b.isEnemy) {
+                        let hit = false;
+                        for (let j = enemies.length - 1; j >= 0; j--) {
+                            const e = enemies[j];
+                            if (Math.hypot(b.x - e.x, b.y - e.y) < 0.6) {
+                                let dmg = b.damage || 1;
+                                if (player.nukeShot) { dmg = 5;
+                                    player.nukeShot = false;
+                                    showToast('💣', 'Ядерный урон!'); }
+                                e.hp -= dmg;
+                                e.hitFlash = 0.2;
+                                spawnParticles(b.x, b.y, 15, '#FF5722', '💥');
+                                hit = true;
+                                bullets.splice(i, 1);
+                                break;
+                            }
+                        }
+                        if (hit) continue;
+                    }
+
+                    if (b.isEnemy) {
+                        if (Math.hypot(b.x - player.x, b.y - player.y) < 0.5) {
+                            if (player.shield) {
+                                player.shield = false;
+                                spawnParticles(b.x, b.y, 20, '#00BCD4', '🛡️');
+                                showToast('🛡️', 'Щит поглотил урон!');
+                                bullets.splice(i, 1);
+                                continue;
+                            }
+                            player.hp -= b.damage || 1;
+                            spawnParticles(b.x, b.y, 20, '#FF1744', '💥');
+                            updateHpBar();
+                            bullets.splice(i, 1);
+                            if (player.hp <= 0) {
+                                if (player.extraLife > 0) {
+                                    player.extraLife--;
+                                    player.hp = Math.floor(player.maxHp / 2) + 1;
+                                    updateHpBar();
+                                    showToast('📦', 'Доп. жизнь использована!');
+                                } else {
+                                    gameOver('player');
+                                    return;
+                                }
+                            }
+                            continue;
+                        }
+                    }
+
+                    if (b.x < walls.l - 2 || b.x > walls.r + 2 || b.y < walls.t - 2 || b.y > walls.b + 2) {
+                        bullets.splice(i, 1);
+                    }
+                }
+            }
+
+            function updatePowerups(dt) {
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    const p = powerups[i];
+                    p.timer -= dt;
+                    if (p.timer <= 0) { powerups.splice(i, 1); continue; }
+                    if (Math.hypot(p.x - player.x, p.y - player.y) < 0.6) {
+                        applyPowerup(p.type);
+                        spawnParticles(p.x, p.y, 15, '#F0B90B', p.type);
+                        powerups.splice(i, 1);
+                    }
+                }
+            }
+
+            // =====================================================================
+            // PLAYER UPDATE
+            // =====================================================================
+            let moveDir = { x: 0, y: 0 };
+            let shootPressed = false;
+
+            function updatePlayer(dt) {
+                if (!gameActive || paused || showSplash) return;
+                if (player.speedBoost > 0) player.speedBoost -= dt;
+                if (player.fireRateBoost > 0) player.fireRateBoost -= dt;
+                if (player.regenTimer > 0) {
+                    player.regenTimer -= dt;
+                    if (player.regenTimer <= 0) {
+                        player.hp = Math.min(player.hp + 1, player.maxHp);
+                        updateHpBar();
+                        showToast('🔄', 'Восстановлено 1 HP');
+                    }
+                }
+
+                const speedMult = player.speedBoost > 0 ? 1.6 : 1;
+                const fireRateMult = player.fireRateBoost > 0 ? 0.5 : 1;
+
+                let dx = 0,
+                    dy = 0;
+                if (moveDir.x !== 0 || moveDir.y !== 0) {
+                    if (moveDir.x !== 0 && moveDir.y !== 0) { dx = moveDir.x * 0.707;
+                        dy = moveDir.y * 0.707; } else { dx = moveDir.x;
+                        dy = moveDir.y; }
+                    const spd = player.speed * speedMult * dt * 2.2;
+                    const nx = player.x + dx * spd;
+                    const ny = player.y + dy * spd;
+                    if (!isOccupied(Math.round(nx), Math.round(ny), false, true, true)) {
+                        player.x = nx;
+                        player.y = ny;
+                        if (Math.abs(dx) > Math.abs(dy)) { player.dir = dx > 0 ? 'right' : 'left'; } else { player.dir =
+                                dy > 0 ? 'down' : 'up'; }
+                    } else {
+                        if (!isOccupied(Math.round(nx), Math.round(player.y), false, true, true)) player.x = nx;
+                        else if (!isOccupied(Math.round(player.x), Math.round(ny), false, true, true)) player.y = ny;
+                    }
+                }
+
+                player.x = Math.max(walls.l + 0.2, Math.min(walls.r - 0.2, player.x));
+                player.y = Math.max(walls.t + 0.2, Math.min(walls.b - 0.2, player.y));
+
+                if (player.shootCooldown > 0) player.shootCooldown -= dt;
+                if (shootPressed && player.shootCooldown <= 0 && gameActive && !showSplash) {
+                    const delay = player.shootDelay * fireRateMult;
+                    player.shootCooldown = delay;
+                    const dmg = player.powerShot ? 2 : 1;
+                    const isNuke = player.nukeShot;
+                    bullets.push({
+                        x: player.x,
+                        y: player.y,
+                        dir: player.dir,
+                        speed: 4.5,
+                        isEnemy: false,
+                        damage: isNuke ? 5 : dmg,
+                        life: 3.5,
+                        trail: [],
+                        size: isNuke ? 0.5 : (player.powerShot ? 0.35 : 0.25)
+                    });
+                    if (isNuke) {
+                        spawnParticles(player.x, player.y, 30, '#FFD700', '💣');
+                        player.nukeShot = false;
+                        showToast('💣', 'Ядерный выстрел!');
+                    } else if (player.powerShot) {
+                        spawnParticles(player.x, player.y, 8, '#FFD700', '💥');
+                        player.powerShot = false;
+                    }
+                }
+
+                updateCamera();
+            }
+
+            // =====================================================================
+            // LEVEL COMPLETE
+            // =====================================================================
+            function onLevelComplete() {
+                if (levelCompleted || levelTransitioning) return;
+                levelCompleted = true;
+                levelTransitioning = true;
+                showToast('🎉', `Уровень ${currentLevel} пройден!`);
+                statusEl.textContent = '🎉 УРОВЕНЬ ПРОЙДЕН';
+
+                if (currentLevel < 10) {
+                    setTimeout(() => {
+                        currentLevel++;
+                        loadLevel(currentLevel);
+                    }, 2500);
+                } else {
+                    setTimeout(() => {
+                        showToast('🏆', 'ПОБЕДА! Все 10 уровней пройдены!');
+                        statusEl.textContent = '🏆 ПОБЕДА!';
+                        gameActive = false;
+                        setButtonsEnabled(true);
+                    }, 1500);
+                }
+            }
+
+            // =====================================================================
+            // LOAD LEVEL
+            // =====================================================================
+            function loadLevel(lv) {
+                const cfg = LEVEL_CONFIGS[lv - 1];
+                currentLevel = lv;
+                viewportSize = cfg.viewportSize;
+                fieldSize = cfg.fieldSize;
+                cellSize = SIZE / viewportSize;
+                walls = { l: 0, r: fieldSize - 1, t: 0, b: fieldSize - 1 };
+                levelCompleted = false;
+                levelTransitioning = false;
+                levelEnemiesKilled = 0;
+                isBossFight = false;
+                bossSpawned = false;
+                bossDefeated = false;
+                enemies = [];
+                bullets = [];
+                particles = [];
+                powerups = [];
+                base = null;
+
+                radarActive = false;
+                radarTimer = 0;
+                radarTarget = null;
+                radarBtn.classList.remove('scanning', 'active-pulse');
+
+                player.hp = Math.min(player.hp + 1, player.maxHp);
+                updateHpBar();
+
+                player.shield = false;
+                player.powerShot = false;
+                player.speedBoost = 0;
+                player.fireRateBoost = 0;
+                player.regenTimer = 0;
+                player.nukeShot = false;
+
+                initPlayer();
+                generateLevelMap();
+                spawnBase();
+                generatePowerupsForLevel();
+                spawnLevelEnemies();
+
+                updateLevelUI();
+                buildLevelProgress();
+
+                statusEl.textContent = `🟢 УРОВЕНЬ ${lv}`;
+                gameActive = true;
+                setButtonsEnabled(false);
+
+                splashLevel.textContent = `УРОВЕНЬ ${lv}`;
+                splashDesc.textContent = cfg.desc;
+
+                showSplashWithTimer(2000, function() {
+                    if (!gameActive) return;
+                    statusEl.textContent = `🟢 УРОВЕНЬ ${lv}`;
+                });
+
+                updateEnemyCount();
+                updateScore();
+                updateBaseHud();
+            }
+
+            // =====================================================================
+            // GAME OVER / RECORDS
+            // =====================================================================
+            function gameOver(winner) {
+                if (!gameActive || gameOverFlag) return;
+                gameActive = false;
+                gameOverFlag = true;
+                if (intervalId) clearInterval(intervalId);
+                if (timerId) clearInterval(timerId);
+                if (autoFireInterval) clearInterval(autoFireInterval);
+                radarActive = false;
+                radarTarget = null;
+                radarBtn.classList.remove('scanning', 'active-pulse');
+                if (winner === 'player') statusEl.textContent = '💀 ВЫ УНИЧТОЖЕНЫ';
+                else if (winner === 'time') statusEl.textContent = '⏰ ВРЕМЯ ВЫШЛО';
+                else statusEl.textContent = '💀 GAME OVER';
+                saveRecord(score);
+                spawnParticles(player.x, player.y, 40, '#FF1744', '💥');
+                setButtonsEnabled(true);
+            }
+
+            function saveRecord(sc) {
+                const recs = getRecords();
+                const modeNames = { classic: 'Классика', timed: 'На время', obstacle: 'Препятствия', duel: 'Дуэль' };
+                recs.push({ score: sc, mode: modeNames[mode] || mode, date: new Date().toLocaleString(), level: currentLevel });
+                recs.sort((a, b) => b.score - a.score);
+                if (recs.length > 10) recs.length = 10;
+                localStorage.setItem('tankRecords', JSON.stringify(recs));
+            }
+
+            function getRecords() {
+                try { return JSON.parse(localStorage.getItem('tankRecords')) || []; } catch { return []; }
+            }
+
+            function renderRecords() {
+                const recs = getRecords();
+                if (!recs.length) { recordsList.innerHTML = '<div class="empty">📭 Нет рекордов. Сыграйте!</div>'; return; }
+                let html = '';
+                const medals = ['🥇', '🥈', '🥉'];
+                recs.forEach((r, i) => {
+                    const medal = i < 3 ? medals[i] : `${i+1}.`;
+                    const lvlInfo = r.level ? `Ур.${r.level}` : '';
+                    html +=
+                        `<div class="record-item"><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><span class="medal">${medal}</span><span class="score">${r.score}</span><span class="mode-tag">${r.mode}</span><span class="mode-tag">${lvlInfo}</span></span><span class="date">${r.date}</span></div>`;
+                });
+                recordsList.innerHTML = html;
+            }
+
+            // =====================================================================
+            // RESET GAME
+            // =====================================================================
+            function resetGame() {
+                if (intervalId) clearInterval(intervalId);
+                if (timerId) clearInterval(timerId);
+                if (animFrameId) cancelAnimationFrame(animFrameId);
+                if (autoFireInterval) clearInterval(autoFireInterval);
+                if (goodMode) removeGoodMode();
+
+                radarActive = false;
+                radarTimer = 0;
+                radarTarget = null;
+                radarBtn.classList.remove('scanning', 'active-pulse');
+
+                gameActive = false;
+                gameOverFlag = false;
+                paused = false;
+                score = 0;
+                currentLevel = 1;
+                levelCompleted = false;
+                levelTransitioning = false;
+                levelEnemiesKilled = 0;
+                isBossFight = false;
+                bossSpawned = false;
+                bossDefeated = false;
+                enemies = [];
+                bullets = [];
+                powerups = [];
+                particles = [];
+                obstacles = [];
+                breakableWalls = [];
+                base = null;
+                comboCount = 0;
+                lastKillTime = 0;
+
+                player.hp = 3;
+                player.maxHp = 5;
+                player.extraLife = 0;
+                player.shield = false;
+                player.powerShot = false;
+                player.speedBoost = 0;
+                player.fireRateBoost = 0;
+                player.regenTimer = 0;
+                player.nukeShot = false;
+
+                scoreEl.innerHTML = `<span class="emoji-icon">💀</span> 0`;
+                statusEl.textContent = '⏳ ЗАГРУЗКА...';
+
+                buildLevelProgress();
+                const cfg = LEVEL_CONFIGS[0];
+                viewportSize = cfg.viewportSize;
+                fieldSize = cfg.fieldSize;
+                cellSize = SIZE / viewportSize;
+                walls = { l: 0, r: fieldSize - 1, t: 0, b: fieldSize - 1 };
+
+                initPlayer();
+                generateLevelMap();
+                spawnBase();
+                generatePowerupsForLevel();
+                spawnLevelEnemies();
+
+                updateLevelUI();
+                updateHpBar();
+                updateScore();
+                updateEnemyCount();
+                updateBaseHud();
+
+                splashLevel.textContent = `УРОВЕНЬ 1`;
+                splashDesc.textContent = cfg.desc;
+                setButtonsEnabled(false);
+
+                showSplashWithTimer(3000, function() {
+                    if (gameActive) {
+                        statusEl.textContent = '🟢 УРОВЕНЬ 1';
+                    }
+                    if (!gameActive && !gameOverFlag) {
+                        gameActive = true;
+                        lastTickTime = performance.now();
+                        startLoop();
+                        setButtonsEnabled(false);
+                        if (goodMode) {
+                            if (autoFireInterval) clearInterval(autoFireInterval);
+                            autoFireInterval = setInterval(() => {
+                                if (!gameActive || paused || showSplash) return;
+                                const dirs = ['up', 'down', 'left', 'right'];
+                                for (let d of dirs) {
+                                    bullets.push({
+                                        x: player.x,
+                                        y: player.y,
+                                        dir: d,
+                                        speed: 4.5,
+                                        isEnemy: false,
+                                        damage: 5,
+                                        life: 3.5,
+                                        trail: [],
+                                        size: 0.4
+                                    });
+                                }
+                                spawnParticles(player.x, player.y, 5, '#FFD700', '💥');
+                            }, 2000);
+                        }
+                    }
+                });
+
+                if (!animFrameId) {
+                    animFrameId = requestAnimationFrame(renderLoop);
+                }
+            }
+
+            function startLoop() {
+                if (intervalId) clearInterval(intervalId);
+                intervalId = setInterval(updateGame, tickInterval);
+            }
+
+            function updateGame() {
+                if (!gameActive || paused || showSplash) return;
+                forceHideSplashIfStuck();
+
+                const now = performance.now();
+                const dt = Math.min((now - lastTickTime) / 1000, 0.1);
+                lastTickTime = now;
+
+                updatePlayer(dt);
+                updateEnemies(dt);
+                updateBullets(dt);
+                updatePowerups(dt);
+                updateParticles();
+                updateRadar(dt);
+
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    if (powerups[i].timer <= 0) powerups.splice(i, 1);
+                }
+                updateBaseHud();
+            }
+
+            // =====================================================================
+            // RENDER (увеличенная и пульсирующая база)
+            // =====================================================================
+            function renderLoop() {
+                draw();
+                animFrameId = requestAnimationFrame(renderLoop);
+            }
+
+            function drawTank(ctx, x, y, dir, size, color, isPlayer = false, shield = false, speedBoost = false, powerShot =
+                false, nukeShot = false) {
+                const cx = x,
+                    cy = y;
+                let sz = size;
+                if (isPlayer) {
+                    const pulse = 1 + 0.04 * Math.sin(performance.now() / 280);
+                    sz *= pulse;
+                }
+
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+
+                const grad = ctx.createLinearGradient(cx - sz, cy - sz, cx + sz, cy + sz);
+                if (isPlayer) {
+                    grad.addColorStop(0, '#1565C0');
+                    grad.addColorStop(0.5, '#1E88E5');
+                    grad.addColorStop(1, '#0D47A1');
+                } else {
+                    grad.addColorStop(0, color);
+                    grad.addColorStop(0.7, color);
+                    grad.addColorStop(1, '#1a1a1a');
+                }
+                ctx.fillStyle = grad;
+
+                ctx.beginPath();
+                ctx.roundRect(cx - sz * 0.8, cy - sz * 0.6, sz * 1.6, sz * 1.2, 6);
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = isPlayer ? '#0D47A1' : '#222';
+                ctx.fillRect(cx - sz * 0.9, cy - sz * 0.7, sz * 0.2, sz * 1.4);
+                ctx.fillRect(cx + sz * 0.7, cy - sz * 0.7, sz * 0.2, sz * 1.4);
+
+                for (let i = -3; i <= 3; i++) {
+                    const yy = cy + i * sz * 0.15;
+                    ctx.fillStyle = isPlayer ? '#1A237E' : '#333';
+                    ctx.fillRect(cx - sz * 0.85, yy, sz * 0.1, sz * 0.05);
+                    ctx.fillRect(cx + sz * 0.75, yy, sz * 0.1, sz * 0.05);
+                }
+
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                const grad2 = ctx.createRadialGradient(cx - sz * 0.1, cy - sz * 0.1, 2, cx, cy, sz * 0.6);
+                if (isPlayer) {
+                    grad2.addColorStop(0, '#42A5F5');
+                    grad2.addColorStop(1, '#0D47A1');
+                } else {
+                    grad2.addColorStop(0, '#fff');
+                    grad2.addColorStop(1, color);
+                }
+                ctx.fillStyle = grad2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, sz * 0.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                const dirData = DIRS.find(d => d.dir === dir);
+                const tLen = sz * 0.9;
+                ctx.strokeStyle = isPlayer ? '#0D47A1' : '#1a1a1a';
+                ctx.lineWidth = isPlayer ? 6 : 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + dirData.dx * tLen, cy + dirData.dy * tLen);
+                ctx.stroke();
+
+                ctx.strokeStyle = isPlayer ? '#42A5F5' : '#aaa';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx + dirData.dx * tLen * 0.5, cy + dirData.dy * tLen * 0.5);
+                ctx.lineTo(cx + dirData.dx * tLen * 1.1, cy + dirData.dy * tLen * 1.1);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+
+                if (shield) {
+                    ctx.strokeStyle = 'rgba(0, 188, 212, 0.6)';
+                    ctx.lineWidth = 3;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = 'rgba(0, 188, 212, 0.5)';
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, sz * 1.2, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.strokeStyle = 'rgba(0, 188, 212, 0.2)';
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, sz * 1.0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+
+                if (speedBoost) {
+                    ctx.fillStyle = 'rgba(170, 0, 255, 0.1)';
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, sz * 1.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(170, 0, 255, 0.2)';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([3, 5]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, sz * 1.3 + Math.sin(performance.now() / 300) * 3, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                if (powerShot) {
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(cx + dirData.dx * tLen * 1.3, cy + dirData.dy * tLen * 1.3, 8 + 3 * Math.sin(performance.now() /
+                        150), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (nukeShot) {
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                    ctx.beginPath();
+                    ctx.arc(cx + dirData.dx * tLen * 1.5, cy + dirData.dy * tLen * 1.5, 14 + 6 * Math.sin(performance.now() /
+                        100), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = 'rgba(255,0,0,0.3)';
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
+                    ctx.beginPath();
+                    ctx.arc(cx + dirData.dx * tLen * 1.5, cy + dirData.dy * tLen * 1.5, 20 + 8 * Math.sin(performance.now() /
+                        80), 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, SIZE, SIZE);
+
+                const grad = ctx.createRadialGradient(400, 400, 50, 400, 400, 500);
+                grad.addColorStop(0, '#1A1F2E');
+                grad.addColorStop(1, '#0B0E11');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, SIZE, SIZE);
+
+                ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < viewportSize; i++)
+                    for (let j = 0; j < viewportSize; j++)
+                        ctx.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
+
+                // Стены (без фона)
+                for (let o of obstacles) {
+                    if (!isVisible(o.x, o.y)) continue;
+                    const v = worldToViewport(o.x, o.y);
+                    const emoji = o.emoji || '🌊';
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    const fs = Math.min(cellSize * 0.75, 36);
+                    ctx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(emoji, v.x + cellSize / 2, v.y + cellSize / 2 + 1);
+                    ctx.shadowBlur = 0;
+                }
+
+                for (let w of breakableWalls) {
+                    if (!isVisible(w.x, w.y)) continue;
+                    const v = worldToViewport(w.x, w.y);
+                    const emoji = w.emoji || '🌳';
+                    ctx.shadowBlur = 18;
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    const fs = Math.min(cellSize * 0.75, 36);
+                    ctx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(emoji, v.x + cellSize / 2, v.y + cellSize / 2 + 1);
+                    ctx.shadowBlur = 0;
+                }
+
+                // ----- База (увеличенная и пульсирующая) -----
+                if (base && base.alive && isVisible(base.x, base.y)) {
+                    const v = worldToViewport(base.x, base.y);
+                    const cx = v.x + cellSize / 2,
+                        cy = v.y + cellSize / 2;
+                    const pulse = 1 + 0.08 * Math.sin(performance.now() / 300);
+                    const baseScale = 3.0;
+                    const fs = Math.min(cellSize * baseScale * pulse, 90);
+                    const glow = ctx.createRadialGradient(cx, cy, 2, cx, cy, fs * 1.2);
+                    glow.addColorStop(0, 'rgba(255, 215, 0, 0.2)');
+                    glow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+                    ctx.fillStyle = glow;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, fs * 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = `rgba(255, 215, 0, ${0.3 + 0.2 * Math.sin(performance.now()/300)})`;
+                    ctx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(base.emoji, cx, cy + 2);
+                    ctx.shadowBlur = 0;
+
+                    const bw = fs * 0.8;
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(cx - bw / 2, cy - fs * 0.6 - 8, bw, 8);
+                    const ratio = Math.max(0, base.hp / base.maxHp);
+                    ctx.fillStyle = ratio > 0.3 ? '#4CAF50' : '#F44336';
+                    ctx.fillRect(cx - bw / 2, cy - fs * 0.6 - 8, bw * ratio, 8);
+                }
+
+                // Бонусы
+                for (let p of powerups) {
+                    if (!isVisible(p.x, p.y)) continue;
+                    const v = worldToViewport(p.x, p.y);
+                    const pulse = 0.7 + 0.3 * Math.sin(performance.now() / 400 + p.x + p.y);
+                    ctx.globalAlpha = 0.8 + 0.2 * pulse;
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = 'rgba(240,185,11,0.6)';
+                    const fs = Math.min(cellSize * 0.7, 30);
+                    ctx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(p.type, v.x + cellSize / 2, v.y + cellSize / 2 + 1);
+                    ctx.shadowBlur = 0;
+                    ctx.globalAlpha = 1;
+
+                    ctx.fillStyle = 'rgba(240,185,11,0.04)';
+                    ctx.beginPath();
+                    ctx.arc(v.x + cellSize / 2, v.y + cellSize / 2, cellSize * 0.35 * pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Враги
+                for (let e of enemies) {
+                    if (!isVisible(e.x, e.y)) continue;
+                    const v = worldToViewport(e.x, e.y);
+                    const cx = v.x + cellSize / 2,
+                        cy = v.y + cellSize / 2;
+                    const sz = cellSize * (e.sizeScale || 0.35);
+
+                    if (e.hitFlash > 0) ctx.globalAlpha = 0.6 + 0.4 * Math.sin(performance.now() / 50);
+
+                    drawTank(ctx, cx, cy, e.dir, sz, e.color, false, false, false, false, false);
+
+                    if (e.maxHp > 1) {
+                        const bw = sz * 1.2;
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                        ctx.fillRect(cx - bw / 2, cy - sz * 1.1 - 4, bw, 5);
+                        ctx.fillStyle = e.hp / e.maxHp > 0.3 ? '#4CAF50' : '#F44336';
+                        ctx.fillRect(cx - bw / 2, cy - sz * 1.1 - 4, bw * (e.hp / e.maxHp), 5);
+                    }
+
+                    ctx.globalAlpha = 1;
+                    ctx.shadowBlur = 0;
+
+                    if (e.isBoss) {
+                        ctx.font = 'bold 12px "Inter", monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'bottom';
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                        ctx.fillStyle = '#FFD700';
+                        ctx.fillText(`👑 ${e.typeName}`, cx, cy - sz * 1.3);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+
+                // Игрок (пульсирует)
+                const pv = worldToViewport(player.x, player.y);
+                const pcx = pv.x + cellSize / 2,
+                    pcy = pv.y + cellSize / 2;
+                const psz = cellSize * 0.38;
+
+                const grd = ctx.createRadialGradient(pcx, pcy, 2, pcx, pcy, psz * 2.5);
+                grd.addColorStop(0, 'rgba(59,130,246,0.15)');
+                grd.addColorStop(1, 'rgba(59,130,246,0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath();
+                ctx.arc(pcx, pcy, psz * 2.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                drawTank(ctx, pcx, pcy, player.dir, psz, '#1E88E5', true, player.shield, player.speedBoost > 0, player
+                    .powerShot, player.nukeShot);
+
+                // Пули
+                for (let b of bullets) {
+                    if (!isVisible(b.x, b.y)) continue;
+                    const v = worldToViewport(b.x, b.y);
+                    const size = (b.size || 0.25) * cellSize;
+                    const col = b.isEnemy ? '#FF5722' : '#FFD740';
+                    const glow = b.isEnemy ? 'rgba(255,87,34,0.8)' : 'rgba(255,215,64,0.8)';
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = glow;
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.arc(v.x, v.y, Math.max(size, 4), 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(v.x, v.y, Math.max(size * 0.4, 2), 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.shadowBlur = 0;
+                    for (let t of b.trail) {
+                        if (!isVisible(t.x, t.y)) continue;
+                        const tv = worldToViewport(t.x, t.y);
+                        ctx.globalAlpha = t.life * 0.3;
+                        ctx.fillStyle = col;
+                        ctx.beginPath();
+                        ctx.arc(tv.x, tv.y, Math.max(size * 0.6, 2), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+
+                // Частицы
+                for (let p of particles) {
+                    if (!isVisible(p.wx, p.wy)) continue;
+                    const v = worldToViewport(p.wx, p.wy);
+                    ctx.globalAlpha = p.life;
+                    if (p.isEmoji) {
+                        const fs = Math.min(p.size * 2, 28);
+                        ctx.font = `${fs}px "Segoe UI Emoji", "Apple Color Emoji"`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.shadowBlur = 20;
+                        ctx.shadowColor = p.color;
+                        ctx.fillText(p.emoji || '✨', v.x, v.y);
+                        ctx.shadowBlur = 0;
+                    } else {
+                        ctx.shadowBlur = 12;
+                        ctx.shadowColor = p.color;
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(v.x, v.y, p.size * p.life, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+                ctx.globalAlpha = 1;
+
+                drawRadarArrow();
+
+                // HUD
+                ctx.font = 'bold 16px "Inter", monospace';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.fillStyle = '#F0B90B';
+                ctx.fillText(`💀 ${score}`, 12, 10);
+                ctx.fillStyle = '#848E9C';
+                ctx.font = '13px "Inter", monospace';
+                ctx.fillText(`👑 ${bestScore}`, 12, 34);
+                ctx.fillStyle = '#FF5722';
+                ctx.fillText(`👾 ${enemies.filter(e => e.hp > 0).length}`, 12, 56);
+                ctx.shadowBlur = 0;
+
+                let fx = '';
+                if (player.shield) fx += '🛡️ ';
+                if (player.speedBoost > 0) fx += '⚡ ';
+                if (player.powerShot) fx += '💥 ';
+                if (player.nukeShot) fx += '💣 ';
+                if (player.fireRateBoost > 0) fx += '🔥 ';
+                if (player.regenTimer > 0) fx += '🔄 ';
+                if (goodMode) fx += '👑 ';
+                if (radarActive) fx += '📡 ';
+                if (fx) {
+                    ctx.font = '18px "Segoe UI Emoji", "Apple Color Emoji"';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+                    ctx.fillText(fx.trim(), SIZE - 12, 10);
+                    ctx.shadowBlur = 0;
+                }
+
+                // Пауза
+                if (paused && gameActive) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                    ctx.fillRect(0, 0, SIZE, SIZE);
+                    ctx.font = 'bold 50px "Segoe UI Emoji", "Apple Color Emoji"';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = '#F0B90B';
+                    ctx.fillStyle = '#F0B90B';
+                    ctx.fillText('⏸️', SIZE / 2, SIZE / 2 - 30);
+                    ctx.font = 'bold 26px "Inter", monospace';
+                    ctx.fillStyle = '#EAECEF';
+                    ctx.fillText('ПАУЗА', SIZE / 2, SIZE / 2 + 45);
+                    ctx.shadowBlur = 0;
+                }
+
+                if (!gameActive && !showSplash) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(0, 0, SIZE, SIZE);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 40;
+                    ctx.shadowColor = '#F0B90B';
+                    let emoji = '💀',
+                        msg = 'GAME OVER';
+                    if (statusEl.textContent.includes('ПОБЕДА')) { emoji = '🏆';
+                        msg = 'ПОБЕДА!'; } else if (statusEl.textContent.includes('ВРЕМЯ')) { emoji = '⏰';
+                        msg = 'ВРЕМЯ ВЫШЛО'; } else if (statusEl.textContent.includes('УНИЧТОЖЕНЫ')) { emoji = '💥';
+                        msg = 'ВЫ УНИЧТОЖЕНЫ'; }
+                    ctx.font = `bold 70px "Segoe UI Emoji", "Apple Color Emoji"`;
+                    ctx.fillStyle = '#F0B90B';
+                    ctx.fillText(emoji, SIZE / 2, SIZE / 2 - 40);
+                    ctx.font = 'bold 28px "Inter", monospace';
+                    ctx.fillStyle = '#EAECEF';
+                    ctx.fillText(msg, SIZE / 2, SIZE / 2 + 50);
+                    ctx.font = '16px "Inter", monospace';
+                    ctx.fillStyle = '#848E9C';
+                    ctx.shadowBlur = 0;
+                    ctx.fillText('нажми R для рестарта', SIZE / 2, SIZE / 2 + 100);
+                }
+
+                drawMinimap();
+            }
+
+            if (!CanvasRenderingContext2D.prototype.roundRect) {
+                CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+                    const r = typeof radii === 'number' ? radii : (radii || 0);
+                    this.moveTo(x + r, y);
+                    this.arcTo(x + w, y, x + w, y + h, r);
+                    this.arcTo(x + w, y + h, x, y + h, r);
+                    this.arcTo(x, y + h, x, y, r);
+                    this.arcTo(x, y, x + w, y, r);
+                    return this;
+                };
+            }
+
+            function drawMinimap() {
+                const mw = MINIMAP_SIZE,
+                    mh = MINIMAP_SIZE;
+                minimapCtx.clearRect(0, 0, mw, mh);
+                minimapCtx.fillStyle = 'rgba(0,0,0,0.85)';
+                minimapCtx.fillRect(0, 0, mw, mh);
+                const scale = mw / fieldSize;
+                minimapCtx.strokeStyle = 'rgba(240,185,11,0.25)';
+                minimapCtx.lineWidth = 0.5;
+                minimapCtx.strokeRect(0, 0, mw, mh);
+
+                const wl = walls.l * scale,
+                    wr = (walls.r + 1) * scale;
+                const wt = walls.t * scale,
+                    wb = (walls.b + 1) * scale;
+                minimapCtx.fillStyle = 'rgba(240,185,11,0.04)';
+                minimapCtx.fillRect(wl, wt, wr - wl, wb - wt);
+
+                for (let o of obstacles) {
+                    minimapCtx.fillStyle = 'rgba(100,200,255,0.25)';
+                    const s = Math.max(1, scale * 2);
+                    minimapCtx.fillRect(o.x * scale - s / 2, o.y * scale - s / 2, s, s);
+                }
+                for (let w of breakableWalls) {
+                    minimapCtx.fillStyle = 'rgba(200,230,255,0.2)';
+                    const s = Math.max(1, scale * 2);
+                    minimapCtx.fillRect(w.x * scale - s / 2, w.y * scale - s / 2, s, s);
+                }
+                for (let p of powerups) {
+                    minimapCtx.fillStyle = 'rgba(240,185,11,0.5)';
+                    const s = Math.max(1.5, scale * 2);
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(p.x * scale, p.y * scale, s, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
+                for (let e of enemies) {
+                    if (e.hp <= 0) continue;
+                    minimapCtx.fillStyle = e.isBoss ? '#FFD700' : (e.color || '#BF360C');
+                    const s = Math.max(1.5, scale * 2.5);
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(e.x * scale, e.y * scale, s, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                }
+                if (base && base.alive) {
+                    minimapCtx.fillStyle = '#FFD700';
+                    const s = Math.max(5, scale * 6);
+                    minimapCtx.beginPath();
+                    minimapCtx.arc(base.x * scale, base.y * scale, s, 0, Math.PI * 2);
+                    minimapCtx.fill();
+                    minimapCtx.strokeStyle = '#FF6F00';
+                    minimapCtx.lineWidth = 1.5;
+                    minimapCtx.stroke();
+                }
+                minimapCtx.fillStyle = '#3B82F6';
+                const ps = Math.max(2.5, scale * 3.5);
+                minimapCtx.beginPath();
+                minimapCtx.arc(player.x * scale, player.y * scale, ps, 0, Math.PI * 2);
+                minimapCtx.fill();
+
+                minimapCtx.strokeStyle = 'rgba(255,255,255,0.4)';
+                minimapCtx.lineWidth = 1;
+                const cx = camera.x * scale,
+                    cy = camera.y * scale;
+                const cw = viewportSize * scale,
+                    ch = viewportSize * scale;
+                minimapCtx.strokeRect(cx, cy, cw, ch);
+                minimapCtx.fillStyle = 'rgba(255,255,255,0.03)';
+                minimapCtx.fillRect(cx, cy, cw, ch);
+            }
+
+            // =====================================================================
+            // BELARUS: заполнение списка (новый дизайн)
+            // =====================================================================
+            let belarusAnimInterval = null;
+
+            function fillBelarusList() {
+                // Генерируем список команды
+                const team = [
+                    { name: 'Анна Коваль', role: 'Гейм-дизайнер' },
+                    { name: 'Дмитрий Смирнов', role: 'Программист AI' },
+                    { name: 'Елена Новик', role: '3D-моделлер' },
+                    { name: 'Игорь Мороз', role: 'Звукорежиссёр' },
+                    { name: 'Ольга Зайцева', role: 'Сценарист' },
+                    { name: 'Сергей Васильев', role: 'Технический художник' },
+                    { name: 'Татьяна Лебедева', role: 'Тестировщик' },
+                    { name: 'Виктор Павлов', role: 'Сетевой программист' },
+                    { name: 'Наталья Романова', role: 'UI/UX дизайнер' },
+                    { name: 'Андрей Кузнецов', role: 'Аниматор' }
+                ];
+
+                let html = `
+                            <p style="font-size: 20px; font-weight: bold; color: #f5c842; text-align: center; margin-bottom: 18px;">
+                                🎮 Команда разработки игры «Битва титанов часть 2»
+                            </p>
+                        `;
+
+                team.forEach((person, idx) => {
+                    html += `<p><span class="role">${idx+1}. ${person.name}</span> — ${person.role}</p>`;
+                });
+
+                // Главный директор
+                html += `
+                            <div class="boss">
+                                <p><strong>👑 Главный руководитель проекта:</strong> Демидов Валентин</p>
+                                <p class="contact">📱 WhatsApp: +375447841340</p>
+                            </div>
+                        `;
+
+                scrollContent.innerHTML = html;
+
+                // Запускаем анимацию прокрутки
+                startBelarusScroll();
+            }
+
+            function startBelarusScroll() {
+                // Останавливаем предыдущую анимацию
+                if (belarusAnimInterval) {
+                    clearInterval(belarusAnimInterval);
+                    belarusAnimInterval = null;
+                }
+
+                const content = scrollContent;
+                const container = viewport;
+
+                // Сброс позиции: контент скрыт снизу
+                const contentHeight = content.scrollHeight;
+                const containerHeight = container.clientHeight;
+
+                // Начальное смещение: контент полностью за нижней границей
+                let offset = contentHeight;
+                content.style.transform = `translateY(${offset}px)`;
+
+                // Анимация: двигаем вверх со скоростью 2px за кадр
+                belarusAnimInterval = setInterval(() => {
+                    offset -= 2;
+                    // Если дошли до верха, останавливаем
+                    if (offset <= -contentHeight) {
+                        offset = -contentHeight;
+                        clearInterval(belarusAnimInterval);
+                        belarusAnimInterval = null;
+                    }
+                    content.style.transform = `translateY(${offset}px)`;
+                }, 30);
+            }
+
+            // Остановка анимации при закрытии
+            function stopBelarusScroll() {
+                if (belarusAnimInterval) {
+                    clearInterval(belarusAnimInterval);
+                    belarusAnimInterval = null;
+                }
+            }
+
+            // =====================================================================
+            // CONTROLS
+            // =====================================================================
+            document.addEventListener('keydown', (e) => {
+                hideShootButton();
+                const k = e.key;
+                if (k === 'w' || k === 'W' || k === 'ArrowUp') { e.preventDefault();
+                    moveDir.y = -1; } else if (k === 's' || k === 'S' || k === 'ArrowDown') { e.preventDefault();
+                    moveDir.y = 1; } else if (k === 'a' || k === 'A' || k === 'ArrowLeft') { e.preventDefault();
+                    moveDir.x = -1; } else if (k === 'd' || k === 'D' || k === 'ArrowRight') { e.preventDefault();
+                    moveDir.x = 1; } else if (k === ' ' || k === 'Space' || k === 'Enter') { e.preventDefault();
+                    shootPressed = true; } else if (k === 'p' || k === 'P') { e.preventDefault();
+                    togglePause(); } else if (k === 'r' || k === 'R') { e.preventDefault();
+                    restart(); } else if (k === 'q' || k === 'Q' || k === 'я' || k === 'Я') {
+                    e.preventDefault();
+                    activateRadar();
+                }
+            });
+            document.addEventListener('keyup', (e) => {
+                const k = e.key;
+                if (k === 'w' || k === 'W' || k === 'ArrowUp') moveDir.y = 0;
+                if (k === 's' || k === 'S' || k === 'ArrowDown') moveDir.y = 0;
+                if (k === 'a' || k === 'A' || k === 'ArrowLeft') moveDir.x = 0;
+                if (k === 'd' || k === 'D' || k === 'ArrowRight') moveDir.x = 0;
+                if (k === ' ' || k === 'Space' || k === 'Enter') shootPressed = false;
+            });
+
+            canvas.addEventListener('dblclick', (e) => { e.preventDefault();
+                togglePause(); });
+            let lastTapTime = 0,
+                lastTapX = 0,
+                lastTapY = 0;
+            canvas.addEventListener('touchstart', (e) => {
+                const t = e.touches[0];
+                if (!t) return;
+                const rect = canvas.getBoundingClientRect();
+                const cx = t.clientX - rect.left,
+                    cy = t.clientY - rect.top;
+                const now = Date.now();
+                const dt = now - lastTapTime;
+                const dist = Math.hypot(cx - lastTapX, cy - lastTapY);
+                if (dt < 300 && dist < 20) { e.preventDefault();
+                    togglePause();
+                    lastTapTime = 0; return; }
+                lastTapTime = now;
+                lastTapX = cx;
+                lastTapY = cy;
+                touchStartX = cx;
+                touchStartY = cy;
+                touchActive = true;
+            }, { passive: false });
+
+            let touchStartX = 0,
+                touchStartY = 0,
+                touchActive = false;
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                if (!touchActive) return;
+                const t = e.touches[0];
+                if (!t) return;
+                const rect = canvas.getBoundingClientRect();
+                const ex = t.clientX - rect.left,
+                    ey = t.clientY - rect.top;
+                const dx = ex - touchStartX,
+                    dy = ey - touchStartY;
+                if (Math.abs(dx) > 15 || Math.abs(dy) > 15) {
+                    if (Math.abs(dx) > Math.abs(dy)) { moveDir.x = dx > 0 ? 1 : -1;
+                        moveDir.y = 0; } else { moveDir.y = dy > 0 ? 1 : -1;
+                        moveDir.x = 0; }
+                    touchStartX = ex;
+                    touchStartY = ey;
+                }
+            }, { passive: false });
+            canvas.addEventListener('touchend', (e) => { e.preventDefault();
+                touchActive = false;
+                moveDir.x = 0;
+                moveDir.y = 0; }, { passive: false });
+
+            shootBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+                shootPressed = true; }, { passive: false });
+            shootBtn.addEventListener('touchend', (e) => { e.preventDefault();
+                shootPressed = false; }, { passive: false });
+            shootBtn.addEventListener('mousedown', () => { shootPressed = true; });
+            shootBtn.addEventListener('mouseup', () => { shootPressed = false; });
+
+            // =====================================================================
+            // PAUSE TOGGLE
+            // =====================================================================
+            function togglePause() {
+                if (!gameActive || showSplash) return;
+                paused = !paused;
+                if (paused) {
+                    statusEl.textContent = '⏸️ ПАУЗА';
+                    if (intervalId) clearInterval(intervalId);
+                    if (timerId) clearInterval(timerId);
+                    if (autoFireInterval) clearInterval(autoFireInterval);
+                    setButtonsEnabled(true);
+                } else {
+                    statusEl.textContent = `🟢 УРОВЕНЬ ${currentLevel}`;
+                    lastTickTime = performance.now();
+                    startLoop();
+                    if (mode === 'timed') startTimer();
+                    if (goodMode) {
+                        if (autoFireInterval) clearInterval(autoFireInterval);
+                        autoFireInterval = setInterval(() => {
+                            if (!gameActive || paused || showSplash) return;
+                            const dirs = ['up', 'down', 'left', 'right'];
+                            for (let d of dirs) {
+                                bullets.push({
+                                    x: player.x,
+                                    y: player.y,
+                                    dir: d,
+                                    speed: 4.5,
+                                    isEnemy: false,
+                                    damage: 5,
+                                    life: 3.5,
+                                    trail: [],
+                                    size: 0.4
+                                });
+                            }
+                            spawnParticles(player.x, player.y, 5, '#FFD700', '💥');
+                        }, 2000);
+                    }
+                    setButtonsEnabled(false);
+                }
+            }
+
+            function restart() {
+                if (intervalId) clearInterval(intervalId);
+                if (timerId) clearInterval(timerId);
+                if (autoFireInterval) clearInterval(autoFireInterval);
+                if (goodMode) removeGoodMode();
+                radarActive = false;
+                radarTarget = null;
+                radarBtn.classList.remove('scanning', 'active-pulse');
+                resetGame();
+            }
+
+            // =====================================================================
+            // UI BUTTONS
+            // =====================================================================
+            document.querySelectorAll('[data-mode]').forEach(btn => {
+                const handler = (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    mode = btn.dataset.mode;
+                    restart();
+                };
+                btn.addEventListener('click', handler);
+                btn.addEventListener('touchstart', handler, { passive: false });
+            });
+
+            document.querySelectorAll('[data-size]').forEach(btn => {
+                const handler = (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const size = parseInt(btn.dataset.size);
+                    const cfg = LEVEL_CONFIGS[currentLevel - 1];
+                    const ratio = size / 20;
+                    viewportSize = Math.min(Math.max(Math.round(cfg.viewportSize * ratio), 10), 30);
+                    fieldSize = viewportSize * VIEWPORT_MULTIPLIER;
+                    cellSize = SIZE / viewportSize;
+                    walls = { l: 0, r: fieldSize - 1, t: 0, b: fieldSize - 1 };
+                    initPlayer();
+                    generateLevelMap();
+                    spawnBase();
+                    generatePowerupsForLevel();
+                    const oldEnemies = enemies;
+                    enemies = [];
+                    for (let e of oldEnemies) {
+                        const pos = randPos(true, true, true);
+                        if (pos) {
+                            e.x = pos.x;
+                            e.y = pos.y;
+                            enemies.push(e);
+                        }
+                    }
+                    updateEnemyCount();
+                    updateCamera();
+                    updateBaseHud();
+                };
+                btn.addEventListener('click', handler);
+                btn.addEventListener('touchstart', handler, { passive: false });
+            });
+
+            document.querySelectorAll('[data-density]').forEach(btn => {
+                const handler = (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('[data-density]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    wallDensityFactor = parseFloat(btn.dataset.density);
+                    if (gameActive) {
+                        const lv = currentLevel;
+                        loadLevel(lv);
+                    } else {
+                        restart();
+                    }
+                    showToast('🧱', `Плотность стен: ${wallDensityFactor}x (база 50×)`);
+                };
+                btn.addEventListener('click', handler);
+                btn.addEventListener('touchstart', handler, { passive: false });
+            });
+
+            document.getElementById('restartBtn').addEventListener('click', restart);
+            document.getElementById('restartBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                restart(); });
+
+            radarBtn.addEventListener('click', activateRadar);
+            radarBtn.addEventListener('touchstart', (e) => { e.preventDefault();
+                activateRadar(); });
+
+            document.getElementById('recordsBtn').addEventListener('click', () => { renderRecords();
+                recordsModal.classList.add('active'); });
+            document.getElementById('recordsBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                renderRecords();
+                recordsModal.classList.add('active'); });
+            modalClose.addEventListener('click', () => recordsModal.classList.remove('active'));
+            recordsModal.addEventListener('click', (e) => { if (e.target === recordsModal) recordsModal.classList.remove(
+                    'active'); });
+            document.getElementById('helpBtn').addEventListener('click', () => helpModal.classList.add('active'));
+            document.getElementById('helpBtn').addEventListener('touchstart', (e) => { e.preventDefault();
+                helpModal.classList.add('active'); });
+            helpClose.addEventListener('click', () => helpModal.classList.remove('active'));
+            helpModal.addEventListener('click', (e) => { if (e.target === helpModal) helpModal.classList.remove('active'); });
+
+            // =====================================================================
+            // BELARUS BUTTON
+            // =====================================================================
+            belarusBtn.addEventListener('click', () => {
+                belarusOverlay.classList.add('active');
+                fillBelarusList();
+            });
+            belarusBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                belarusOverlay.classList.add('active');
+                fillBelarusList();
+            });
+
+            belarusClose.addEventListener('click', () => {
+                belarusOverlay.classList.remove('active');
+                stopBelarusScroll();
+            });
+            belarusOverlay.addEventListener('click', (e) => {
+                if (e.target === belarusOverlay) {
+                    belarusOverlay.classList.remove('active');
+                    stopBelarusScroll();
+                }
+            });
+
+            // =====================================================================
+            // GAMEPAD
+            // =====================================================================
+            let gamepadConnected = false;
+            window.addEventListener('gamepadconnected', (e) => {
+                gamepadConnected = true;
+                hideShootButton();
+                showToast('🎮', 'Геймпад подключён!');
+            });
+            window.addEventListener('gamepaddisconnected', (e) => {
+                gamepadConnected = false;
+                showToast('🎮', 'Геймпад отключён');
+            });
+
+            function handleGamepad() {
+                if (!gamepadConnected || !gameActive || showSplash) return;
+                const gp = navigator.getGamepads()[0];
+                if (!gp) return;
+                const ax = gp.axes[0] || 0,
+                    ay = gp.axes[1] || 0;
+                const deadZone = 0.25;
+                if (Math.abs(ax) > deadZone || Math.abs(ay) > deadZone) {
+                    if (Math.abs(ax) > Math.abs(ay)) { moveDir.x = ax > 0 ? 1 : -1;
+                        moveDir.y = 0; } else { moveDir.y = ay > 0 ? 1 : -1;
+                        moveDir.x = 0; }
+                } else {
+                    const btns = gp.buttons;
+                    if (btns[12] && btns[12].pressed) { moveDir.y = -1;
+                        moveDir.x = 0; } else if (btns[13] && btns[13].pressed) { moveDir.y = 1;
+                        moveDir.x = 0; } else if (btns[14] && btns[14].pressed) { moveDir.x = -1;
+                        moveDir.y = 0; } else if (btns[15] && btns[15].pressed) { moveDir.x = 1;
+                        moveDir.y = 0; } else if (!btns[12].pressed && !btns[13].pressed && !btns[14].pressed && !btns[15]
+                        .pressed) {
+                        if (Math.abs(ax) < deadZone && Math.abs(ay) < deadZone) { moveDir.x = 0;
+                            moveDir.y = 0; }
+                    }
+                }
+                if (gp.buttons[0] && gp.buttons[0].pressed) { shootPressed = true; } else if (gp.buttons[1] && gp.buttons[1]
+                    .pressed) { shootPressed = true; } else { shootPressed = false; }
+                if (gp.buttons[9] && gp.buttons[9].pressed && !gp._startPressed) {
+                    gp._startPressed = true;
+                    togglePause();
+                }
+                if (!gp.buttons[9] || !gp.buttons[9].pressed) gp._startPressed = false;
+            }
+            setInterval(handleGamepad, 50);
+
+            // =====================================================================
+            // TIMER MODE
+            // =====================================================================
+            function startTimer() {
+                if (timerId) clearInterval(timerId);
+                timeLeft = 60;
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerId);
+                        timerId = null;
+                        if (gameActive) gameOver('time');
+                    }
+                }, 1000);
+            }
+
+            // =====================================================================
+            // START
+            // =====================================================================
+            checkGamepadOnStart();
+            buildLevelProgress();
+            resetGame();
+            animFrameId = requestAnimationFrame(renderLoop);
+
+        })();
+    </script>
+</body>
+</html>
