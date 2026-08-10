@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>⚔️ Битва Титанов · Команда</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b0e1a, #0f1428);
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            padding: 14px;
+            margin: 0;
+            touch-action: pan-y;
+        }
+
+        .page {
+            max-width: 640px;
+            width: 100%;
+            background: linear-gradient(145deg, #141b33, #0f1428);
+            border-radius: 28px;
+            padding: 20px 18px 18px;
+            border: 1px solid rgba(83, 52, 131, 0.3);
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.3s;
+        }
+        .page:hover {
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(83, 52, 131, 0.5);
+            margin-bottom: 16px;
+            flex-shrink: 0;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .header .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header .brand .badge {
+            background: linear-gradient(135deg, #e94560, #c23152);
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.25);
+            white-space: nowrap;
+        }
+        .header .brand .icon {
+            font-size: 22px;
+            filter: drop-shadow(0 2px 6px rgba(233, 69, 96, 0.3));
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 40px;
+            padding: 6px 16px 6px 12px;
+            color: #d6dcec;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            backdrop-filter: blur(4px);
+            touch-action: manipulation;
+            flex-shrink: 0;
+        }
+        .back-btn:hover {
+            background: rgba(233, 69, 96, 0.15);
+            border-color: #e94560;
+            color: #fff;
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.08);
+        }
+        .back-btn:active {
+            transform: scale(0.94);
+        }
+        .back-btn .arrow {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        /* ===== VIEWPORT ===== */
+        .viewport {
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            background: rgba(15, 22, 48, 0.6);
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(83, 52, 131, 0.25);
+            backdrop-filter: blur(2px);
+            transition: border-color 0.3s;
+        }
+        .viewport:hover {
+            border-color: rgba(83, 52, 131, 0.5);
+        }
+
+        .viewport::before,
+        .viewport::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 40px;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .viewport::before {
+            top: 0;
+            background: linear-gradient(to bottom, rgba(15, 22, 48, 0.92), transparent);
+        }
+        .viewport::after {
+            bottom: 0;
+            background: linear-gradient(to top, rgba(15, 22, 48, 0.92), transparent);
+        }
+
+        .scroll-content {
+            padding: 18px 22px 24px;
+            color: #d6dcec;
+            font-size: 16px;
+            line-height: 1.8;
+            letter-spacing: 0.2px;
+            will-change: transform;
+            position: relative;
+            z-index: 1;
+            transform: translateY(0);
+            transition: transform 0.05s linear;
+        }
+
+        .scroll-content .title-block {
+            text-align: center;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(83, 52, 131, 0.25);
+        }
+        .scroll-content .title-block .game-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #f5c842;
+            text-shadow: 0 0 30px rgba(245, 200, 66, 0.15);
+            letter-spacing: 0.5px;
+        }
+        .scroll-content .title-block .game-title .accent {
+            color: #e94560;
+        }
+        .scroll-content .title-block .sub {
+            font-size: 13px;
+            color: #7a84a8;
+            margin-top: 4px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 300;
+        }
+
+        .member {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            transition: background 0.2s;
+            border-radius: 4px;
+            padding-left: 4px;
+        }
+        .member:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .member .role-tag {
+            color: #e94560;
+            font-weight: 600;
+            flex-shrink: 0;
+            font-size: 15px;
+            min-width: 110px;
+        }
+        .member .role-tag::before {
+            content: '▸';
+            color: #533483;
+            margin-right: 6px;
+            font-size: 13px;
+        }
+        .member .name {
+            color: #e8ecf5;
+            font-weight: 400;
+        }
+
+        .boss-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 2px dashed rgba(83, 52, 131, 0.4);
+            text-align: center;
+        }
+        .boss-section .boss-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #f5c842;
+            letter-spacing: 0.3px;
+        }
+        .boss-section .boss-title .crown {
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .boss-section .boss-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+            background: linear-gradient(90deg, #f5c842, #f7d97e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .boss-section .contact {
+            margin-top: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #7ec8e3;
+            letter-spacing: 0.5px;
+        }
+        .boss-section .contact .icon {
+            margin-right: 6px;
+        }
+
+        .footer-emoji {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 10px;
+            font-size: 64px;
+            line-height: 1.2;
+            filter: drop-shadow(0 4px 20px rgba(245, 200, 66, 0.2));
+            transition: transform 0.2s;
+        }
+        .footer-emoji:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== SCROLLBAR ===== */
+        .viewport::-webkit-scrollbar {
+            width: 5px;
+        }
+        .viewport::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        .viewport::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #533483, #6a3f9e);
+            border-radius: 10px;
+        }
+        .viewport {
+            scrollbar-width: thin;
+            scrollbar-color: #533483 rgba(0, 0, 0, 0.2);
+        }
+
+        /* ===== ACTIONS ===== */
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .actions .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+            color: #d6dcec;
+            border-color: rgba(255, 255, 255, 0.08);
+            flex: 1 1 auto;
+            min-width: 140px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-family: 'Inter', sans-serif;
+        }
+        .actions .btn-whatsapp {
+            background: #25D366;
+            color: #fff;
+            border-color: #25D366;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.25);
+        }
+        .actions .btn-whatsapp:hover {
+            background: #20b858;
+            border-color: #20b858;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(37, 211, 102, 0.35);
+        }
+        .actions .btn-support {
+            background: linear-gradient(135deg, #f5c842, #f7d97e);
+            color: #0b0e1a;
+            border-color: #f5c842;
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(245, 200, 66, 0.25);
+        }
+        .actions .btn-support:hover {
+            background: linear-gradient(135deg, #f7d97e, #f5c842);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(245, 200, 66, 0.4);
+        }
+        .actions .btn-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .page {
+                padding: 16px 14px 14px;
+                border-radius: 20px;
+                max-height: 97vh;
+            }
+            .header .brand .badge {
+                font-size: 13px;
+                padding: 4px 12px;
+            }
+            .header .brand .icon {
+                font-size: 18px;
+            }
+            .back-btn {
+                font-size: 13px;
+                padding: 4px 12px 4px 10px;
+            }
+            .back-btn .arrow {
+                font-size: 17px;
+            }
+            .scroll-content {
+                padding: 14px 16px 18px;
+                font-size: 15px;
+            }
+            .member .role-tag {
+                min-width: 90px;
+                font-size: 14px;
+            }
+            .scroll-content .title-block .game-title {
+                font-size: 19px;
+            }
+            .boss-section .boss-name {
+                font-size: 18px;
+            }
+            .footer-emoji {
+                font-size: 52px;
+            }
+            .actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .actions .btn {
+                width: 100%;
+                min-width: unset;
+                padding: 12px 16px;
+                font-size: 15px;
+            }
+        }
+        @media (max-width: 400px) {
+            .page {
+                padding: 12px 10px 12px;
+                border-radius: 16px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .header .brand {
+                justify-content: center;
+            }
+            .back-btn {
+                justify-content: center;
+                padding: 8px 14px;
+            }
+            .member {
+                flex-wrap: wrap;
+                gap: 2px;
+            }
+            .member .role-tag {
+                min-width: 100%;
+                font-size: 14px;
+            }
+            .member .name {
+                padding-left: 18px;
+                font-size: 14px;
+            }
+            .footer-emoji {
+                font-size: 44px;
+            }
+            .scroll-content {
+                padding: 12px 12px 16px;
+                font-size: 14px;
+            }
+            .scroll-content .title-block .game-title {
+                font-size: 17px;
+            }
+            .boss-section .boss-name {
+                font-size: 16px;
+            }
+        }
+
+        /* ===== SCROLL ANIMATION INDICATOR ===== */
+        .scroll-hint {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 20px;
+            animation: bounceDown 1.8s ease-in-out infinite;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            padding: 0 12px;
+            line-height: 1.6;
+            backdrop-filter: blur(2px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            display: none;
+        }
+        .scroll-hint.show {
+            display: block;
+        }
+        @keyframes bounceDown {
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+                opacity: 0.3;
+            }
+            50% {
+                transform: translateX(-50%) translateY(6px);
+                opacity: 0.9;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page" id="page">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="brand">
+                <span class="icon">⚔️</span>
+                <span class="badge">Сделано в Беларуси</span>
+                <span class="icon">🇧🇾</span>
+            </div>
+            <button class="back-btn" id="backBtn" aria-label="Вернуться в игру">
+                <span class="arrow">←</span> Назад
+            </button>
+        </div>
+
+        <!-- VIEWPORT with SCROLL -->
+        <div class="viewport" id="viewport">
+            <div class="scroll-content" id="scrollContent">
+                <div class="title-block">
+                    <div class="game-title">
+                        Битва <span class="accent">Титанов</span> · Часть 2
+                    </div>
+                    <div class="sub">Команда разработки</div>
+                </div>
+
+                <div class="member">
+                    <span class="role-tag">Гейм-дизайнер</span>
+                    <span class="name">Анна Коваль</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Программист AI</span>
+                    <span class="name">Дмитрий Смирнов</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">3D-моделлер</span>
+                    <span class="name">Елена Новик</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Звукорежиссёр</span>
+                    <span class="name">Игорь Мороз</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Сценарист</span>
+                    <span class="name">Ольга Зайцева</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Технический художник</span>
+                    <span class="name">Сергей Васильев</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Тестировщик</span>
+                    <span class="name">Татьяна Лебедева</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Сетевой программист</span>
+                    <span class="name">Виктор Павлов</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">UI/UX дизайнер</span>
+                    <span class="name">Наталья Романова</span>
+                </div>
+                <div class="member">
+                    <span class="role-tag">Аниматор</span>
+                    <span class="name">Андрей Кузнецов</span>
+                </div>
+
+                <div class="boss-section">
+                    <div class="boss-title">
+                        <span class="crown">👑</span> Главный руководитель проекта
+                    </div>
+                    <div class="boss-name">Демидов Валентин</div>
+                    <div class="contact">
+                        <span class="icon">📱</span> WhatsApp: +375447841340
+                    </div>
+                </div>
+
+                <div class="footer-emoji">🏕</div>
+            </div>
+
+            <!-- scroll hint (показывается, если контент выше контейнера) -->
+            <div class="scroll-hint" id="scrollHint">⋮</div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="actions">
+            <a href="https://wa.me/375447841340" target="_blank" class="btn btn-whatsapp">
+                <span class="btn-icon">💬</span> WhatsApp
+            </a>
+            <a href="https://s.binance.com/yn8IBeZL" target="_blank" class="btn btn-support">
+                <span class="btn-icon">⭐</span> Поддержать проект
+            </a>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== DOM =====
+            const viewport = document.getElementById('viewport');
+            const content = document.getElementById('scrollContent');
+            const hint = document.getElementById('scrollHint');
+            const backBtn = document.getElementById('backBtn');
+
+            // ===== BACK BUTTON =====
+            function goBack() {
+                // Если страница открыта в отдельной вкладке — закрываем её
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    // Иначе пытаемся закрыть окно (сработает, если открыто из main)
+                    window.close();
+                }
+                // fallback: показать сообщение
+                setTimeout(() => {
+                    document.body.innerHTML =
+                        '<div style="display:flex;justify-content:center;align-items:center;height:100vh;color:#848E9C;font-family:Inter,sans-serif;flex-direction:column;gap:16px;text-align:center;padding:20px;"><span style="font-size:48px;">👋</span><p style="font-size:18px;">Закройте эту вкладку, чтобы вернуться в игру.</p><p style="font-size:14px;color:#5E6673;">Если игра открыта в другой вкладке, переключитесь на неё.</p></div>';
+                }, 300);
+            }
+
+            backBtn.addEventListener('click', goBack);
+            backBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                goBack();
+            }, { passive: false });
+
+            // ===== SCROLL ANIMATION =====
+            let animId = null;
+            let offset = 0;
+            let stopOffset = 0;
+            let isPaused = false;
+            const SPEED = 1.4; // px per tick
+
+            function getScrollLimits() {
+                const containerHeight = viewport.clientHeight;
+                const contentHeight = content.scrollHeight;
+                const maxOffset = Math.max(0, contentHeight - containerHeight);
+                return { containerHeight, contentHeight, maxOffset };
+            }
+
+            function resetScroll() {
+                const { containerHeight, contentHeight, maxOffset } = getScrollLimits();
+
+                if (maxOffset <= 0) {
+                    content.style.transform = 'translateY(0px)';
+                    hint.classList.remove('show');
+                    if (animId) { cancelAnimationFrame(animId);
+                        animId = null; }
+                    return;
+                }
+
+                // Начинаем с середины (или с верха, если контент короткий)
+                offset = Math.min(containerHeight * 0.35, maxOffset);
+                stopOffset = Math.max(0, maxOffset - containerHeight * 0.25);
+                content.style.transform = 'translateY(' + (-offset) + 'px)';
+                hint.classList.add('show');
+
+                if (!animId) {
+                    animId = requestAnimationFrame(step);
+                }
+            }
+
+            function step() {
+                if (isPaused) {
+                    animId = requestAnimationFrame(step);
+                    return;
+                }
+
+                const { maxOffset } = getScrollLimits();
+                if (maxOffset <= 0) {
+                    content.style.transform = 'translateY(0px)';
+                    hint.classList.remove('show');
+                    animId = null;
+                    return;
+                }
+
+                offset += SPEED;
+
+                if (offset >= maxOffset - 2) {
+                    offset = stopOffset;
+                    content.style.transform = 'translateY(' + (-offset) + 'px)';
+                    animId = null;
+                    // Зациклим через паузу
+                    setTimeout(() => {
+                        if (!isPaused) {
+                            resetScroll();
+                        }
+                    }, 1200);
+                    return;
+                }
+
+                content.style.transform = 'translateY(' + (-offset) + 'px)';
+                animId = requestAnimationFrame(step);
+            }
+
+            // ===== PAUSE ON HOVER / TOUCH =====
+            viewport.addEventListener('mouseenter', () => { isPaused = true; });
+            viewport.addEventListener('mouseleave', () => {
+                isPaused = false;
+                if (!animId) {
+                    const { maxOffset } = getScrollLimits();
+                    if (maxOffset > 0) {
+                        animId = requestAnimationFrame(step);
+                    }
+                }
+            });
+            viewport.addEventListener('touchstart', () => { isPaused = true; }, { passive: true });
+            viewport.addEventListener('touchend', () => {
+                isPaused = false;
+                if (!animId) {
+                    const { maxOffset } = getScrollLimits();
+                    if (maxOffset > 0) {
+                        animId = requestAnimationFrame(step);
+                    }
+                }
+            }, { passive: true });
+
+            // ===== RESIZE =====
+            let resizeTimer = null;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    if (animId) { cancelAnimationFrame(animId);
+                        animId = null; }
+                    resetScroll();
+                }, 200);
+            });
+
+            // ===== START =====
+            // Ждём, чтобы DOM отрисовался
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    resetScroll();
+                });
+            });
+
+            // Если контент изменился (например, шрифты подгрузились) — пересчитаем
+            window.addEventListener('load', () => {
+                if (animId) { cancelAnimationFrame(animId);
+                    animId = null; }
+                resetScroll();
+            });
+
+            // Запасной вариант через MutationObserver
+            if (window.ResizeObserver) {
+                const ro = new ResizeObserver(() => {
+                    if (animId) { cancelAnimationFrame(animId);
+                        animId = null; }
+                    resetScroll();
+                });
+                ro.observe(content);
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
