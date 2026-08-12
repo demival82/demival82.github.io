@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Битва титанов · 3D Танк</title>
+
+    <style>
+        /* ===== RESET ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a2b3c;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        /* ===== TANK CONTAINER (фон) ===== */
+        #tank-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            background: #1a2b3c;
+        }
+
+        /* ===== SPLASH OVERLAY ===== */
+        .splash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(ellipse at 50% 40%, #1a2a3a, #05080c);
+            padding: 20px;
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            will-change: opacity, transform;
+        }
+
+        .splash-overlay.hidden {
+            opacity: 0;
+            transform: scale(1.02);
+            pointer-events: none;
+        }
+
+        /* ===== SPLASH CARD ===== */
+        .splash-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            max-width: 620px;
+            background: rgba(10, 16, 24, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 38px 28px 32px;
+            border: 1px solid rgba(240, 185, 11, 0.15);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            animation: containerPulse 3.2s ease-in-out infinite;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        @keyframes containerPulse {
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+            }
+            50% {
+                transform: scale(1.008);
+                box-shadow: 0 50px 120px rgba(240, 185, 11, 0.06);
+            }
+        }
+
+        .splash-card.fade-out {
+            opacity: 0;
+            transform: scale(0.94) translateY(8px);
+            pointer-events: none;
+        }
+
+        /* ===== CONTENT ===== */
+        .splash-content {
+            text-align: center;
+            width: 100%;
+        }
+
+        .big-emoji {
+            font-size: 4.8rem;
+            display: block;
+            margin-bottom: 2px;
+            filter: drop-shadow(0 8px 30px rgba(240, 185, 11, 0.25));
+            animation: emojiFloat 3.6s ease-in-out infinite;
+            line-height: 1.2;
+        }
+
+        @keyframes emojiFloat {
+            0%,
+            100% {
+                transform: translateY(0) rotate(-1deg);
+            }
+            50% {
+                transform: translateY(-14px) rotate(1deg);
+            }
+        }
+
+        .splash-content h1 {
+            font-size: 3.4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #F0B90B, #FFD966, #F0B90B);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 3px;
+            animation: shimmerLogo 3.4s ease-in-out infinite;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.1;
+            margin-top: 2px;
+            text-shadow: 0 0 80px rgba(240, 185, 11, 0.08);
+        }
+
+        @keyframes shimmerLogo {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .splash-content .subtitle {
+            font-size: 1rem;
+            color: #8a9aaa;
+            letter-spacing: 3px;
+            margin-top: 0px;
+            font-weight: 400;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .splash-content .lvl-info {
+            color: #F0B90B;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-top: 14px;
+            text-shadow: 0 0 60px rgba(240, 185, 11, 0.2);
+            letter-spacing: 2px;
+        }
+
+        .splash-content .desc {
+            color: #b8c8d8;
+            font-size: 1.2rem;
+            margin-top: 2px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .splash-content .goal {
+            color: #6a7a8a;
+            font-size: 0.95rem;
+            margin-top: 10px;
+            letter-spacing: 0.3px;
+            font-weight: 300;
+            border-top: 1px solid rgba(43, 49, 57, 0.3);
+            padding-top: 12px;
+            display: inline-block;
+        }
+
+        /* ===== LOADING BAR ===== */
+        .loading-wrap {
+            margin-top: 28px;
+            width: 100%;
+            max-width: 380px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(43, 49, 57, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-bar .fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #F0B90B, #FFD966, #F0B90B);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            animation: loadProgress 20s ease-in-out forwards, shimmerBar 2s linear infinite;
+            box-shadow: 0 0 30px rgba(240, 185, 11, 0.2);
+        }
+
+        @keyframes loadProgress {
+            0% {
+                width: 0%;
+            }
+            10% {
+                width: 8%;
+            }
+            25% {
+                width: 22%;
+            }
+            40% {
+                width: 38%;
+            }
+            55% {
+                width: 52%;
+            }
+            70% {
+                width: 68%;
+            }
+            85% {
+                width: 85%;
+            }
+            95% {
+                width: 95%;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+
+        @keyframes shimmerBar {
+            0% {
+                background-position: 0% 0%;
+            }
+            100% {
+                background-position: 200% 0%;
+            }
+        }
+
+        .loading-percent {
+            font-size: 0.8rem;
+            color: #5a6a7a;
+            text-align: right;
+            margin-top: 6px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ===== STATUS MESSAGES ===== */
+        .status-message {
+            margin-top: 22px;
+            min-height: 2.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            padding: 6px 18px;
+            border-radius: 40px;
+            border: 1px solid rgba(43, 49, 57, 0.2);
+            backdrop-filter: blur(4px);
+        }
+
+        .status-message .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid rgba(240, 185, 11, 0.15);
+            border-top-color: #F0B90B;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-message .msg-text {
+            font-size: 0.95rem;
+            color: #aab8c8;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+            transition: opacity 0.3s ease;
+        }
+
+        .status-message .msg-text .highlight {
+            color: #F0B90B;
+            font-weight: 500;
+        }
+
+        .status-message .dots::after {
+            content: '';
+            animation: dotsAnim 1.6s steps(4, end) infinite;
+        }
+
+        @keyframes dotsAnim {
+            0% {
+                content: '';
+            }
+            25% {
+                content: '.';
+            }
+            50% {
+                content: '..';
+            }
+            75% {
+                content: '...';
+            }
+            100% {
+                content: '';
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        .splash-footer {
+            margin-top: 28px;
+            font-size: 0.7rem;
+            color: #3a4555;
+            letter-spacing: 0.5px;
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(43, 49, 57, 0.2);
+            padding-top: 18px;
+            width: 100%;
+        }
+
+        .splash-footer .badge {
+            background: rgba(43, 49, 57, 0.25);
+            padding: 3px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(43, 49, 57, 0.15);
+            font-weight: 500;
+            color: #6a7a8a;
+            font-size: 0.7rem;
+        }
+
+        .splash-footer .badge .emoji {
+            font-size: 0.8rem;
+        }
+
+        /* ===== ПОДСКАЗКА (инфо о танке) ===== */
+        #tank-info {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            font-family: 'Inter', sans-serif;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 6px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            pointer-events: none;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 1.2s ease 1s;
+        }
+
+        #tank-info.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            #tank-info {
+                font-size: 0.55rem;
+                bottom: 20px;
+                padding: 4px 12px;
+            }
+        }
+
+        /* ===== ТЕРМИНАЛ В ЛЕВОМ ВЕРХНЕМ УГЛУ ===== */
+        #terminal-overlay {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.85);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid #0f0;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.15);
+            max-width: 380px;
+            max-height: 260px;
+            overflow: auto;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        #terminal-overlay.visible {
+            opacity: 1;
+        }
+
+        #terminal-overlay .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background: #0f0;
+            animation: blink 0.8s step-end infinite;
+            vertical-align: text-bottom;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Скрываем полосу прокрутки для эстетики */
+        #terminal-overlay::-webkit-scrollbar {
+            width: 4px;
+        }
+        #terminal-overlay::-webkit-scrollbar-track {
+            background: rgba(0, 255, 0, 0.05);
+        }
+        #terminal-overlay::-webkit-scrollbar-thumb {
+            background: #0f0;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 480px) {
+            #terminal-overlay {
+                font-size: 11px;
+                max-width: 200px;
+                max-height: 180px;
+                padding: 12px 14px;
+                top: 10px;
+                left: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== TANK CONTAINER (фон) ===== -->
+    <div id="tank-container"></div>
+
+    <!-- ===== TANK INFO (подсказка) ===== -->
+    <div id="tank-info">🖱️ Вращайте · 🎯 Bloom · 🏔️ Ландшафт</div>
+
+    <!-- ===== ТЕРМИНАЛ В ЛЕВОМ ВЕРХНЕМ УГЛУ ===== -->
+    <div id="terminal-overlay">
+        <div id="terminal-output"></div>
+        <span class="cursor"></span>
+    </div>
+
+    <!-- ===== SPLASH OVERLAY ===== -->
+    <div class="splash-overlay" id="splashOverlay">
+        <div class="splash-card" id="splashCard">
+
+            <div class="splash-content">
+
+                <span class="big-emoji">🏕️</span>
+                <h1>Битва титанов</h1>
+                <p class="subtitle">TANK BATTLE</p>
+
+                <div class="lvl-info" id="splashLevel">УРОВЕНЬ 1</div>
+                <div class="desc" id="splashDesc">🌊 Океанский берег</div>
+                <div class="goal">Уничтожьте базу противника, чтобы победить!</div>
+
+                <div class="loading-wrap">
+                    <div class="loading-bar">
+                        <div class="fill" id="progressFill"></div>
+                    </div>
+                    <div class="loading-percent" id="percentText">0%</div>
+                </div>
+
+                <div class="status-message" id="statusMessage">
+                    <span class="spinner"></span>
+                    <span class="msg-text" id="msgText">Загрузка игровых ресурсов<span class="dots"></span></span>
+                </div>
+
+                <!-- Кнопка продолжения удалена, переход автоматический -->
+
+                <div class="splash-footer">
+                    <span class="badge"><span class="emoji">🎮</span> v2.0</span>
+                    <span class="badge"><span class="emoji">⚡</span> 10 уровней</span>
+                    <span class="badge"><span class="emoji">🌍</span> Битва титанов</span>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- THREE.JS ТАНК (ES Module)                                    -->
+    <!-- ============================================================ -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        // ----- ИМПОРТЫ -----
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        // ----- КОНТЕЙНЕР -----
+        const container = document.getElementById('tank-container');
+
+        // ----- 1. СЦЕНА, КАМЕРА, РЕНДЕРЕР -----
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a2b3c);
+        scene.fog = new THREE.FogExp2(0x1a2b3c, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+        camera.position.set(12, 8, 14);
+        camera.lookAt(0, 1.5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.0;
+        container.appendChild(renderer.domElement);
+
+        // ----- 2. ПОСТ-ОБРАБОТКА (BLOOM) -----
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.4, // сила
+            0.2, // радиус
+            0.1 // порог
+        );
+        composer.addPass(bloomPass);
+
+        // ----- 3. УПРАВЛЕНИЕ -----
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.5, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 5;
+        controls.maxDistance = 30;
+        controls.maxPolarAngle = Math.PI / 2.1;
+        controls.update();
+
+        // ----- 4. ОСВЕЩЕНИЕ -----
+        const ambient = new THREE.AmbientLight(0x404060, 0.5);
+        scene.add(ambient);
+
+        const mainLight = new THREE.DirectionalLight(0xffeedd, 1.5);
+        mainLight.position.set(10, 15, 8);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.near = 0.5;
+        mainLight.shadow.camera.far = 40;
+        mainLight.shadow.camera.left = -15;
+        mainLight.shadow.camera.right = 15;
+        mainLight.shadow.camera.top = 15;
+        mainLight.shadow.camera.bottom = -15;
+        mainLight.shadow.bias = -0.001;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.8);
+        fillLight.position.set(-8, 5, -10);
+        scene.add(fillLight);
+
+        const bottomLight = new THREE.DirectionalLight(0x446688, 0.3);
+        bottomLight.position.set(0, -5, 5);
+        scene.add(bottomLight);
+
+        // ----- 5. ЛАНДШАФТ -----
+        const groundSize = 30;
+        const segments = 64;
+        const groundGeo = new THREE.PlaneGeometry(groundSize, groundSize, segments, segments);
+        groundGeo.rotateX(-Math.PI / 2);
+        const pos = groundGeo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const x = pos.getX(i);
+            const z = pos.getZ(i);
+            let y = 0;
+            y += 0.8 * Math.sin(x * 0.3) * Math.cos(z * 0.25);
+            y += 0.5 * Math.sin(x * 0.7 + 1.2) * Math.cos(z * 0.6 + 0.8);
+            y += 0.3 * Math.sin(x * 1.5) * Math.sin(z * 1.2);
+            pos.setY(i, y);
+        }
+        groundGeo.computeVertexNormals();
+
+        const groundMat = new THREE.MeshStandardMaterial({
+            color: 0x3a5a3a,
+            roughness: 0.9,
+            metalness: 0.1,
+            flatShading: false,
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.receiveShadow = true;
+        ground.castShadow = false;
+        scene.add(ground);
+
+        // ----- 6. ДЕРЕВЬЯ -----
+        function getGroundHeight(x, z) {
+            let y = 0;
+            y += 0.8 * Math.sin(x * 0.3) * Math.cos(z * 0.25);
+            y += 0.5 * Math.sin(x * 0.7 + 1.2) * Math.cos(z * 0.6 + 0.8);
+            y += 0.3 * Math.sin(x * 1.5) * Math.sin(z * 1.2);
+            return y;
+        }
+
+        function createTree(x, z, scale = 1) {
+            const group = new THREE.Group();
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.9 });
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2 * scale, 0.3 * scale, 0.8 * scale, 6), trunkMat);
+            trunk.position.y = 0.4 * scale;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            group.add(trunk);
+
+            const leafMat = new THREE.MeshStandardMaterial({ color: 0x2a7a2a, roughness: 0.8 });
+            const leaf1 = new THREE.Mesh(new THREE.ConeGeometry(0.8 * scale, 0.8 * scale, 8), leafMat);
+            leaf1.position.y = 0.8 * scale + 0.4 * scale;
+            leaf1.castShadow = true;
+            leaf1.receiveShadow = true;
+            group.add(leaf1);
+            const leaf2 = new THREE.Mesh(new THREE.ConeGeometry(0.6 * scale, 0.7 * scale, 8), leafMat);
+            leaf2.position.y = 1.2 * scale + 0.5 * scale;
+            leaf2.castShadow = true;
+            leaf2.receiveShadow = true;
+            group.add(leaf2);
+
+            const yGround = getGroundHeight(x, z);
+            group.position.set(x, yGround, z);
+            return group;
+        }
+
+        const treePositions = [
+            [-6, -5],
+            [5, -6],
+            [-5, 6],
+            [7, 4],
+            [-7, -3],
+            [4, -7],
+            [-4, 7],
+            [8, -2],
+            [-8, 2]
+        ];
+        treePositions.forEach(([x, z]) => {
+            const tree = createTree(x, z, 0.7 + Math.random() * 0.6);
+            scene.add(tree);
+        });
+
+        // ----- 7. ТРАВА (InstancedMesh) -----
+        const bladeMat = new THREE.MeshStandardMaterial({ color: 0x3a8a3a, roughness: 0.8 });
+        const bladeGeo = new THREE.PlaneGeometry(0.08, 0.3);
+        const bladeCount = 800;
+        const mesh = new THREE.InstancedMesh(bladeGeo, bladeMat, bladeCount);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        const dummy = new THREE.Object3D();
+        for (let i = 0; i < bladeCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = 2 + Math.random() * 12;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const yGround = getGroundHeight(x, z);
+            dummy.position.set(x, yGround, z);
+            dummy.rotation.y = Math.random() * Math.PI * 2;
+            dummy.rotation.x = -Math.PI / 2 + (Math.random() - 0.5) * 0.4;
+            dummy.scale.set(1, 1 + Math.random() * 0.5, 1);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+        }
+        mesh.instanceMatrix.needsUpdate = true;
+        scene.add(mesh);
+
+        // ----- 8. ТАНК -----
+        const tank = new THREE.Group();
+        tank.position.y = 0.0;
+
+        const bodyMat = new THREE.MeshPhysicalMaterial({
+            color: 0x4d7a4d,
+            roughness: 0.5,
+            metalness: 0.3,
+            clearcoat: 0.2,
+        });
+        const turretMat = new THREE.MeshPhysicalMaterial({
+            color: 0x5a8a5a,
+            roughness: 0.4,
+            metalness: 0.4,
+            clearcoat: 0.3,
+        });
+        const barrelMat = new THREE.MeshPhysicalMaterial({
+            color: 0x3a4a3a,
+            roughness: 0.3,
+            metalness: 0.7,
+        });
+        const trackMat = new THREE.MeshPhysicalMaterial({
+            color: 0x222222,
+            roughness: 0.9,
+            metalness: 0.1,
+        });
+        const wheelMat = new THREE.MeshPhysicalMaterial({
+            color: 0x1a1a1a,
+            roughness: 0.7,
+            metalness: 0.2,
+        });
+        const rimMat = new THREE.MeshPhysicalMaterial({
+            color: 0x333333,
+            roughness: 0.4,
+            metalness: 0.6,
+        });
+        const lightMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffaa44,
+            emissive: 0xff6600,
+            emissiveIntensity: 1.0,
+            roughness: 0.2,
+        });
+
+        // Корпус
+        const body = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.2, 5.0), bodyMat);
+        body.position.y = 0.6;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        tank.add(body);
+
+        const slopeMat = new THREE.MeshPhysicalMaterial({ color: 0x4a7a4a, roughness: 0.5, metalness: 0.3 });
+        const frontSlope = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.3, 0.6), slopeMat);
+        frontSlope.position.set(0, 1.0, 2.7);
+        frontSlope.rotation.x = 0.4;
+        frontSlope.castShadow = true;
+        frontSlope.receiveShadow = true;
+        tank.add(frontSlope);
+
+        const backSlope = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.3, 0.6), slopeMat);
+        backSlope.position.set(0, 1.0, -2.7);
+        backSlope.rotation.x = -0.4;
+        backSlope.castShadow = true;
+        backSlope.receiveShadow = true;
+        tank.add(backSlope);
+
+        const sideMat = new THREE.MeshPhysicalMaterial({ color: 0x4a7a4a, roughness: 0.6, metalness: 0.2 });
+        const sideGeo = new THREE.BoxGeometry(0.2, 0.8, 4.2);
+        const sideLeft = new THREE.Mesh(sideGeo, sideMat);
+        sideLeft.position.set(-1.9, 0.8, 0);
+        sideLeft.castShadow = true;
+        sideLeft.receiveShadow = true;
+        tank.add(sideLeft);
+        const sideRight = new THREE.Mesh(sideGeo, sideMat);
+        sideRight.position.set(1.9, 0.8, 0);
+        sideRight.castShadow = true;
+        sideRight.receiveShadow = true;
+        tank.add(sideRight);
+
+        // Башня
+        const turretBase = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.8, 0.9, 24), turretMat);
+        turretBase.position.set(0, 1.5, 0.2);
+        turretBase.castShadow = true;
+        turretBase.receiveShadow = true;
+        tank.add(turretBase);
+
+        const turretTop = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2), turretMat);
+        turretTop.position.set(0, 2.0, 0.2);
+        turretTop.scale.set(1, 0.5, 1);
+        turretTop.castShadow = true;
+        turretTop.receiveShadow = true;
+        tank.add(turretTop);
+
+        const cupolaMat = new THREE.MeshPhysicalMaterial({ color: 0x6a8a5a, roughness: 0.4, metalness: 0.3 });
+        const cupola = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.4, 12), cupolaMat);
+        cupola.position.set(0.5, 2.3, -0.3);
+        cupola.castShadow = true;
+        cupola.receiveShadow = true;
+        tank.add(cupola);
+        const hatch2 = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.1, 8), cupolaMat);
+        hatch2.position.set(0.5, 2.5, -0.3);
+        hatch2.castShadow = true;
+        hatch2.receiveShadow = true;
+        tank.add(hatch2);
+
+        // Ствол
+        const barrelGroup = new THREE.Group();
+        barrelGroup.position.set(0, 1.9, 1.0);
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 2.8, 12), barrelMat);
+        barrel.rotation.x = Math.PI / 2;
+        barrel.position.z = 1.5;
+        barrel.castShadow = true;
+        barrel.receiveShadow = true;
+        barrelGroup.add(barrel);
+        const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.4, 8), barrelMat);
+        muzzle.rotation.x = Math.PI / 2;
+        muzzle.position.z = 3.1;
+        muzzle.castShadow = true;
+        muzzle.receiveShadow = true;
+        barrelGroup.add(muzzle);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 8, 12), barrelMat);
+        ring.rotation.y = Math.PI / 2;
+        ring.position.z = 1.8;
+        ring.castShadow = true;
+        ring.receiveShadow = true;
+        barrelGroup.add(ring);
+        tank.add(barrelGroup);
+
+        // Гусеницы
+        const trackWidth = 0.7;
+        const trackHeight = 0.5;
+        const trackLength = 5.4;
+        const trackGeo = new THREE.BoxGeometry(trackWidth, trackHeight, trackLength);
+        const trackLeft = new THREE.Mesh(trackGeo, trackMat);
+        trackLeft.position.set(-2.2, 0.4, 0);
+        trackLeft.castShadow = true;
+        trackLeft.receiveShadow = true;
+        tank.add(trackLeft);
+        const trackRight = new THREE.Mesh(trackGeo, trackMat);
+        trackRight.position.set(2.2, 0.4, 0);
+        trackRight.castShadow = true;
+        trackRight.receiveShadow = true;
+        tank.add(trackRight);
+
+        // Траки
+        const trackSegmentMat = new THREE.MeshPhysicalMaterial({ color: 0x333333, roughness: 0.8 });
+        const trackSegments = [];
+        for (let side = -1; side <= 1; side += 2) {
+            for (let i = -2.4; i <= 2.4; i += 0.5) {
+                const seg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.4), trackSegmentMat);
+                seg.position.set(side * 2.2, 0.2, i);
+                seg.castShadow = true;
+                seg.receiveShadow = true;
+                tank.add(seg);
+                trackSegments.push({ mesh: seg, side, offset: i });
+            }
+        }
+
+        // Колеса
+        const wheelPositions = [-2.0, -0.7, 0.7, 2.0];
+        const wheels = [];
+        wheelPositions.forEach(z => {
+            const wheelL = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.25, 16), wheelMat);
+            wheelL.rotation.x = Math.PI / 2;
+            wheelL.position.set(-1.9, 0.4, z);
+            wheelL.castShadow = true;
+            wheelL.receiveShadow = true;
+            tank.add(wheelL);
+            const rimL = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 8, 12), rimMat);
+            rimL.rotation.x = Math.PI / 2;
+            rimL.position.set(-1.9, 0.4, z);
+            rimL.castShadow = true;
+            rimL.receiveShadow = true;
+            tank.add(rimL);
+            const wheelR = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.25, 16), wheelMat);
+            wheelR.rotation.x = Math.PI / 2;
+            wheelR.position.set(1.9, 0.4, z);
+            wheelR.castShadow = true;
+            wheelR.receiveShadow = true;
+            tank.add(wheelR);
+            const rimR = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.08, 8, 12), rimMat);
+            rimR.rotation.x = Math.PI / 2;
+            rimR.position.set(1.9, 0.4, z);
+            rimR.castShadow = true;
+            rimR.receiveShadow = true;
+            tank.add(rimR);
+            wheels.push(wheelL, wheelR);
+        });
+
+        // Фары
+        const headlightMat = new THREE.MeshPhysicalMaterial({
+            color: 0xffdd99,
+            emissive: 0xff8800,
+            emissiveIntensity: 1.5,
+            roughness: 0.2,
+        });
+        const headlightGeo = new THREE.SphereGeometry(0.25, 8, 8);
+        const headlightLeft = new THREE.Mesh(headlightGeo, headlightMat);
+        headlightLeft.position.set(-1.2, 1.1, 2.8);
+        headlightLeft.castShadow = true;
+        tank.add(headlightLeft);
+        const headlightRight = new THREE.Mesh(headlightGeo, headlightMat);
+        headlightRight.position.set(1.2, 1.1, 2.8);
+        headlightRight.castShadow = true;
+        tank.add(headlightRight);
+
+        // Выхлоп
+        const exhaustMat = new THREE.MeshPhysicalMaterial({ color: 0x555555, roughness: 0.5, metalness: 0.6 });
+        const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.6, 8), exhaustMat);
+        exhaust.position.set(1.0, 0.5, -2.9);
+        exhaust.rotation.x = Math.PI / 2;
+        exhaust.castShadow = true;
+        exhaust.receiveShadow = true;
+        tank.add(exhaust);
+
+        // Антенна
+        const antennaMat = new THREE.MeshPhysicalMaterial({ color: 0xaaaaaa, roughness: 0.3, metalness: 0.8 });
+        const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 1.0, 4), antennaMat);
+        antenna.position.set(-0.8, 2.5, -0.2);
+        antenna.castShadow = true;
+        antenna.receiveShadow = true;
+        tank.add(antenna);
+        const tipMat = new THREE.MeshPhysicalMaterial({
+            color: 0xff4444,
+            emissive: 0xff2222,
+            emissiveIntensity: 2.0,
+        });
+        const tip = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6), tipMat);
+        tip.position.set(-0.8, 3.0, -0.2);
+        tip.castShadow = true;
+        tank.add(tip);
+
+        const tankY = getGroundHeight(0, 0) + 0.1;
+        tank.position.y = tankY;
+        scene.add(tank);
+
+        // ----- 9. АНИМАЦИЯ ТАНКА -----
+        let clock = new THREE.Clock();
+
+        function animateTank() {
+            const delta = clock.getDelta();
+            const elapsed = performance.now() / 1000;
+
+            const turretAngle = Math.sin(elapsed * 0.25) * 0.8;
+            turretBase.rotation.y = turretAngle;
+            turretTop.rotation.y = turretAngle;
+            cupola.rotation.y = turretAngle;
+            hatch2.rotation.y = turretAngle;
+            barrelGroup.rotation.y = turretAngle;
+            const barrelElevation = Math.sin(elapsed * 0.4) * 0.15 + 0.1;
+            barrelGroup.rotation.x = barrelElevation;
+
+            const wheelSpeed = 2.5;
+            const angle = elapsed * wheelSpeed;
+            wheels.forEach(w => {
+                w.rotation.z = angle;
+            });
+
+            trackSegments.forEach(seg => {
+                let offset = seg.offset;
+                offset += elapsed * 0.8;
+                offset = ((offset % 4.8) + 4.8) % 4.8 - 2.4;
+                seg.mesh.position.z = offset;
+            });
+
+            tank.position.y = tankY + Math.sin(elapsed * 0.6) * 0.03;
+
+            controls.update();
+            composer.render();
+            requestAnimationFrame(animateTank);
+        }
+
+        animateTank();
+
+        // ----- 10. АДАПТАЦИЯ -----
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            composer.setSize(w, h);
+        });
+
+        // Показываем подсказку после скрытия заставки
+        const tankInfo = document.getElementById('tank-info');
+        window.__revealTank = function() {
+            tankInfo.classList.add('visible');
+        };
+
+        console.log('🚀 3D Танк загружен и ждёт!');
+    </script>
+
+    <!-- ============================================================ -->
+    <!-- SPLEШ JS (обычный)                                            -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            // DOM
+            const overlay = document.getElementById('splashOverlay');
+            const card = document.getElementById('splashCard');
+            const splashLevel = document.getElementById('splashLevel');
+            const splashDesc = document.getElementById('splashDesc');
+            const msgText = document.getElementById('msgText');
+            const percentText = document.getElementById('percentText');
+            const progressFill = document.getElementById('progressFill');
+
+            // Терминал
+            const terminalOverlay = document.getElementById('terminal-overlay');
+            const terminalOutput = document.getElementById('terminal-output');
+
+            // Фразы
+            const PHRASES = [
+                'Загрузка звуковых эффектов…',
+                'Компиляция шейдеров…',
+                'Инициализация физического движка…',
+                'Загрузка игровых уровней…',
+                'Синхронизация с сервером…',
+                'Подготовка текстур высокого разрешения…',
+                'Загрузка анимаций персонажей…',
+                'Проверка целостности файлов…',
+                'Настройка управления…',
+                'Загрузка сохранённых данных…',
+                'Прогрев кэша графики…',
+                'Финализация (осталось пару секунд)…'
+            ];
+
+            // Сообщения для терминала
+            const TERMINAL_MESSAGES = [
+                '[SYSTEM] Инициализация ядра...',
+                '[NET] Установка соединения с сервером...',
+                '[LOAD] Загрузка конфигурации окружения...',
+                '[DATA] Получение карты местности...',
+                '[AI] Анализ тактической обстановки...',
+                '[RADAR] Сканирование целей...',
+                '[WEAPON] Калибровка орудийной установки...',
+                '[ENGINE] Запуск двигателя...',
+                '[STATUS] Все системы готовы к работе.',
+                '[MISSION] Приказ: уничтожить базу противника!'
+            ];
+
+            const SPLASH_DURATION = 20000;
+            const PHRASE_INTERVAL = 1500;
+            let startTime = performance.now();
+            let phraseIndex = 0;
+            let phraseTimer = null;
+            let animationFrame = null;
+            let isFinished = false;
+
+            // Переменные для терминала
+            let termInterval = null;
+            let termMsgIndex = 0;
+
+            // ----- UPDATE PROGRESS -----
+            function updateProgress(elapsed) {
+                const progress = Math.min(elapsed / SPLASH_DURATION, 1);
+                const percent = Math.round(progress * 100);
+                percentText.textContent = percent + '%';
+                progressFill.style.width = percent + '%';
+                return progress;
+            }
+
+            // ----- UPDATE PHRASE -----
+            function updatePhrase() {
+                if (isFinished) return;
+                const phrase = PHRASES[phraseIndex % PHRASES.length];
+                msgText.innerHTML = phrase + '<span class="dots"></span>';
+                phraseIndex++;
+            }
+
+            // ----- SPLASH LOOP -----
+            function splashLoop() {
+                if (isFinished) return;
+                const now = performance.now();
+                const elapsed = now - startTime;
+                updateProgress(elapsed);
+
+                if (elapsed >= SPLASH_DURATION) {
+                    finishSplash();
+                    return;
+                }
+                animationFrame = requestAnimationFrame(splashLoop);
+            }
+
+            // ----- ЗАПУСК ТЕРМИНАЛА -----
+            function startTerminal() {
+                terminalOverlay.classList.add('visible');
+                terminalOutput.textContent = ''; // очищаем
+                termMsgIndex = 0;
+
+                if (termInterval) clearInterval(termInterval);
+
+                termInterval = setInterval(() => {
+                    if (termMsgIndex < TERMINAL_MESSAGES.length) {
+                        terminalOutput.textContent += TERMINAL_MESSAGES[termMsgIndex] + '\n';
+                        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                        termMsgIndex++;
+                    } else {
+                        // Если все сообщения выведены, просто оставляем курсор
+                        // Можно ничего не делать, курсор мигает
+                    }
+                }, 650);
+            }
+
+            // ----- ОСТАНОВКА ТЕРМИНАЛА (необязательно, но для чистоты) -----
+            function stopTerminal() {
+                if (termInterval) {
+                    clearInterval(termInterval);
+                    termInterval = null;
+                }
+                // Можно оставить терминал видимым, но мы его скроем при переходе
+            }
+
+            // ----- FINISH SPLASH -----
+            function finishSplash() {
+                if (isFinished) return;
+                isFinished = true;
+
+                if (phraseTimer) {
+                    clearInterval(phraseTimer);
+                    phraseTimer = null;
+                }
+                if (animationFrame) {
+                    cancelAnimationFrame(animationFrame);
+                    animationFrame = null;
+                }
+
+                percentText.textContent = '100%';
+                progressFill.style.width = '100%';
+                msgText.innerHTML = '✅ Готово! Добро пожаловать в игру!';
+
+                // Скрываем заставку, показываем 3D сцену и подсказку
+                overlay.classList.add('hidden');
+                if (window.__revealTank) {
+                    window.__revealTank();
+                }
+
+                // Запускаем терминал
+                startTerminal();
+
+                // Ждём 10 секунд и переходим на вторую страницу
+                setTimeout(function() {
+                    stopTerminal(); // очистка интервала
+                    window.location.href = 'https://demival82.github.io/Tank/Tank2.html';
+                }, 10000);
+            }
+
+            // ----- ЗАПУСК СПЛЕША -----
+            function startSplash() {
+                overlay.classList.remove('hidden');
+                card.classList.remove('fade-out');
+                isFinished = false;
+                phraseIndex = 0;
+                startTime = performance.now();
+
+                updatePhrase();
+                if (animationFrame) cancelAnimationFrame(animationFrame);
+                animationFrame = requestAnimationFrame(splashLoop);
+
+                if (phraseTimer) clearInterval(phraseTimer);
+                phraseTimer = setInterval(updatePhrase, PHRASE_INTERVAL);
+            }
+
+            // ----- API -----
+            window.__splash = {
+                start: startSplash,
+                finish: finishSplash,
+                setLevel: function(lv, desc) {
+                    splashLevel.textContent = 'УРОВЕНЬ ' + lv;
+                    splashDesc.textContent = desc || '🌊 Океанский берег';
+                },
+                getDuration: function() { return SPLASH_DURATION; }
+            };
+
+            // ----- АВТОЗАПУСК -----
+            (function autoStart() {
+                const params = new URLSearchParams(window.location.search);
+                const lv = params.get('level') || '1';
+                const desc = params.get('desc') || '🌊 Океанский берег';
+                window.__splash.setLevel(lv, desc);
+                window.__splash.start();
+
+                console.log(`🎬 Заставка запущена на ${SPLASH_DURATION / 1000} секунд`);
+                console.log(`📌 Уровень ${lv}, описание: ${desc}`);
+            })();
+
+        })();
+    </script>
+
+</body>
+</html>
