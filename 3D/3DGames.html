@@ -1,0 +1,2290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Лабиринт Забытых Плодов</title>
+    <style>
+        /* ===== Базовые стили ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #0a0a0a; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Courier New', monospace; overflow: hidden; touch-action: none; }
+        #gameWrapper { position: relative; border: 3px solid #4a3f2b; border-radius: 12px; box-shadow: 0 0 40px rgba(200,50,0,0.6), inset 0 0 20px rgba(200,50,0,0.2); background: #000; max-width: 100vw; max-height: 100vh; }
+        canvas { display: block; width: 100%; height: auto; background: #000; cursor: crosshair; border-radius: 10px; }
+
+        /* HUD */
+        #hud { position: absolute; top: 12px; left: 12px; color: #0f0; font-size: 18px; text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 10; display: flex; gap: 12px; flex-wrap: wrap; background: rgba(0,0,0,0.5); padding: 6px 14px; border-radius: 30px; backdrop-filter: blur(2px); border: 1px solid #444; }
+        #hud span { padding: 2px 10px; border-radius: 20px; background: rgba(0,0,0,0.4); }
+        #hud .health { border: 1px solid #0f0; color: #0f0; }
+        #hud .fruits { border: 1px solid #ffcc00; color: #ffcc00; }
+        #hud .autopilot { border: 1px solid #00ccff; color: #00ccff; }
+        #hud .walls { border: 1px solid #ff4444; color: #ff4444; }
+        #hud .robot-fruits { border: 1px solid #ff8800; color: #ff8800; }
+
+        #hud-right {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 12px;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+            border: 1px solid #444;
+        }
+        #pauseBtn {
+            background: transparent;
+            border: 2px solid #ffcc00;
+            color: #ffcc00;
+            font-size: 18px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: 0.2s;
+            pointer-events: all;
+        }
+        #pauseBtn:hover { background: #ffcc00; color: #000; box-shadow: 0 0 20px rgba(255,200,0,0.3); }
+
+        #toggleControlsBtn {
+            background: transparent;
+            border: 2px solid #888;
+            color: #ddd;
+            font-size: 18px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: 0.2s;
+            pointer-events: all;
+            line-height: 1;
+        }
+        #toggleControlsBtn:hover {
+            background: #555;
+            border-color: #aaa;
+        }
+        #toggleControlsBtn.hidden-active {
+            border-color: #ff8800;
+            color: #ff8800;
+            box-shadow: 0 0 12px rgba(255,136,0,0.3);
+        }
+
+        #toggleSettingsBtn {
+            background: transparent;
+            border: 2px solid #888;
+            color: #ddd;
+            font-size: 18px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: 0.2s;
+            pointer-events: all;
+            line-height: 1;
+        }
+        #toggleSettingsBtn:hover {
+            background: #555;
+            border-color: #aaa;
+        }
+        #toggleSettingsBtn.hidden-active {
+            border-color: #ff8800;
+            color: #ff8800;
+            box-shadow: 0 0 12px rgba(255,136,0,0.3);
+        }
+
+        #toggleAutoBtn {
+            background: transparent;
+            border: 2px solid #888;
+            color: #ddd;
+            font-size: 18px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: 0.2s;
+            pointer-events: all;
+            line-height: 1;
+        }
+        #toggleAutoBtn:hover {
+            background: #555;
+            border-color: #aaa;
+        }
+        #toggleAutoBtn.active {
+            border-color: #00ccff;
+            color: #00ccff;
+            box-shadow: 0 0 12px rgba(0,204,255,0.3);
+        }
+
+        #crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); color: #ff0; font-size: 30px; pointer-events: none; z-index: 20; text-shadow: 0 0 10px #f00, 0 0 20px #f00; opacity: 0.9; }
+        #message { position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #ffcc00; padding: 10px 30px; border: 2px solid #ff8800; border-radius: 30px; font-size: 24px; font-weight: bold; text-shadow: 0 0 15px #ff6600; pointer-events: none; z-index: 30; white-space: nowrap; transition: opacity 0.4s; opacity: 0; box-shadow: 0 0 30px rgba(255,100,0,0.3); }
+        #message.show { opacity: 1; }
+
+        /* ===== НАСТРОЙКИ ===== */
+        #settings {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 20px;
+            border-radius: 40px;
+            border: 1px solid #666;
+            backdrop-filter: blur(4px);
+            z-index: 35;
+            flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            pointer-events: all;
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        }
+        #settings.hidden {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.95);
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #settings label {
+            color: #ddd;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #settings input[type="range"] {
+            width: 120px;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #555;
+            border-radius: 2px;
+            outline: none;
+        }
+        #settings input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffcc00;
+            cursor: pointer;
+        }
+        #settings .speed-value {
+            color: #ffcc00;
+            font-weight: bold;
+            min-width: 40px;
+            text-align: center;
+        }
+        #settings .console {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            background: #222;
+            padding: 4px 8px;
+            border-radius: 20px;
+            border: 1px solid #555;
+        }
+        #settings .console input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            width: 120px;
+            outline: none;
+            padding: 4px;
+        }
+        #settings .console input::placeholder { color: #666; }
+        #settings .console button {
+            background: #444;
+            border: none;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        #settings .console button:hover { background: #666; }
+        #settings .console .output {
+            color: #0f0;
+            font-size: 13px;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 700px) {
+            #settings { bottom: 80px; padding: 6px 12px; gap: 10px; flex-wrap: wrap; }
+            #settings label { font-size: 14px; }
+            #settings input[type="range"] { width: 80px; }
+            #settings .console input { width: 80px; font-size: 12px; }
+            #settings .console .output { min-width: 60px; font-size: 12px; }
+            #hud-right { padding: 4px 8px; gap: 6px; }
+            #pauseBtn { font-size: 14px; padding: 3px 10px; }
+            #toggleControlsBtn, #toggleSettingsBtn, #toggleAutoBtn { font-size: 14px; padding: 3px 8px; }
+        }
+        @media (max-width: 500px) {
+            #settings { bottom: 70px; padding: 4px 8px; gap: 6px; }
+            #settings label { font-size: 12px; }
+            #settings input[type="range"] { width: 60px; }
+            #settings .console input { width: 60px; font-size: 11px; }
+            #settings .console button { font-size: 11px; padding: 2px 8px; }
+            #hud-right { padding: 3px 6px; gap: 4px; }
+            #pauseBtn { font-size: 12px; padding: 2px 8px; }
+            #toggleControlsBtn, #toggleSettingsBtn, #toggleAutoBtn { font-size: 12px; padding: 2px 6px; }
+        }
+
+        /* Блок управления */
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            z-index: 40;
+            background: rgba(0,0,0,0.65);
+            padding: 12px 18px;
+            border-radius: 60px;
+            border: 1px solid #555;
+            backdrop-filter: blur(4px);
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.8);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        }
+        #controls.hidden {
+            opacity: 0;
+            transform: translateX(-50%) scale(0.95);
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .ctrl-group { display: flex; gap: 6px; align-items: center; }
+        .ctrl-group .dir {
+            display: grid;
+            grid-template-columns: 48px 48px 48px;
+            grid-template-rows: 48px 48px 48px;
+            gap: 4px;
+        }
+        .ctrl-group .dir button {
+            width: 100%; height: 100%;
+            border-radius: 12px;
+            background: #2a2a2a;
+            border: 2px solid #555;
+            color: #ddd;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .ctrl-group .dir button:active { background: #555; transform: scale(0.92); }
+        .ctrl-group .dir .empty { background: transparent; border: none; box-shadow: none; cursor: default; }
+        .ctrl-group .dir .up { grid-column: 2; grid-row: 1; }
+        .ctrl-group .dir .left { grid-column: 1; grid-row: 2; }
+        .ctrl-group .dir .right { grid-column: 3; grid-row: 2; }
+        .ctrl-group .dir .down { grid-column: 2; grid-row: 3; }
+        .ctrl-turn { display: flex; flex-direction: column; gap: 4px; margin: 0 4px; }
+        .ctrl-turn button {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: #1a3a5a;
+            border: 2px solid #4a8ab5;
+            color: #aaddff;
+            font-size: 22px;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .ctrl-turn button:active { background: #3a6a8a; transform: scale(0.92); }
+        @media (max-width: 700px) {
+            .ctrl-group .dir { grid-template-columns: 40px 40px 40px; grid-template-rows: 40px 40px 40px; }
+            .ctrl-turn button { width: 40px; height: 40px; font-size: 18px; }
+            #controls { padding: 8px 12px; gap: 6px; border-radius: 40px; bottom: 10px; }
+            #hud { font-size: 14px; padding: 4px 10px; gap: 6px; top: 6px; left: 6px; }
+            #message { font-size: 18px; padding: 6px 20px; bottom: 100px; }
+        }
+        @media (max-width: 500px) {
+            .ctrl-group .dir { grid-template-columns: 34px 34px 34px; grid-template-rows: 34px 34px 34px; gap: 2px; }
+            .ctrl-turn button { width: 34px; height: 34px; font-size: 16px; }
+            #controls { padding: 6px 8px; gap: 4px; }
+        }
+
+        /* Экраны (overlay, result, pause) */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.88); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; padding: 30px; text-align: center; color: #fff; border-radius: 10px; }
+        #overlay.hidden { display: none; }
+        #overlay h1 { font-size: 56px; color: #ffcc00; text-shadow: 0 0 40px #ff8800, 0 0 80px #aa5500; margin-bottom: 10px; letter-spacing: 6px; }
+        #overlay h2 { font-size: 30px; color: #ffaa00; margin-bottom: 20px; text-shadow: 0 0 20px #ff8800; }
+        #overlay p { font-size: 18px; max-width: 600px; line-height: 1.8; color: #ccc; margin-bottom: 30px; background: rgba(0,0,0,0.6); padding: 18px 30px; border-radius: 16px; border: 1px solid #666; }
+        #overlay .start-btn { background: #8b6a00; border: 3px solid #ffcc44; color: #fff; padding: 16px 60px; font-size: 30px; font-weight: bold; border-radius: 16px; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 4px; font-family: 'Courier New', monospace; box-shadow: 0 0 40px rgba(255,200,0,0.4); }
+        #overlay .start-btn:hover { background: #cc9900; transform: scale(1.05); box-shadow: 0 0 60px rgba(255,200,0,0.7); }
+        #result { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.82); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 90; color: #fff; border-radius: 10px; }
+        #result.show { display: flex; }
+        #result h1 { font-size: 72px; margin-bottom: 15px; text-shadow: 0 0 50px currentColor; }
+        #result p { font-size: 24px; margin-bottom: 30px; background: rgba(0,0,0,0.6); padding: 12px 40px; border-radius: 12px; }
+        #result button { background: #222; border: 2px solid #888; color: #fff; padding: 14px 50px; font-size: 26px; border-radius: 14px; cursor: pointer; font-family: 'Courier New', monospace; transition: 0.2s; }
+        #result button:hover { background: #444; border-color: #ccc; }
+        #pauseOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 80; border-radius: 10px; backdrop-filter: blur(6px); }
+        #pauseOverlay.show { display: flex; }
+        #pauseOverlay h1 { font-size: 52px; color: #ffcc00; text-shadow: 0 0 40px #ff8800; margin-bottom: 20px; letter-spacing: 8px; }
+        #pauseOverlay .pause-icon { font-size: 80px; margin-bottom: 20px; color: #ffcc00; text-shadow: 0 0 60px #ff8800; }
+        #pauseOverlay button { background: #222; border: 2px solid #ffcc00; color: #ffcc00; padding: 14px 50px; font-size: 26px; border-radius: 14px; cursor: pointer; font-family: 'Courier New', monospace; transition: 0.2s; margin-top: 10px; }
+        #pauseOverlay button:hover { background: #ffcc00; color: #000; box-shadow: 0 0 40px rgba(255,200,0,0.3); }
+
+        /* ===== ОВЕРЛЕЙ ЗАГАДКИ ===== */
+        #puzzleOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.88);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            border-radius: 10px;
+            backdrop-filter: blur(4px);
+        }
+        #puzzleOverlay .puzzle-box {
+            background: #1a1a1a;
+            padding: 30px 35px;
+            border-radius: 24px;
+            border: 2px solid #ffcc00;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(255,200,0,0.2);
+        }
+        #puzzleOverlay .puzzle-box h2 {
+            color: #ffcc00;
+            font-size: 32px;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+        #puzzleOverlay .puzzle-box .question {
+            color: #ddd;
+            font-size: 22px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            min-height: 70px;
+        }
+        #puzzleOverlay .puzzle-box input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #666;
+            background: #222;
+            color: #fff;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 18px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #puzzleOverlay .puzzle-box input:focus {
+            border-color: #ffcc00;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions button {
+            padding: 10px 28px;
+            border-radius: 12px;
+            border: none;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions .submit-btn {
+            background: #ffcc00;
+            color: #000;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions .submit-btn:hover {
+            background: #ffdd44;
+            box-shadow: 0 0 20px rgba(255,200,0,0.4);
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions .close-btn {
+            background: #444;
+            color: #ddd;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-actions .close-btn:hover {
+            background: #666;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-message {
+            color: #ff6666;
+            margin-top: 15px;
+            font-size: 18px;
+            min-height: 30px;
+        }
+        #puzzleOverlay .puzzle-box .puzzle-attempts {
+            color: #aaa;
+            margin-top: 8px;
+            font-size: 16px;
+        }
+        @media (max-width: 600px) {
+            #puzzleOverlay .puzzle-box { padding: 20px; }
+            #puzzleOverlay .puzzle-box h2 { font-size: 26px; }
+            #puzzleOverlay .puzzle-box .question { font-size: 18px; }
+            #puzzleOverlay .puzzle-box input { font-size: 17px; padding: 10px 14px; }
+            #puzzleOverlay .puzzle-box .puzzle-actions button { font-size: 17px; padding: 8px 20px; }
+        }
+    </style>
+</head>
+<body>
+<div id="gameWrapper">
+    <canvas id="game" width="800" height="500"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+        <span class="health">❤️ <span id="health">100</span></span>
+        <span class="fruits">🍎 <span id="fruitCount">0 / 12</span></span>
+        <span class="robot-fruits">🎃 <span id="robotFruitCount">0</span></span>
+        <span class="autopilot" id="autoStatus">⚡ ручной</span>
+        <span class="walls" id="wallStatus">🧱 стены: <span id="wallCount">0</span></span>
+    </div>
+
+    <!-- Верхний правый угол -->
+    <div id="hud-right">
+        <button id="toggleControlsBtn" title="Скрыть/показать управление">🕹️</button>
+        <button id="toggleSettingsBtn" title="Скрыть/показать настройки">⚙️</button>
+        <button id="toggleAutoBtn" title="Включить/выключить автопилот">🤖</button>
+        <button id="pauseBtn">⏸ Пауза</button>
+    </div>
+
+    <div id="crosshair">✚</div>
+    <div id="message"></div>
+
+    <!-- НАСТРОЙКИ -->
+    <div id="settings">
+        <label>
+            <span style="color:#aaa;">Скорость</span>
+            <input type="range" id="speedSlider" min="0.02" max="0.10" step="0.005" value="0.045" />
+            <span class="speed-value" id="speedDisplay">0.045</span>
+        </label>
+        <div class="console">
+            <input type="text" id="consoleInput" placeholder="Введите команду..." />
+            <button id="consoleSend">⏎</button>
+            <span class="output" id="consoleOutput">готов</span>
+        </div>
+    </div>
+
+    <!-- КНОПКИ УПРАВЛЕНИЯ -->
+    <div id="controls">
+        <div class="ctrl-group">
+            <div class="dir">
+                <button class="up" data-key="w">▲</button>
+                <button class="left" data-key="a">◄</button>
+                <button class="right" data-key="d">►</button>
+                <button class="down" data-key="s">▼</button>
+                <div class="empty"></div><div class="empty"></div>
+                <div class="empty"></div><div class="empty"></div>
+                <div class="empty"></div><div class="empty"></div>
+            </div>
+        </div>
+        <div class="ctrl-turn">
+            <button id="turnLeft" class="turn">↺</button>
+            <button id="turnRight" class="turn">↻</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАНЫ -->
+    <div id="overlay">
+        <h1>🍒 Лабиринт Забытых Плодов</h1>
+        <h2>⭐ Легенда о 12 священных дарах ⭐</h2>
+        <p>
+            <strong>Вы — археолог, нашедший вход в древний лабиринт.</strong><br>
+            По преданиям, здесь хранятся 12 магических фруктов — дары богов.<br>
+            Тот, кто соберёт их все, получит доступ к сокровищам вечности.<br><br>
+            <em>Исследуйте коридоры, избегайте ловушек (стен) и собирайте плоды.<br>
+            Каждый фрукт открывает часть древней истории.</em><br><br>
+            <span style="color:#ff6666;">⚠️ Внимание: в лабиринте есть выдвижные стены — они периодически меняют своё состояние! Чтобы пройти через активную стену, отгадайте загадку.</span><br><br>
+            <span style="color:#ff8800;">🎃 Также по лабиринту бродит робот-тыква — он тоже собирает фрукты! Успейте опередить его.</span>
+        </p>
+        <button class="start-btn" id="startBtn">▶ Войти в лабиринт</button>
+    </div>
+
+    <div id="result">
+        <h1 id="resultTitle">🏆 ПРОСВЕТЛЕНИЕ!</h1>
+        <p id="resultDesc">Вы собрали все 12 священных плодов! Лабиринт открывает проход к вечным сокровищам. Вы — легенда!</p>
+        <button id="restartBtn">↻ Пройти снова</button>
+    </div>
+
+    <div id="pauseOverlay">
+        <div class="pause-icon">⏸</div>
+        <h1>ПАУЗА</h1>
+        <button id="resumeBtn">▶ Продолжить</button>
+    </div>
+
+    <!-- ===== ОВЕРЛЕЙ ЗАГАДКИ ===== -->
+    <div id="puzzleOverlay">
+        <div class="puzzle-box">
+            <h2>🧩 Загадка</h2>
+            <div class="question" id="puzzleQuestion">Вопрос</div>
+            <input type="text" id="puzzleInput" placeholder="Введите ответ..." autocomplete="off" />
+            <div class="puzzle-actions">
+                <button class="submit-btn" id="puzzleSubmit">Ответить</button>
+                <button class="close-btn" id="puzzleClose">Закрыть</button>
+            </div>
+            <div class="puzzle-message" id="puzzleMessage"></div>
+            <div class="puzzle-attempts" id="puzzleAttempts">Осталось попыток: 3</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  FRUIT COLLECTOR — АВТОПИЛОТ + ВЫДВИЖНЫЕ СТЕНЫ + ЗАГАДКИ + РОБОТ-ТЫКВА
+    // ============================================================
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const W = 800,
+        H = 500;
+    canvas.width = W;
+    canvas.height = H;
+
+    const healthSpan = document.getElementById('health');
+    const fruitSpan = document.getElementById('fruitCount');
+    const robotFruitSpan = document.getElementById('robotFruitCount');
+    const autoStatusSpan = document.getElementById('autoStatus');
+    const wallStatusSpan = document.getElementById('wallCount');
+    const messageEl = document.getElementById('message');
+    const overlay = document.getElementById('overlay');
+    const resultScreen = document.getElementById('result');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultDesc = document.getElementById('resultDesc');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const toggleAutoBtn = document.getElementById('toggleAutoBtn');
+
+    // ---- НАСТРОЙКИ ----
+    const speedSlider = document.getElementById('speedSlider');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const consoleInput = document.getElementById('consoleInput');
+    const consoleSend = document.getElementById('consoleSend');
+    const consoleOutput = document.getElementById('consoleOutput');
+    const toggleControlsBtn = document.getElementById('toggleControlsBtn');
+    const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
+    const controlsEl = document.getElementById('controls');
+    const settingsEl = document.getElementById('settings');
+
+    // ---- ЗАГАДКИ ----
+    const riddles = [
+        { question: "Что можно увидеть с закрытыми глазами?", answer: "сон" },
+        { question: "Что идёт без ног и без крыльев?", answer: "время" },
+        { question: "Утром на четырёх ногах, днём на двух, вечером на трёх?", answer: "человек" },
+        { question: "Что можно сломать, не прикасаясь?", answer: "обещание" },
+        { question: "Что никогда не возвращается?", answer: "время" },
+        { question: "Что становится больше, если его разделить?", answer: "дырка" },
+        { question: "Кто говорит на всех языках?", answer: "эхо" },
+        { question: "Что имеет ключ, но не открывает замок?", answer: "нота" },
+        { question: "Что можно приготовить, но нельзя съесть?", answer: "урок" },
+        { question: "Что идет в гору, а потом с горы, но не движется?", answer: "дорога" },
+        { question: "Что бросают, когда нуждаются, и поднимают, когда не нуждаются?", answer: "якорь" },
+        { question: "Что можно держать, не касаясь?", answer: "слово" },
+        { question: "Что находится в центре слова 'Стена'?", answer: "е" },
+        { question: "Без рук, без ног, а ворота открывает?", answer: "ветер" },
+        { question: "Какое слово всегда звучит неверно?", answer: "неверно" }
+    ];
+
+    // ---- ГЕНЕРАЦИЯ ЛАБИРИНТА ----
+    function generateMaze() {
+        const size = 16;
+        const maze = Array.from({ length: size }, () => Array(size).fill(1));
+
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function carve(x, y) {
+            maze[y][x] = 0;
+            const dirs = shuffle([
+                [0, 2],
+                [0, -2],
+                [2, 0],
+                [-2, 0]
+            ]);
+            for (const [dx, dy] of dirs) {
+                const nx = x + dx,
+                    ny = y + dy;
+                if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+                    maze[y + dy / 2][x + dx / 2] = 0;
+                    carve(nx, ny);
+                }
+            }
+        }
+        carve(1, 1);
+        return maze;
+    }
+
+    let MAP = generateMaze();
+    const MAP_SIZE = MAP.length;
+
+    // ---- ВЫДВИЖНЫЕ СТЕНЫ (с загадками) ----
+    let movableWalls = [];
+
+    function initMovableWalls() {
+        movableWalls = [];
+        const candidates = [];
+        for (let y = 1; y < MAP_SIZE - 1; y++) {
+            for (let x = 1; x < MAP_SIZE - 1; x++) {
+                if (MAP[y][x] === 1) {
+                    if (Math.hypot(x - 1.5, y - 1.5) < 1.5) continue;
+                    candidates.push({ x, y });
+                }
+            }
+        }
+        for (let i = candidates.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+        }
+        const count = Math.min(6 + Math.floor(Math.random() * 3), candidates.length);
+        for (let i = 0; i < count; i++) {
+            const c = candidates[i];
+            const riddle = riddles[Math.floor(Math.random() * riddles.length)];
+            movableWalls.push({
+                x: c.x,
+                y: c.y,
+                active: true,
+                timer: 3 + Math.random() * 5,
+                cooldown: 4 + Math.random() * 3,
+                puzzleActive: false,
+                puzzleSolved: false,
+                wrongAttempts: 0,
+                question: riddle.question,
+                answer: riddle.answer,
+            });
+        }
+        updateWallStatus();
+    }
+
+    function updateWallStatus() {
+        const activeCount = movableWalls.filter(w => w.active && !w.puzzleSolved).length;
+        wallStatusSpan.textContent = activeCount;
+    }
+
+    // ---- ИГРОК ----
+    const player = {
+        x: 1.5,
+        y: 1.5,
+        angle: 0,
+        fov: Math.PI / 3,
+        speed: 0.045,
+        rotSpeed: 0.035,
+        health: 100
+    };
+
+    // ---- РОБОТ-ТЫКВА ----
+    const robot = {
+        x: 1.5,
+        y: 1.5,
+        angle: 0,
+        speed: 0.035, // чуть медленнее игрока
+        fruitCount: 0,
+        // состояние автопилота
+        path: [],
+        pathIndex: 0,
+        targetFruit: null,
+        stuckCounter: 0,
+        lastPos: { x: 0, y: 0 },
+        isRotating: false,
+        moveTimer: 0 // для небольшой задержки между пересчётами
+    };
+
+    // ---- АВТОПИЛОТ ИГРОКА ----
+    let autoPilot = false;
+    let autoPath = [];
+    let pathIndex = 0;
+    let currentTargetFruit = null;
+    let stuckCounter = 0;
+    let lastPos = { x: 0, y: 0 };
+    let isRotating = false;
+
+    // ---- ФРУКТЫ ----
+    const fruitEmojis = ['🌶️', '🍅', '🥝', '🍓', '🍒', '🍑', '🍐', '🍏', '🍎', '🥭', '🍍', '🍋', '🍊'];
+    const TOTAL_FRUITS = 12;
+    let fruits = [];
+    let collectedCount = 0;
+
+    const fruitColors = [
+        '#ff3333', '#ff6633', '#66bb44', '#ff2266', '#cc1144',
+        '#ffaa44', '#88cc44', '#66bb33', '#ff3333', '#ffcc44',
+        '#ffcc22', '#ffcc33', '#ff8800'
+    ];
+
+    // ---- СЮЖЕТНЫЕ СООБЩЕНИЯ ----
+    const storyMessages = [
+        "🍇 Первый плод — «Исток». Вы чувствуете древнюю силу.",
+        "🍊 «Сияние» — лабиринт начинает дышать в такт вашему сердцу.",
+        "🍋 «Мудрость» — стены шепчут забытые имена.",
+        "🍐 «Стойкость» — ваш шаг становится твёрже.",
+        "🍏 «Чистота» — воздух наполняется светом.",
+        "🍎 «Плодородие» — земля под ногами теплеет.",
+        "🍑 «Бессмертие» — вы ощущаете вечность в каждой клетке.",
+        "🍒 «Страсть» — лабиринт окрашивается в алый цвет.",
+        "🍓 «Нежность» — ветер приносит ароматы далёких садов.",
+        "🥝 «Изумруд» — глаза видят скрытые пути.",
+        "🍅 «Солнце» — даже в темноте вы видите свет.",
+        "🥭 «Завершение» — все плоды собраны! Лабиринт раскрывает свои тайны."
+    ];
+
+    // ---- ГЕНЕРАЦИЯ ФРУКТОВ ----
+    function generateFruits() {
+        fruits = [];
+        let placed = 0;
+        while (placed < TOTAL_FRUITS) {
+            const x = 1.5 + Math.random() * (MAP_SIZE - 3);
+            const y = 1.5 + Math.random() * (MAP_SIZE - 3);
+            if (isWall(x, y)) continue;
+            if (Math.hypot(x - player.x, y - player.y) < 1.5) continue;
+            if (Math.hypot(x - robot.x, y - robot.y) < 1.5) continue;
+            let tooClose = false;
+            for (const f of fruits) {
+                if (Math.hypot(x - f.x, y - f.y) < 0.7) { tooClose = true; break; }
+            }
+            if (tooClose) continue;
+            fruits.push({
+                x,
+                y,
+                collected: false,
+                color: fruitColors[placed % fruitColors.length],
+                emoji: fruitEmojis[placed % fruitEmojis.length],
+                phase: Math.random() * 10,
+                size: 0.5 + Math.random() * 0.15,
+                index: placed
+            });
+            placed++;
+        }
+        const fallback = [
+            [3.5, 3.5],
+            [12.5, 3.5],
+            [3.5, 12.5],
+            [12.5, 12.5],
+            [7.5, 7.5],
+            [5.5, 9.5],
+            [10.5, 5.5],
+            [6.5, 13.5],
+            [13.5, 8.5],
+            [8.5, 4.5],
+            [4.5, 7.5],
+            [11.5, 11.5]
+        ];
+        while (fruits.length < TOTAL_FRUITS) {
+            const idx = fruits.length;
+            const pos = fallback[idx % fallback.length];
+            if (!isWall(pos[0], pos[1])) {
+                fruits.push({
+                    x: pos[0],
+                    y: pos[1],
+                    collected: false,
+                    color: fruitColors[idx % fruitColors.length],
+                    emoji: fruitEmojis[idx % fruitEmojis.length],
+                    phase: Math.random() * 10,
+                    size: 0.5 + Math.random() * 0.15,
+                    index: idx
+                });
+            } else {
+                fruits.push({
+                    x: pos[0] + 0.5,
+                    y: pos[1] + 0.5,
+                    collected: false,
+                    color: fruitColors[idx % fruitColors.length],
+                    emoji: fruitEmojis[idx % fruitEmojis.length],
+                    phase: Math.random() * 10,
+                    size: 0.5 + Math.random() * 0.15,
+                    index: idx
+                });
+            }
+        }
+        fruits = fruits.filter(f => !isWall(f.x, f.y));
+        while (fruits.length < TOTAL_FRUITS) {
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const x = 1.5 + Math.random() * (MAP_SIZE - 3);
+                const y = 1.5 + Math.random() * (MAP_SIZE - 3);
+                if (!isWall(x, y)) {
+                    fruits.push({
+                        x,
+                        y,
+                        collected: false,
+                        color: fruitColors[fruits.length % fruitColors.length],
+                        emoji: fruitEmojis[fruits.length % fruitEmojis.length],
+                        phase: Math.random() * 10,
+                        size: 0.5 + Math.random() * 0.15,
+                        index: fruits.length
+                    });
+                    break;
+                }
+            }
+        }
+        fruits.forEach((f, i) => f.index = i);
+        collectedCount = 0;
+        robot.fruitCount = 0;
+        autoPath = [];
+        pathIndex = 0;
+        currentTargetFruit = null;
+        stuckCounter = 0;
+        lastPos = { x: player.x, y: player.y };
+        isRotating = false;
+        robot.path = [];
+        robot.pathIndex = 0;
+        robot.targetFruit = null;
+        robot.stuckCounter = 0;
+        robot.lastPos = { x: robot.x, y: robot.y };
+        robot.isRotating = false;
+        updateUI();
+    }
+
+    // ---- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----
+    let messageTimeout = null;
+    const keys = {};
+    let isMouseLocked = false;
+    let paused = false;
+    let gamepad = null;
+    window.addEventListener('gamepadconnected', (e) => { gamepad = e.gamepad; });
+    window.addEventListener('gamepaddisconnected', (e) => { if (gamepad && gamepad.index === e.gamepad.index) gamepad = null; });
+
+    let audioCtx = null;
+
+    function initAudio() { if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)(); }
+
+    function playCollectSound() {
+        try {
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 0.12;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.sin(i * 0.05) * Math.exp(-i / bufferSize * 4);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.3;
+            source.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
+        } catch (e) {}
+    }
+
+    function playWinSound() {
+        try {
+            initAudio();
+            const bufferSize = audioCtx.sampleRate * 0.4;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.sin(i * 0.1) * Math.sin(i * 0.03) * (1 - i / bufferSize);
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.2;
+            source.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
+        } catch (e) {}
+    }
+
+    // ============================================================
+    //  isWall — учитывает выдвижные стены (и их решение)
+    // ============================================================
+    function isWall(x, y) {
+        const mx = Math.floor(x),
+            my = Math.floor(y);
+        if (mx < 0 || my < 0 || mx >= MAP_SIZE || my >= MAP_SIZE) return true;
+        const movable = movableWalls.find(w => w.x === mx && w.y === my);
+        if (movable) {
+            if (movable.puzzleSolved || !movable.active) return false;
+            return true;
+        }
+        return MAP[my][mx] === 1;
+    }
+
+    // ---- Получить активную нерешённую выдвижную стену в клетке ----
+    function getMovableWallAt(x, y) {
+        return movableWalls.find(w => w.x === x && w.y === y && w.active && !w.puzzleSolved) || null;
+    }
+
+    // ---- ВЫТАЛКИВАНИЕ ИГРОКА ИЗ СТЕНЫ ----
+    function pushPlayerOut(cx, cy) {
+        const dirs = [
+            [0, -1],
+            [0, 1],
+            [-1, 0],
+            [1, 0]
+        ];
+        for (const [dx, dy] of dirs) {
+            const nx = cx + dx,
+                ny = cy + dy;
+            if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE) {
+                if (!isWall(nx + 0.5, ny + 0.5)) {
+                    player.x = nx + 0.5;
+                    player.y = ny + 0.5;
+                    return true;
+                }
+            }
+        }
+        const diag = [
+            [-1, -1],
+            [-1, 1],
+            [1, -1],
+            [1, 1]
+        ];
+        for (const [dx, dy] of diag) {
+            const nx = cx + dx,
+                ny = cy + dy;
+            if (nx >= 0 && ny >= 0 && nx < MAP_SIZE && ny < MAP_SIZE) {
+                if (!isWall(nx + 0.5, ny + 0.5)) {
+                    player.x = nx + 0.5;
+                    player.y = ny + 0.5;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // ---- ОБНОВЛЕНИЕ ВЫДВИЖНЫХ СТЕН (по таймеру) ----
+    let lastTime = 0;
+
+    function updateMovableWalls(delta) {
+        for (const wall of movableWalls) {
+            if (wall.puzzleSolved) continue;
+            wall.timer -= delta;
+            if (wall.timer <= 0) {
+                wall.active = !wall.active;
+                if (wall.active) {
+                    const px = Math.floor(player.x);
+                    const py = Math.floor(player.y);
+                    if (px === wall.x && py === wall.y) {
+                        pushPlayerOut(wall.x, wall.y);
+                    }
+                }
+                wall.timer = wall.cooldown + Math.random() * 2;
+                updateWallStatus();
+            }
+        }
+    }
+
+    // ---- ТЕКСТУРЫ ----
+    function generateWallTexture() {
+        const texSize = 64;
+        const canvasTex = document.createElement('canvas');
+        canvasTex.width = texSize;
+        canvasTex.height = texSize;
+        const tctx = canvasTex.getContext('2d');
+        const brickH = 16,
+            brickW = 32;
+        for (let row = 0; row < texSize / brickH; row++) {
+            for (let col = 0; col < texSize / brickW + 1; col++) {
+                const x = col * brickW + (row % 2) * (brickW / 2);
+                const y = row * brickH;
+                const brightness = 80 + Math.random() * 60;
+                tctx.fillStyle = `rgb(${brightness+30}, ${brightness-10}, ${brightness-30})`;
+                tctx.fillRect(x, y, brickW - 1, brickH - 1);
+                tctx.fillStyle = '#4a3a2a';
+                tctx.fillRect(x, y, brickW - 1, 2);
+                tctx.fillRect(x, y, 2, brickH - 1);
+            }
+        }
+        for (let i = 0; i < 20; i++) {
+            const x = Math.random() * texSize,
+                y = Math.random() * texSize;
+            tctx.strokeStyle = `rgba(30,20,10,${0.3 + Math.random() * 0.3})`;
+            tctx.lineWidth = 1 + Math.random() * 2;
+            tctx.beginPath();
+            tctx.moveTo(x, y);
+            tctx.lineTo(x + (Math.random() - 0.5) * 12, y + (Math.random() - 0.5) * 12);
+            tctx.stroke();
+        }
+        return canvasTex;
+    }
+
+    function generateFloorTexture() {
+        const texSize = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = texSize;
+        canvas.height = texSize;
+        const tctx = canvas.getContext('2d');
+        const tileSize = 16;
+        for (let y = 0; y < texSize; y += tileSize) {
+            for (let x = 0; x < texSize; x += tileSize) {
+                const isDark = ((x / tileSize + y / tileSize) % 2 === 0);
+                tctx.fillStyle = isDark ? '#3a3a3a' : '#5a5a5a';
+                tctx.fillRect(x, y, tileSize, tileSize);
+                tctx.strokeStyle = '#222';
+                tctx.lineWidth = 1;
+                tctx.strokeRect(x, y, tileSize, tileSize);
+            }
+        }
+        return canvas;
+    }
+
+    function generateCeilingTexture() {
+        const texSize = 64;
+        const canvas = document.createElement('canvas');
+        canvas.width = texSize;
+        canvas.height = texSize;
+        const tctx = canvas.getContext('2d');
+        const grad = tctx.createLinearGradient(0, 0, 0, texSize);
+        grad.addColorStop(0, '#0a0a2a');
+        grad.addColorStop(0.5, '#1a1a3a');
+        grad.addColorStop(1, '#2a1a3a');
+        tctx.fillStyle = grad;
+        tctx.fillRect(0, 0, texSize, texSize);
+        for (let i = 0; i < 10; i++) {
+            const x = Math.random() * texSize,
+                y = Math.random() * texSize;
+            const r = 5 + Math.random() * 12;
+            const grad2 = tctx.createRadialGradient(x, y, 0, x, y, r);
+            grad2.addColorStop(0, `rgba(200,200,255,${0.3 + Math.random() * 0.3})`);
+            grad2.addColorStop(1, 'rgba(200,200,255,0)');
+            tctx.fillStyle = grad2;
+            tctx.beginPath();
+            tctx.arc(x, y, r, 0, Math.PI * 2);
+            tctx.fill();
+        }
+        return canvas;
+    }
+    const wallTexture = generateWallTexture();
+    const floorTexture = generateFloorTexture();
+    const ceilingTexture = generateCeilingTexture();
+
+    function renderFloorAndCeiling() {
+        const imageData = ctx.getImageData(0, 0, W, H);
+        const data = imageData.data;
+        const texSize = 64;
+        const floorTexData = floorTexture.getContext('2d').getImageData(0, 0, texSize, texSize).data;
+        const ceilTexData = ceilingTexture.getContext('2d').getImageData(0, 0, texSize, texSize).data;
+        const halfH = H / 2;
+        const rayDirX = new Float32Array(W);
+        const rayDirY = new Float32Array(W);
+        for (let x = 0; x < W; x++) {
+            const angle = player.angle - player.fov / 2 + (x / W) * player.fov;
+            rayDirX[x] = Math.cos(angle);
+            rayDirY[x] = Math.sin(angle);
+        }
+        for (let y = 0; y < H; y++) {
+            const isFloor = y > halfH;
+            const ratio = isFloor ? (y - halfH) / halfH : (halfH - y) / halfH;
+            if (ratio === 0) continue;
+            const distance = 0.5 / ratio;
+            for (let x = 0; x < W; x++) {
+                const worldX = player.x + rayDirX[x] * distance;
+                const worldY = player.y + rayDirY[x] * distance;
+                let texU = (worldX - Math.floor(worldX)) * texSize;
+                let texV = (worldY - Math.floor(worldY)) * texSize;
+                texU = Math.floor(texU) % texSize;
+                texV = Math.floor(texV) % texSize;
+                const srcIdx = (texV * texSize + texU) * 4;
+                const dstIdx = (y * W + x) * 4;
+                const texData = isFloor ? floorTexData : ceilTexData;
+                const shade = 1 - Math.min(1, distance / 10) * 0.4;
+                data[dstIdx] = texData[srcIdx] * shade;
+                data[dstIdx + 1] = texData[srcIdx + 1] * shade;
+                data[dstIdx + 2] = texData[srcIdx + 2] * shade;
+                data[dstIdx + 3] = 255;
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    function castRays() {
+        const numRays = W;
+        const stripWidth = W / numRays;
+        for (let i = 0; i < numRays; i++) {
+            const rayAngle = player.angle - player.fov / 2 + (i / numRays) * player.fov;
+            const dx = Math.cos(rayAngle);
+            const dy = Math.sin(rayAngle);
+            let mapX = Math.floor(player.x);
+            let mapY = Math.floor(player.y);
+            const stepX = dx > 0 ? 1 : -1;
+            const stepY = dy > 0 ? 1 : -1;
+            const tDeltaX = Math.abs(1 / dx);
+            const tDeltaY = Math.abs(1 / dy);
+            let tMaxX = dx > 0 ? (mapX + 1 - player.x) * tDeltaX : (player.x - mapX) * tDeltaX;
+            let tMaxY = dy > 0 ? (mapY + 1 - player.y) * tDeltaY : (player.y - mapY) * tDeltaY;
+            let hit = false,
+                side = 0,
+                wallDist = 0,
+                texX = 0;
+            while (!hit) {
+                if (tMaxX < tMaxY) {
+                    tMaxX += tDeltaX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    tMaxY += tDeltaY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                if (isWall(mapX, mapY)) {
+                    hit = true;
+                    if (side === 0) {
+                        wallDist = (mapX - player.x + (1 - stepX) / 2) / dx;
+                        texX = player.y + wallDist * dy;
+                    } else {
+                        wallDist = (mapY - player.y + (1 - stepY) / 2) / dy;
+                        texX = player.x + wallDist * dx;
+                    }
+                    wallDist = Math.abs(wallDist);
+                    texX = texX - Math.floor(texX);
+                }
+            }
+            const lineHeight = H / wallDist;
+            const drawStart = Math.floor(H / 2 - lineHeight / 2);
+            const drawEnd = Math.floor(H / 2 + lineHeight / 2);
+            const texSize = 64;
+            const texXInt = Math.floor(texX * texSize) % texSize;
+            const stepTex = texSize / lineHeight;
+            let texY = (drawStart - H / 2 + lineHeight / 2) * stepTex;
+            if (texY < 0) texY = 0;
+            const imageData = ctx.getImageData(i * stripWidth, drawStart, stripWidth, drawEnd - drawStart);
+            const data = imageData.data;
+            const texData = wallTexture.getContext('2d').getImageData(0, 0, texSize, texSize).data;
+            const fog = Math.min(1, wallDist / 7);
+            const shade = 1 - fog * 0.6;
+            const glow = Math.min(1, wallDist / 4) * 0.2;
+
+            const isMovable = movableWalls.some(w => w.x === mapX && w.y === mapY && w.active && !w.puzzleSolved);
+
+            for (let y = drawStart; y < drawEnd; y++) {
+                const texYInt = Math.floor(texY) % texSize;
+                const srcIdx = (texYInt * texSize + texXInt) * 4;
+                let r = texData[srcIdx] * shade + glow * 80;
+                let g = texData[srcIdx + 1] * shade + glow * 20;
+                let b = texData[srcIdx + 2] * shade + glow * 10;
+                if (side === 1) { r *= 0.6;
+                    g *= 0.6;
+                    b *= 0.6; }
+                if (isMovable) {
+                    r = Math.min(255, r * 1.2 + 60);
+                    g = Math.min(255, g * 0.5);
+                    b = Math.min(255, b * 0.5);
+                    r = Math.min(255, r + 30);
+                }
+                const dstIdx = ((y - drawStart) * stripWidth + 0) * 4;
+                data[dstIdx] = Math.min(255, r);
+                data[dstIdx + 1] = Math.min(255, g);
+                data[dstIdx + 2] = Math.min(255, b);
+                data[dstIdx + 3] = 255;
+                texY += stepTex;
+            }
+            ctx.putImageData(imageData, i * stripWidth, drawStart);
+        }
+    }
+
+    // ---- ОТРИСОВКА СПРАЙТОВ (фрукты + робот) ----
+    function drawSprite(screenX, screenY, screenWidth, screenHeight, color, emoji, time, phase, size, glowColor) {
+        const cx = screenX + screenWidth / 2;
+        const cy = screenY + screenHeight / 2;
+        const baseSize = Math.min(screenWidth, screenHeight) * 0.6 * size;
+        const pulse = 1 + 0.08 * Math.sin(time * 1.8 + phase);
+        const r = baseSize * pulse;
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2);
+        glow.addColorStop(0, (glowColor || color) + '55');
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * 2, 0, Math.PI * 2);
+        ctx.fill();
+        const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.05, cx, cy, r);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.3, color);
+        grad.addColorStop(1, '#222');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = glowColor || color;
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(cx - r * 0.25, cy - r * 0.25, r * 0.3, r * 0.2, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath();
+        ctx.ellipse(cx + r * 0.2, cy + r * 0.15, r * 0.15, r * 0.1, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.font = `${r * 0.8}px serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(emoji, cx, cy + r * 0.05);
+        ctx.shadowBlur = 0;
+    }
+
+    function renderSprites() {
+        const time = performance.now() / 1000;
+        // Фрукты
+        for (const fruit of fruits) {
+            if (fruit.collected) continue;
+            const dx = fruit.x - player.x;
+            const dy = fruit.y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 0.1) continue;
+            let angle = Math.atan2(dy, dx) - player.angle;
+            while (angle > Math.PI) angle -= 2 * Math.PI;
+            while (angle < -Math.PI) angle += 2 * Math.PI;
+            const halfFov = player.fov / 2;
+            if (Math.abs(angle) > halfFov + 0.2) continue;
+            let hitWall = false;
+            const step = 0.05;
+            let rayX = player.x,
+                rayY = player.y;
+            const dirX = dx / dist,
+                dirY = dy / dist;
+            for (let t = 0; t < dist; t += step) {
+                rayX += dirX * step;
+                rayY += dirY * step;
+                if (isWall(rayX, rayY)) { hitWall = true; break; }
+            }
+            if (hitWall) continue;
+            const size = 0.8;
+            const screenHeight = H / dist * size;
+            const screenWidth = screenHeight * 0.7;
+            const screenX = (W / 2) + (angle / halfFov) * (W / 2) - screenWidth / 2;
+            const screenY = H / 2 - screenHeight / 2;
+            drawSprite(screenX, screenY, screenWidth, screenHeight,
+                fruit.color, fruit.emoji, time, fruit.phase, fruit.size, fruit.color);
+        }
+
+        // Робот-тыква
+        const rdx = robot.x - player.x;
+        const rdy = robot.y - player.y;
+        const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+        if (rdist > 0.1) {
+            let rangle = Math.atan2(rdy, rdx) - player.angle;
+            while (rangle > Math.PI) rangle -= 2 * Math.PI;
+            while (rangle < -Math.PI) rangle += 2 * Math.PI;
+            const halfFov = player.fov / 2;
+            if (Math.abs(rangle) <= halfFov + 0.2) {
+                let hitWall = false;
+                const step = 0.05;
+                let rayX = player.x,
+                    rayY = player.y;
+                const dirX = rdx / rdist,
+                    dirY = rdy / rdist;
+                for (let t = 0; t < rdist; t += step) {
+                    rayX += dirX * step;
+                    rayY += dirY * step;
+                    if (isWall(rayX, rayY)) { hitWall = true; break; }
+                }
+                if (!hitWall) {
+                    const size = 0.9;
+                    const screenHeight = H / rdist * size;
+                    const screenWidth = screenHeight * 0.7;
+                    const screenX = (W / 2) + (rangle / halfFov) * (W / 2) - screenWidth / 2;
+                    const screenY = H / 2 - screenHeight / 2;
+                    drawSprite(screenX, screenY, screenWidth, screenHeight,
+                        '#ff8800', '🎃', time, 0, 0.9, '#ff4400');
+                }
+            }
+        }
+    }
+
+    // ---- СБОР ФРУКТОВ ИГРОКОМ ----
+    function collectFruit() {
+        if (paused) return;
+        for (const fruit of fruits) {
+            if (fruit.collected) continue;
+            const dist = Math.hypot(fruit.x - player.x, fruit.y - player.y);
+            if (dist < 0.6) {
+                fruit.collected = true;
+                collectedCount++;
+                playCollectSound();
+                updateUI();
+
+                const idx = fruit.index % storyMessages.length;
+                const storyText = storyMessages[idx];
+                if (collectedCount === TOTAL_FRUITS) {
+                    showMessage('🏆 ' + storyText, 3000);
+                    setTimeout(() => {
+                        playWinSound();
+                        showWinScreen();
+                    }, 800);
+                } else {
+                    let extra = '';
+                    if (collectedCount === 3) extra = ' (3/12) — Духи лабиринта начинают говорить с вами.';
+                    else if (collectedCount === 6) extra = ' (6/12) — Лабиринт оживает, стены движутся.';
+                    else if (collectedCount === 9) extra = ' (9/12) — Осталось всего три! Вы почти у цели.';
+                    showMessage('🍃 ' + storyText + extra, 2500);
+                }
+                autoPath = [];
+                pathIndex = 0;
+                currentTargetFruit = null;
+                stuckCounter = 0;
+                isRotating = false;
+                break;
+            }
+        }
+    }
+
+    // ---- СБОР ФРУКТОВ РОБОТОМ ----
+    function robotCollectFruit() {
+        if (paused) return;
+        for (const fruit of fruits) {
+            if (fruit.collected) continue;
+            const dist = Math.hypot(fruit.x - robot.x, robot.y - fruit.y);
+            if (dist < 0.6) {
+                fruit.collected = true;
+                robot.fruitCount++;
+                playCollectSound();
+                showMessage('🎃 Робот-тыква собрал плод!', 1500);
+                updateUI();
+                // Сброс пути робота
+                robot.path = [];
+                robot.pathIndex = 0;
+                robot.targetFruit = null;
+                robot.stuckCounter = 0;
+                robot.isRotating = false;
+                break;
+            }
+        }
+    }
+
+    function showMessage(text, duration) {
+        if (messageTimeout) clearTimeout(messageTimeout);
+        messageEl.textContent = text;
+        messageEl.classList.add('show');
+        messageTimeout = setTimeout(() => {
+            messageEl.classList.remove('show');
+        }, duration || 1500);
+    }
+
+    function showWinScreen() {
+        resultTitle.textContent = '🏆 ПРОСВЕТЛЕНИЕ!';
+        resultTitle.style.color = '#ffcc00';
+        resultDesc.textContent = 'Вы собрали все 12 священных плодов! Лабиринт открывает проход к вечным сокровищам. Вы — легенда!';
+        resultScreen.classList.add('show');
+        autoPilot = false;
+        updateUI();
+    }
+
+    function updateUI() {
+        healthSpan.textContent = Math.floor(player.health);
+        fruitSpan.textContent = `${collectedCount} / ${TOTAL_FRUITS}`;
+        robotFruitSpan.textContent = robot.fruitCount;
+        autoStatusSpan.textContent = autoPilot ? '🤖 автопилот' : '⚡ ручной';
+        autoStatusSpan.style.color = autoPilot ? '#00ccff' : '#0f0';
+        if (autoPilot) {
+            toggleAutoBtn.classList.add('active');
+            toggleAutoBtn.title = 'Выключить автопилот';
+        } else {
+            toggleAutoBtn.classList.remove('active');
+            toggleAutoBtn.title = 'Включить автопилот';
+        }
+        updateWallStatus();
+    }
+
+    // ============================================================
+    //  A* (поиск пути)
+    // ============================================================
+    function aStar(startX, startY, goalX, goalY) {
+        if (startX === goalX && startY === goalY) return [{ x: goalX, y: goalY }];
+        if (MAP[goalY]?.[goalX] === 1) {
+            const mw = movableWalls.find(w => w.x === goalX && w.y === goalY);
+            if (!mw || mw.active) return null;
+        }
+
+        const openSet = [];
+        const closedSet = new Set();
+        const cameFrom = {};
+        const gScore = {};
+        const fScore = {};
+
+        const key = (x, y) => `${x},${y}`;
+        const heuristic = (x, y) => Math.abs(x - goalX) + Math.abs(y - goalY);
+
+        const startKey = key(startX, startY);
+        gScore[startKey] = 0;
+        fScore[startKey] = heuristic(startX, startY);
+        openSet.push({ x: startX, y: startY, f: fScore[startKey] });
+
+        while (openSet.length > 0) {
+            let bestIdx = 0;
+            for (let i = 1; i < openSet.length; i++) {
+                if (openSet[i].f < openSet[bestIdx].f) bestIdx = i;
+            }
+            const current = openSet.splice(bestIdx, 1)[0];
+            const { x, y } = current;
+
+            if (x === goalX && y === goalY) {
+                const path = [];
+                let cur = { x, y };
+                while (cur) {
+                    path.push(cur);
+                    const k = key(cur.x, cur.y);
+                    if (!cameFrom[k]) break;
+                    cur = cameFrom[k];
+                }
+                path.reverse();
+                return path;
+            }
+
+            closedSet.add(key(x, y));
+
+            const neighbors = [
+                { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+            ];
+            for (const n of neighbors) {
+                const nx = x + n.dx,
+                    ny = y + n.dy;
+                if (nx < 0 || ny < 0 || nx >= MAP_SIZE || ny >= MAP_SIZE) continue;
+                if (isWall(nx + 0.5, ny + 0.5)) continue;
+                const nKey = key(nx, ny);
+                if (closedSet.has(nKey)) continue;
+                const tentativeG = gScore[key(x, y)] + 1;
+                if (!gScore[nKey] || tentativeG < gScore[nKey]) {
+                    cameFrom[nKey] = { x, y };
+                    gScore[nKey] = tentativeG;
+                    fScore[nKey] = tentativeG + heuristic(nx, ny);
+                    const existing = openSet.find(p => p.x === nx && p.y === ny);
+                    if (existing) {
+                        existing.f = fScore[nKey];
+                    } else {
+                        openSet.push({ x: nx, y: ny, f: fScore[nKey] });
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // ============================================================
+    //  АВТОПИЛОТ ИГРОКА
+    // ============================================================
+    function updateAutoPilot() {
+        if (!autoPilot || paused || collectedCount === TOTAL_FRUITS) return;
+
+        let closest = null;
+        let minDist = Infinity;
+        for (const f of fruits) {
+            if (f.collected) continue;
+            const d = Math.hypot(f.x - player.x, f.y - player.y);
+            if (d < minDist) {
+                minDist = d;
+                closest = f;
+            }
+        }
+        if (!closest) return;
+
+        const currentCell = { x: Math.floor(player.x), y: Math.floor(player.y) };
+        const targetCell = { x: Math.floor(closest.x), y: Math.floor(closest.y) };
+
+        const needNewPath = (
+            currentTargetFruit !== closest ||
+            autoPath.length === 0 ||
+            pathIndex >= autoPath.length
+        );
+
+        if (needNewPath) {
+            const path = aStar(currentCell.x, currentCell.y, targetCell.x, targetCell.y);
+            if (path && path.length > 0) {
+                if (path[0].x === currentCell.x && path[0].y === currentCell.y) {
+                    path.shift();
+                }
+                autoPath = path;
+                pathIndex = 0;
+                currentTargetFruit = closest;
+                stuckCounter = 0;
+                lastPos = { x: player.x, y: player.y };
+                isRotating = false;
+            } else {
+                autoPath = [];
+                pathIndex = 0;
+                currentTargetFruit = null;
+                showMessage('🔄 Ищу другой путь...', 800);
+                return;
+            }
+        }
+
+        if (autoPath.length === 0 || pathIndex >= autoPath.length) {
+            autoPath = [];
+            pathIndex = 0;
+            currentTargetFruit = null;
+            return;
+        }
+
+        const currentTarget = autoPath[pathIndex];
+        const nextTarget = (pathIndex + 1 < autoPath.length) ? autoPath[pathIndex + 1] : null;
+
+        let targetX = currentTarget.x + 0.5;
+        let targetY = currentTarget.y + 0.5;
+
+        if (nextTarget) {
+            const lookAhead = 0.35;
+            const dxNext = nextTarget.x - currentTarget.x;
+            const dyNext = nextTarget.y - currentTarget.y;
+            targetX += dxNext * lookAhead;
+            targetY += dyNext * lookAhead;
+        }
+
+        const dx = targetX - player.x;
+        const dy = targetY - player.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 0.18) {
+            pathIndex++;
+            if (pathIndex >= autoPath.length) {
+                if (closest && !closest.collected) {
+                    autoPath = [];
+                    pathIndex = 0;
+                    currentTargetFruit = null;
+                    isRotating = false;
+                }
+                return;
+            }
+            const newTarget = autoPath[pathIndex];
+            const nxt = (pathIndex + 1 < autoPath.length) ? autoPath[pathIndex + 1] : null;
+            let newTargetX = newTarget.x + 0.5;
+            let newTargetY = newTarget.y + 0.5;
+            if (nxt) {
+                const lookAhead = 0.35;
+                newTargetX += (nxt.x - newTarget.x) * lookAhead;
+                newTargetY += (nxt.y - newTarget.y) * lookAhead;
+            }
+            const newDx = newTargetX - player.x;
+            const newDy = newTargetY - player.y;
+            const newAngle = Math.atan2(newDy, newDx);
+            let diff = newAngle - player.angle;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            player.angle += Math.sign(diff) * Math.min(Math.abs(diff), player.rotSpeed * 2.5);
+            isRotating = true;
+            stuckCounter = 0;
+            lastPos = { x: player.x, y: player.y };
+            return;
+        }
+
+        const targetAngle = Math.atan2(dy, dx);
+        let diff = targetAngle - player.angle;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+
+        const absDiff = Math.abs(diff);
+        const rotSpeed = Math.min(player.rotSpeed * 2.8, absDiff * 2.2 + 0.01);
+
+        const angleThreshold = 0.045;
+        if (absDiff > angleThreshold) {
+            player.angle += Math.sign(diff) * Math.min(absDiff, rotSpeed);
+            isRotating = true;
+            stuckCounter = 0;
+            lastPos = { x: player.x, y: player.y };
+            return;
+        }
+
+        isRotating = false;
+
+        if (absDiff > 0.001) {
+            player.angle += Math.sign(diff) * Math.min(absDiff, rotSpeed * 0.5);
+        }
+
+        const moveSpeed = player.speed * 1.0;
+        const newX = player.x + moveSpeed * Math.cos(player.angle);
+        const newY = player.y + moveSpeed * Math.sin(player.angle);
+
+        if (!isWall(newX, player.y)) player.x = newX;
+        if (!isWall(player.x, newY)) player.y = newY;
+
+        const moved = Math.hypot(player.x - lastPos.x, player.y - lastPos.y);
+        if (moved < 0.0005) {
+            stuckCounter++;
+            if (stuckCounter > 25) {
+                player.angle += (Math.random() - 0.5) * 0.8;
+                autoPath = [];
+                pathIndex = 0;
+                currentTargetFruit = null;
+                isRotating = false;
+                stuckCounter = 0;
+                showMessage('🔄 Перестраиваю маршрут...', 800);
+            }
+        } else {
+            stuckCounter = 0;
+            lastPos = { x: player.x, y: player.y };
+        }
+    }
+
+    // ============================================================
+    //  АВТОПИЛОТ РОБОТА (аналогичный, но для robot)
+    // ============================================================
+    function updateRobot(delta) {
+        if (paused) return;
+        // Если все фрукты собраны — стоим
+        if (fruits.every(f => f.collected)) return;
+
+        let closest = null;
+        let minDist = Infinity;
+        for (const f of fruits) {
+            if (f.collected) continue;
+            const d = Math.hypot(f.x - robot.x, f.y - robot.y);
+            if (d < minDist) {
+                minDist = d;
+                closest = f;
+            }
+        }
+        if (!closest) return;
+
+        const currentCell = { x: Math.floor(robot.x), y: Math.floor(robot.y) };
+        const targetCell = { x: Math.floor(closest.x), y: Math.floor(closest.y) };
+
+        const needNewPath = (
+            robot.targetFruit !== closest ||
+            robot.path.length === 0 ||
+            robot.pathIndex >= robot.path.length
+        );
+
+        if (needNewPath) {
+            const path = aStar(currentCell.x, currentCell.y, targetCell.x, targetCell.y);
+            if (path && path.length > 0) {
+                if (path[0].x === currentCell.x && path[0].y === currentCell.y) {
+                    path.shift();
+                }
+                robot.path = path;
+                robot.pathIndex = 0;
+                robot.targetFruit = closest;
+                robot.stuckCounter = 0;
+                robot.lastPos = { x: robot.x, y: robot.y };
+                robot.isRotating = false;
+            } else {
+                robot.path = [];
+                robot.pathIndex = 0;
+                robot.targetFruit = null;
+                // Если нет пути, пробуем другой фрукт позже (через пересчёт)
+                robot.targetFruit = null;
+                return;
+            }
+        }
+
+        if (robot.path.length === 0 || robot.pathIndex >= robot.path.length) {
+            robot.path = [];
+            robot.pathIndex = 0;
+            robot.targetFruit = null;
+            return;
+        }
+
+        const currentTarget = robot.path[robot.pathIndex];
+        const nextTarget = (robot.pathIndex + 1 < robot.path.length) ? robot.path[robot.pathIndex + 1] : null;
+
+        let targetX = currentTarget.x + 0.5;
+        let targetY = currentTarget.y + 0.5;
+
+        if (nextTarget) {
+            const lookAhead = 0.35;
+            const dxNext = nextTarget.x - currentTarget.x;
+            const dyNext = nextTarget.y - currentTarget.y;
+            targetX += dxNext * lookAhead;
+            targetY += dyNext * lookAhead;
+        }
+
+        const dx = targetX - robot.x;
+        const dy = targetY - robot.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < 0.18) {
+            robot.pathIndex++;
+            if (robot.pathIndex >= robot.path.length) {
+                if (closest && !closest.collected) {
+                    robot.path = [];
+                    robot.pathIndex = 0;
+                    robot.targetFruit = null;
+                    robot.isRotating = false;
+                }
+                return;
+            }
+            const newTarget = robot.path[robot.pathIndex];
+            const nxt = (robot.pathIndex + 1 < robot.path.length) ? robot.path[robot.pathIndex + 1] : null;
+            let newTargetX = newTarget.x + 0.5;
+            let newTargetY = newTarget.y + 0.5;
+            if (nxt) {
+                const lookAhead = 0.35;
+                newTargetX += (nxt.x - newTarget.x) * lookAhead;
+                newTargetY += (nxt.y - newTarget.y) * lookAhead;
+            }
+            const newDx = newTargetX - robot.x;
+            const newDy = newTargetY - robot.y;
+            const newAngle = Math.atan2(newDy, newDx);
+            let diff = newAngle - robot.angle;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+            robot.angle += Math.sign(diff) * Math.min(Math.abs(diff), 0.035 * 2.5);
+            robot.isRotating = true;
+            robot.stuckCounter = 0;
+            robot.lastPos = { x: robot.x, y: robot.y };
+            return;
+        }
+
+        const targetAngle = Math.atan2(dy, dx);
+        let diff = targetAngle - robot.angle;
+        while (diff > Math.PI) diff -= 2 * Math.PI;
+        while (diff < -Math.PI) diff += 2 * Math.PI;
+
+        const absDiff = Math.abs(diff);
+        const rotSpeed = Math.min(0.035 * 2.8, absDiff * 2.2 + 0.01);
+
+        const angleThreshold = 0.045;
+        if (absDiff > angleThreshold) {
+            robot.angle += Math.sign(diff) * Math.min(absDiff, rotSpeed);
+            robot.isRotating = true;
+            robot.stuckCounter = 0;
+            robot.lastPos = { x: robot.x, y: robot.y };
+            return;
+        }
+
+        robot.isRotating = false;
+
+        if (absDiff > 0.001) {
+            robot.angle += Math.sign(diff) * Math.min(absDiff, rotSpeed * 0.5);
+        }
+
+        const moveSpeed = robot.speed * 1.0;
+        const newX = robot.x + moveSpeed * Math.cos(robot.angle);
+        const newY = robot.y + moveSpeed * Math.sin(robot.angle);
+
+        if (!isWall(newX, robot.y)) robot.x = newX;
+        if (!isWall(robot.x, newY)) robot.y = newY;
+
+        const moved = Math.hypot(robot.x - robot.lastPos.x, robot.y - robot.lastPos.y);
+        if (moved < 0.0005) {
+            robot.stuckCounter++;
+            if (robot.stuckCounter > 25) {
+                robot.angle += (Math.random() - 0.5) * 0.8;
+                robot.path = [];
+                robot.pathIndex = 0;
+                robot.targetFruit = null;
+                robot.isRotating = false;
+                robot.stuckCounter = 0;
+            }
+        } else {
+            robot.stuckCounter = 0;
+            robot.lastPos = { x: robot.x, y: robot.y };
+        }
+
+        // Сбор фруктов роботом
+        robotCollectFruit();
+    }
+
+    // ============================================================
+    //  ЗАГАДКИ — ЛОГИКА
+    // ============================================================
+    let puzzleOpen = false;
+    let currentPuzzleWall = null;
+
+    const puzzleOverlay = document.getElementById('puzzleOverlay');
+    const puzzleQuestion = document.getElementById('puzzleQuestion');
+    const puzzleInput = document.getElementById('puzzleInput');
+    const puzzleSubmit = document.getElementById('puzzleSubmit');
+    const puzzleClose = document.getElementById('puzzleClose');
+    const puzzleMessage = document.getElementById('puzzleMessage');
+    const puzzleAttempts = document.getElementById('puzzleAttempts');
+
+    function showPuzzle(wall) {
+        if (puzzleOpen) return;
+        puzzleOpen = true;
+        currentPuzzleWall = wall;
+        puzzleQuestion.textContent = wall.question;
+        puzzleInput.value = '';
+        puzzleMessage.textContent = '';
+        puzzleAttempts.textContent = `Осталось попыток: ${3 - wall.wrongAttempts}`;
+        puzzleOverlay.style.display = 'flex';
+        puzzleInput.focus();
+    }
+
+    function closePuzzle() {
+        puzzleOpen = false;
+        currentPuzzleWall = null;
+        puzzleOverlay.style.display = 'none';
+        puzzleMessage.textContent = '';
+    }
+
+    function handleWallBlock(wall) {
+        if (wall.puzzleSolved) return;
+        if (wall.wrongAttempts >= 3) {
+            showMessage('🚫 Эта дверь заперта навсегда.', 1500);
+            return;
+        }
+        if (!wall.puzzleActive) {
+            wall.puzzleActive = true;
+            showPuzzle(wall);
+        } else {
+            if (!puzzleOpen) showPuzzle(wall);
+        }
+    }
+
+    function submitPuzzleAnswer() {
+        if (!currentPuzzleWall) return;
+        const wall = currentPuzzleWall;
+        const input = puzzleInput.value.trim().toLowerCase();
+        const correct = wall.answer.trim().toLowerCase();
+
+        if (input === correct) {
+            wall.puzzleSolved = true;
+            wall.active = false;
+            updateWallStatus();
+            closePuzzle();
+            showMessage('🔓 Дверь открыта! Вы можете пройти.', 2000);
+        } else {
+            wall.wrongAttempts++;
+            const remaining = 3 - wall.wrongAttempts;
+            puzzleMessage.textContent = '❌ Неправильный ответ!';
+            puzzleAttempts.textContent = `Осталось попыток: ${remaining}`;
+            if (wall.wrongAttempts >= 3) {
+                closePuzzle();
+                wall.puzzleActive = false;
+                showMessage('🚫 Загадка закрыта. Дверь осталась запертой.', 2500);
+                updateWallStatus();
+            } else {
+                puzzleInput.value = '';
+                puzzleInput.focus();
+            }
+        }
+    }
+
+    // ---- ОБНОВЛЕНИЕ (включая стены, игрока, робота) ----
+    function update(delta) {
+        if (paused) return;
+
+        // Обновляем выдвижные стены
+        updateMovableWalls(delta);
+
+        // Если загадка открыта — блокируем движение и автопилот
+        if (puzzleOpen) {
+            // Но робот всё равно может двигаться? Нет, тоже блокируем, чтобы не было конфликтов.
+            return;
+        }
+
+        // ---- Движение игрока (ручное или автопилот) ----
+        if (gamepad && !autoPilot) {
+            const gp = navigator.getGamepads()[gamepad.index];
+            if (gp) {
+                const lx = gp.axes[0] || 0,
+                    ly = gp.axes[1] || 0,
+                    rx = gp.axes[2] || 0;
+                if (Math.abs(lx) > 0.2 || Math.abs(ly) > 0.2) {
+                    const angle = Math.atan2(ly, lx);
+                    const speed = Math.min(1, Math.sqrt(lx * lx + ly * ly));
+                    const moveX = speed * player.speed * Math.cos(angle + player.angle);
+                    const moveY = speed * player.speed * Math.sin(angle + player.angle);
+                    const newX = player.x + moveX,
+                        newY = player.y + moveY;
+                    let blocked = false;
+                    const wallX = getMovableWallAt(Math.floor(newX), Math.floor(player.y));
+                    if (wallX) { handleWallBlock(wallX);
+                        blocked = true; }
+                    if (!blocked) {
+                        const wallY = getMovableWallAt(Math.floor(player.x), Math.floor(newY));
+                        if (wallY) { handleWallBlock(wallY);
+                            blocked = true; }
+                    }
+                    if (!blocked) {
+                        if (!isWall(newX, player.y)) player.x = newX;
+                        if (!isWall(player.x, newY)) player.y = newY;
+                    }
+                }
+                if (Math.abs(rx) > 0.2) player.angle += rx * player.rotSpeed * 0.8;
+            }
+        }
+
+        if (!autoPilot) {
+            let dx = 0,
+                dy = 0;
+            if (keys['w'] || keys['W'] || keys['ArrowUp']) { dx += player.speed * Math.cos(player.angle);
+                dy += player.speed * Math.sin(player.angle); }
+            if (keys['s'] || keys['S'] || keys['ArrowDown']) { dx -= player.speed * Math.cos(player.angle);
+                dy -= player.speed * Math.sin(player.angle); }
+            if (keys['a'] || keys['A'] || keys['ArrowLeft']) { dx += player.speed * Math.cos(player.angle - Math.PI / 2);
+                dy += player.speed * Math.sin(player.angle - Math.PI / 2); }
+            if (keys['d'] || keys['D'] || keys['ArrowRight']) { dx += player.speed * Math.cos(player.angle + Math.PI / 2);
+                dy += player.speed * Math.sin(player.angle + Math.PI / 2); }
+            if (!isMouseLocked || keys['turnLeft'] || keys['turnRight']) {
+                if (keys['ArrowLeft'] || keys['turnLeft']) player.angle -= player.rotSpeed;
+                if (keys['ArrowRight'] || keys['turnRight']) player.angle += player.rotSpeed;
+            }
+            const newX = player.x + dx,
+                newY = player.y + dy;
+
+            let blocked = false;
+            const wallX = getMovableWallAt(Math.floor(newX), Math.floor(player.y));
+            if (wallX) { handleWallBlock(wallX);
+                blocked = true; }
+            if (!blocked) {
+                const wallY = getMovableWallAt(Math.floor(player.x), Math.floor(newY));
+                if (wallY) { handleWallBlock(wallY);
+                    blocked = true; }
+            }
+            if (!blocked) {
+                if (!isWall(newX, player.y)) player.x = newX;
+                if (!isWall(player.x, newY)) player.y = newY;
+            }
+        }
+
+        if (autoPilot) {
+            updateAutoPilot();
+        }
+
+        // ---- Движение робота ----
+        updateRobot(delta);
+
+        // ---- Сбор фруктов игроком ----
+        collectFruit();
+    }
+
+    // ---- МИНИКАРТА (с отображением робота) ----
+    function drawMinimap() {
+        const size = 120,
+            scale = size / MAP_SIZE,
+            x0 = W - size - 10,
+            y0 = H - size - 10;
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(x0, y0, size, size);
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x0, y0, size, size);
+        for (let y = 0; y < MAP_SIZE; y++) {
+            for (let x = 0; x < MAP_SIZE; x++) {
+                if (MAP[y][x] === 1) {
+                    const movable = movableWalls.find(w => w.x === x && w.y === y);
+                    if (movable) {
+                        if (movable.puzzleSolved) {
+                            ctx.fillStyle = '#44aa44';
+                        } else {
+                            ctx.fillStyle = movable.active ? '#ff4444' : '#444444';
+                        }
+                    } else {
+                        ctx.fillStyle = '#888';
+                    }
+                    ctx.fillRect(x0 + x * scale, y0 + y * scale, scale, scale);
+                }
+            }
+        }
+        for (const fruit of fruits) {
+            if (fruit.collected) continue;
+            ctx.fillStyle = fruit.color;
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = fruit.color;
+            ctx.beginPath();
+            ctx.arc(x0 + fruit.x * scale, y0 + fruit.y * scale, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        // Игрок
+        ctx.fillStyle = '#0f0';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#0f0';
+        ctx.beginPath();
+        ctx.arc(x0 + player.x * scale, y0 + player.y * scale, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x0 + player.x * scale, y0 + player.y * scale);
+        ctx.lineTo(x0 + (player.x + 0.5 * Math.cos(player.angle)) * scale, y0 + (player.y + 0.5 * Math.sin(player.angle)) * scale);
+        ctx.stroke();
+        // Робот
+        ctx.fillStyle = '#ff8800';
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#ff8800';
+        ctx.beginPath();
+        ctx.arc(x0 + robot.x * scale, y0 + robot.y * scale, 4, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#ff8800';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x0 + robot.x * scale, y0 + robot.y * scale);
+        ctx.lineTo(x0 + (robot.x + 0.5 * Math.cos(robot.angle)) * scale, y0 + (robot.y + 0.5 * Math.sin(robot.angle)) * scale);
+        ctx.stroke();
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, W, H);
+        renderFloorAndCeiling();
+        castRays();
+        renderSprites();
+        drawMinimap();
+    }
+
+    function gameLoop(timestamp) {
+        const delta = (timestamp - lastTime) / 1000;
+        lastTime = timestamp;
+        const dt = Math.min(delta, 0.1);
+        update(dt);
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    // ---- УПРАВЛЕНИЕ ПАУЗОЙ ----
+    function togglePause() {
+        if (overlay.classList.contains('hidden') && !resultScreen.classList.contains('show')) {
+            paused = !paused;
+            if (paused) {
+                pauseOverlay.classList.add('show');
+                pauseBtn.textContent = '▶ Продолжить';
+                if (document.pointerLockElement === canvas) document.exitPointerLock();
+            } else {
+                pauseOverlay.classList.remove('show');
+                pauseBtn.textContent = '⏸ Пауза';
+                if (!document.pointerLockElement && overlay.classList.contains('hidden') && !resultScreen.classList.contains('show')) {
+                    canvas.requestPointerLock();
+                }
+            }
+        }
+    }
+
+    function resetGame() {
+        MAP = generateMaze();
+        initMovableWalls();
+        // Размещаем игрока
+        player.x = 1.5;
+        player.y = 1.5;
+        player.angle = 0;
+        player.health = 100;
+        // Размещаем робота в случайной свободной клетке (не рядом с игроком)
+        let placed = false;
+        for (let attempt = 0; attempt < 100; attempt++) {
+            const rx = 1.5 + Math.random() * (MAP_SIZE - 3);
+            const ry = 1.5 + Math.random() * (MAP_SIZE - 3);
+            if (!isWall(rx, ry) && Math.hypot(rx - player.x, ry - player.y) > 2.5) {
+                robot.x = rx;
+                robot.y = ry;
+                placed = true;
+                break;
+            }
+        }
+        if (!placed) {
+            robot.x = 12.5;
+            robot.y = 12.5;
+        }
+        robot.angle = Math.random() * 2 * Math.PI;
+        robot.fruitCount = 0;
+        robot.path = [];
+        robot.pathIndex = 0;
+        robot.targetFruit = null;
+        robot.stuckCounter = 0;
+        robot.lastPos = { x: robot.x, y: robot.y };
+        robot.isRotating = false;
+
+        resultScreen.classList.remove('show');
+        generateFruits();
+        collectedCount = 0;
+        autoPilot = false;
+        autoPath = [];
+        pathIndex = 0;
+        currentTargetFruit = null;
+        stuckCounter = 0;
+        lastPos = { x: player.x, y: player.y };
+        isRotating = false;
+        closePuzzle();
+        updateUI();
+        showMessage('🍇 Лабиринт заново рождается. Ищите плоды!', 2000);
+        paused = false;
+        pauseOverlay.classList.remove('show');
+        pauseBtn.textContent = '⏸ Пауза';
+    }
+
+    // ---- КОНСОЛЬ ----
+    function processCommand(cmd) {
+        cmd = cmd.trim();
+        if (cmd === '') return;
+        const match = cmd.match(/^50\$\s+(on|off)$/i);
+        if (match) {
+            const state = match[1].toLowerCase();
+            if (state === 'on') {
+                if (collectedCount === TOTAL_FRUITS) {
+                    consoleOutput.textContent = '❌ все фрукты уже собраны!';
+                    consoleOutput.style.color = '#ff6666';
+                    return;
+                }
+                autoPilot = true;
+                consoleOutput.textContent = '🤖 автопилот ВКЛ';
+                consoleOutput.style.color = '#00ccff';
+                updateUI();
+                showMessage('🤖 Автопилот активирован!', 1500);
+            } else {
+                autoPilot = false;
+                consoleOutput.textContent = '⚡ автопилот ВЫКЛ';
+                consoleOutput.style.color = '#0f0';
+                updateUI();
+                showMessage('⚡ Автопилот отключён.', 1000);
+            }
+            return;
+        }
+        consoleOutput.textContent = '❌ неизвестная команда';
+        consoleOutput.style.color = '#ff6666';
+        setTimeout(() => {
+            consoleOutput.textContent = 'готов';
+            consoleOutput.style.color = '#0f0';
+        }, 2000);
+    }
+
+    // ---- НАСТРОЙКА СКОРОСТИ ----
+    speedSlider.addEventListener('input', () => {
+        const val = parseFloat(speedSlider.value);
+        speedDisplay.textContent = val.toFixed(3);
+        player.speed = val;
+    });
+
+    // ---- КНОПКА АВТОПИЛОТА ----
+    toggleAutoBtn.addEventListener('click', () => {
+        if (collectedCount === TOTAL_FRUITS) {
+            showMessage('🏆 Все фрукты уже собраны!', 1500);
+            return;
+        }
+        autoPilot = !autoPilot;
+        if (autoPilot) {
+            autoPath = [];
+            pathIndex = 0;
+            currentTargetFruit = null;
+            isRotating = false;
+            showMessage('🤖 Автопилот включён', 1200);
+        } else {
+            showMessage('⚡ Автопилот выключен', 1200);
+        }
+        updateUI();
+    });
+
+    // ---- КНОПКИ СКРЫТИЯ ----
+    let controlsHidden = false;
+    toggleControlsBtn.addEventListener('click', () => {
+        controlsHidden = !controlsHidden;
+        controlsEl.classList.toggle('hidden', controlsHidden);
+        toggleControlsBtn.classList.toggle('hidden-active', controlsHidden);
+        toggleControlsBtn.title = controlsHidden ? 'Показать управление' : 'Скрыть управление';
+    });
+
+    let settingsHidden = false;
+    toggleSettingsBtn.addEventListener('click', () => {
+        settingsHidden = !settingsHidden;
+        settingsEl.classList.toggle('hidden', settingsHidden);
+        toggleSettingsBtn.classList.toggle('hidden-active', settingsHidden);
+        toggleSettingsBtn.title = settingsHidden ? 'Показать настройки' : 'Скрыть настройки';
+    });
+
+    // ---- ОБРАБОТЧИКИ ЗАГАДКИ ----
+    puzzleSubmit.addEventListener('click', submitPuzzleAnswer);
+    puzzleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitPuzzleAnswer();
+        }
+    });
+    puzzleClose.addEventListener('click', () => {
+        closePuzzle();
+    });
+
+    // ---- СОБЫТИЯ ----
+    function initEvents() {
+        document.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            if (e.key === 'Escape' && overlay.classList.contains('hidden') && !resultScreen.classList.contains('show'))
+                togglePause();
+        });
+        document.addEventListener('keyup', e => keys[e.key] = false);
+        canvas.addEventListener('click', () => {
+            if (!overlay.classList.contains('hidden')) return;
+            if (paused) return;
+            canvas.requestPointerLock();
+        });
+        document.addEventListener('pointerlockchange', () => { isMouseLocked = document.pointerLockElement === canvas; });
+        document.addEventListener('mousemove', (e) => {
+            if (!isMouseLocked || paused || autoPilot) return;
+            player.angle += e.movementX * 0.002;
+        });
+        pauseBtn.addEventListener('click', togglePause);
+        resumeBtn.addEventListener('click', togglePause);
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'p' || e.key === 'P') && overlay.classList.contains('hidden') && !resultScreen.classList.contains(
+                    'show')) togglePause();
+            if (e.key === 'Enter' && document.activeElement === consoleInput) {
+                processCommand(consoleInput.value);
+                consoleInput.value = '';
+            }
+        });
+
+        const dirButtons = document.querySelectorAll('.dir button[data-key]');
+        dirButtons.forEach(btn => {
+            const key = btn.dataset.key;
+            const start = (e) => { e.preventDefault(); if (!autoPilot) keys[key] = true; };
+            const end = (e) => { e.preventDefault();
+                keys[key] = false; };
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('touchend', end);
+            btn.addEventListener('touchcancel', end);
+        });
+        document.getElementById('turnLeft').addEventListener('mousedown', (e) => { e.preventDefault(); if (!autoPilot) keys[
+                'turnLeft'] = true; });
+        document.getElementById('turnLeft').addEventListener('mouseup', (e) => { e.preventDefault();
+            keys['turnLeft'] = false; });
+        document.getElementById('turnLeft').addEventListener('mouseleave', () => { keys['turnLeft'] = false; });
+        document.getElementById('turnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); if (!autoPilot) keys[
+                'turnLeft'] = true; });
+        document.getElementById('turnLeft').addEventListener('touchend', (e) => { e.preventDefault();
+            keys['turnLeft'] = false; });
+        document.getElementById('turnRight').addEventListener('mousedown', (e) => { e.preventDefault(); if (!autoPilot) keys[
+                'turnRight'] = true; });
+        document.getElementById('turnRight').addEventListener('mouseup', (e) => { e.preventDefault();
+            keys['turnRight'] = false; });
+        document.getElementById('turnRight').addEventListener('mouseleave', () => { keys['turnRight'] = false; });
+        document.getElementById('turnRight').addEventListener('touchstart', (e) => { e.preventDefault(); if (!autoPilot) keys[
+                'turnRight'] = true; });
+        document.getElementById('turnRight').addEventListener('touchend', (e) => { e.preventDefault();
+            keys['turnRight'] = false; });
+
+        consoleSend.addEventListener('click', () => {
+            processCommand(consoleInput.value);
+            consoleInput.value = '';
+        });
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            overlay.classList.add('hidden');
+            initAudio();
+            resetGame();
+            canvas.requestPointerLock();
+        });
+        document.getElementById('restartBtn').addEventListener('click', resetGame);
+    }
+
+    // ---- СТАРТ ----
+    MAP = generateMaze();
+    initMovableWalls();
+    player.x = 1.5;
+    player.y = 1.5;
+    player.speed = parseFloat(speedSlider.value);
+    // Инициализация робота
+    robot.x = 12.5;
+    robot.y = 12.5;
+    robot.angle = 0;
+    robot.speed = 0.035;
+    generateFruits();
+    updateUI();
+    initEvents();
+    lastTime = performance.now();
+    gameLoop(lastTime);
+</script>
+</body>
+</html>
