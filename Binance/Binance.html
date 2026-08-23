@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Приглашение на Binance</title>
+    <!-- Подключаем шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(ellipse at 30% 20%, #1e2a3a 0%, #0d1117 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Анимированные декоративные круги на фоне */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.25;
+            z-index: 0;
+            animation: floatBg 15s ease-in-out infinite alternate;
+        }
+        body::before {
+            width: 600px;
+            height: 600px;
+            background: #f0b90b;
+            top: -200px;
+            right: -200px;
+        }
+        body::after {
+            width: 500px;
+            height: 500px;
+            background: #f0b90b;
+            bottom: -150px;
+            left: -150px;
+            animation-delay: -7s;
+        }
+
+        @keyframes floatBg {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(60px, 40px) scale(1.2);
+            }
+        }
+
+        /* Карточка — стеклянный эффект */
+        .card {
+            max-width: 540px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-radius: 48px;
+            padding: 44px 36px 48px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: cardAppear 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(30px) scale(0.96);
+        }
+
+        @keyframes cardAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        /* Бейдж */
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f0b90b, #f5c82b);
+            color: #0d1117;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 6px 20px;
+            border-radius: 100px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 16px rgba(240, 185, 11, 0.3);
+            transition: box-shadow 0.3s;
+        }
+        .badge:hover {
+            box-shadow: 0 6px 24px rgba(240, 185, 11, 0.5);
+        }
+
+        /* Заголовки */
+        h1 {
+            font-size: 30px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.15;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+        .subhead {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.6;
+            margin-bottom: 32px;
+            font-weight: 400;
+        }
+        .subhead strong {
+            color: #f0b90b;
+            font-weight: 600;
+        }
+
+        /* Бонусная сетка */
+        .bonus-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        .bonus-item {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 20px;
+            padding: 20px 12px 18px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: background 0.3s, transform 0.25s, border-color 0.3s;
+            cursor: default;
+        }
+        .bonus-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            border-color: rgba(240, 185, 11, 0.3);
+        }
+        .bonus-item .number {
+            font-size: 30px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1;
+        }
+        .bonus-item .number .currency {
+            font-size: 18px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .bonus-item .label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 6px;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        .bonus-item.highlight {
+            background: rgba(240, 185, 11, 0.12);
+            border-color: rgba(240, 185, 11, 0.25);
+        }
+        .bonus-item.highlight .number {
+            color: #f0b90b;
+        }
+        .bonus-item.highlight .label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Разделитель */
+        .divider {
+            width: 56px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 0 auto 28px;
+            border-radius: 4px;
+        }
+
+        /* Особенности */
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 36px;
+            text-align: left;
+        }
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 500;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background 0.25s, border-color 0.25s, transform 0.2s;
+        }
+        .feature-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateX(4px);
+        }
+        .feature-row .icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            width: 30px;
+            text-align: center;
+        }
+        .feature-row .desc {
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .feature-row .highlight-text {
+            color: #f0b90b;
+            font-weight: 700;
+        }
+
+        /* Кнопка */
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, #f0b90b, #f5c82b);
+            color: #0d1117;
+            font-size: 18px;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 100px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 6px 30px rgba(240, 185, 11, 0.35);
+            letter-spacing: 0.2px;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .btn:hover {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 10px 40px rgba(240, 185, 11, 0.5);
+        }
+        .btn:hover::after {
+            opacity: 1;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Реферальный код */
+        .ref-code {
+            margin-top: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 10px 20px;
+            border-radius: 100px;
+            display: inline-block;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .ref-code strong {
+            color: #f0b90b;
+            font-weight: 700;
+        }
+
+        /* Футер */
+        .footer-note {
+            margin-top: 22px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.25);
+            line-height: 1.6;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 480px) {
+            .card {
+                padding: 28px 18px 32px;
+                border-radius: 32px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .bonus-grid {
+                gap: 8px;
+            }
+            .bonus-item .number {
+                font-size: 24px;
+            }
+            .btn {
+                font-size: 16px;
+                padding: 16px 20px;
+            }
+            .feature-row {
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+        }
+
+        /* Анимация для появления элементов с задержкой */
+        .card > * {
+            opacity: 0;
+            animation: fadeSlide 0.6s ease forwards;
+        }
+        .card > .badge {
+            animation-delay: 0.1s;
+        }
+        .card > h1 {
+            animation-delay: 0.2s;
+        }
+        .card > .subhead {
+            animation-delay: 0.3s;
+        }
+        .card > .bonus-grid {
+            animation-delay: 0.4s;
+        }
+        .card > .divider {
+            animation-delay: 0.5s;
+        }
+        .card > .features {
+            animation-delay: 0.6s;
+        }
+        .card > .btn {
+            animation-delay: 0.7s;
+        }
+        .card > .ref-code {
+            animation-delay: 0.8s;
+        }
+        .card > .footer-note {
+            animation-delay: 0.9s;
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Дополнительный блеск */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgba(240, 185, 11, 0.2), transparent, rgba(240, 185, 11, 0.1));
+            z-index: -1;
+            filter: blur(12px);
+            opacity: 0.5;
+            animation: glowPulse 4s ease-in-out infinite alternate;
+        }
+        @keyframes glowPulse {
+            0% {
+                opacity: 0.3;
+                transform: scale(0.98);
+            }
+            100% {
+                opacity: 0.7;
+                transform: scale(1.02);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Бейдж -->
+        <div class="badge">🔥 Официальное приглашение</div>
+
+        <!-- Заголовок -->
+        <h1>Добро пожаловать на Binance</h1>
+        <p class="subhead">
+            Зарегистрируйтесь по моей реферальной ссылке и получите <br />
+            <strong>эксклюзивные бонусы</strong> для старта
+        </p>
+
+        <!-- Бонусы -->
+        <div class="bonus-grid">
+            <div class="bonus-item highlight">
+                <div class="number">$100</div>
+                <div class="label">макс. приветственный бонус</div>
+            </div>
+            <div class="bonus-item">
+                <div class="number">20<small style="font-size:20px;">%</small></div>
+                <div class="label">скидка на комиссию <br />навсегда</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Особенности -->
+        <div class="features">
+            <div class="feature-row">
+                <span class="icon">🎁</span>
+                <span>Бонус до <span class="highlight-text">$100</span> сразу после регистрации</span>
+            </div>
+            <div class="feature-row">
+                <span class="icon">📋</span>
+                <span>Дополнительные задания на <span class="highlight-text">$100</span> после KYC</span>
+            </div>
+            <div class="feature-row">
+                <span class="icon">⚡</span>
+                <span>Пожизненная скидка <span class="highlight-text">20%</span> на спотовую торговлю</span>
+            </div>
+            <div class="feature-row">
+                <span class="icon">🛡️</span>
+                <span>Надёжность и ликвидность <span class="desc">№1 в мире</span></span>
+            </div>
+        </div>
+
+        <!-- Кнопка -->
+        <a href="https://www.binance.com/register?ref=1A2B3" target="_blank" class="btn">
+            🚀 Зарегистрироваться сейчас
+        </a>
+
+        <!-- Реферальный код -->
+        <div class="ref-code">
+            🔑 Реферальный код: <strong>1A2B3</strong>
+        </div>
+
+        <div class="footer-note">
+            Бонусы доступны для новых пользователей. Подробные условия — на сайте Binance.
+        </div>
+    </div>
+
+</body>
+</html>
