@@ -1,0 +1,1808 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Dot Challenge – сложная версия</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #0b0e11;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 16px;
+            margin: 0;
+            color: #eaecef;
+        }
+
+        .game-container {
+            background: #1e2329;
+            border-radius: 24px;
+            padding: 24px 28px 28px;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 3px solid transparent;
+            border-image: linear-gradient(135deg, #f0b90b, #f8d33a, #f0b90b, #f8d33a) 1;
+            border-image-slice: 1;
+            animation: borderGlow 4s ease-in-out infinite;
+            transition: all 0.2s;
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { border-image: linear-gradient(135deg, #f0b90b, #f8d33a, #f0b90b) 1; }
+            50% { border-image: linear-gradient(135deg, #f8d33a, #f0b90b, #f8d33a) 1; }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title h1 {
+            font-size: 22px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f0b90b, #f8d33a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .title .icon {
+            font-size: 26px;
+            filter: drop-shadow(0 0 8px rgba(240, 185, 11, 0.3));
+        }
+
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #848e9c;
+            font-weight: 500;
+            flex-wrap: wrap;
+        }
+
+        .stats span {
+            background: #2b3139;
+            padding: 4px 14px;
+            border-radius: 40px;
+            border: 1px solid #3b424b;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .stats .num {
+            color: #f0b90b;
+            font-weight: 600;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .stats .time-num {
+            color: #34d399;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stats .score-num {
+            color: #f472b6;
+            font-weight: 600;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .goal-hint {
+            font-size: 12px;
+            color: #f0b90b;
+            background: rgba(240, 185, 11, 0.12);
+            border: 1px solid rgba(240, 185, 11, 0.2);
+            padding: 4px 14px;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #13171d;
+            border-radius: 16px;
+            border: 1px solid #2b3139;
+            overflow: hidden;
+            box-shadow: inset 0 4px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 20;
+        }
+
+        .loading-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-overlay .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #2b3139;
+            border-top-color: #f0b90b;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-overlay p {
+            margin-top: 14px;
+            color: #f0b90b;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .loading-overlay .sub {
+            color: #848e9c;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .win-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 10;
+        }
+
+        .win-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .win-overlay .big-emoji {
+            font-size: 72px;
+            animation: bounce 1.2s ease infinite;
+        }
+
+        .win-overlay h2 {
+            color: #f0b90b;
+            font-size: 32px;
+            font-weight: 700;
+            text-shadow: 0 0 30px rgba(240, 185, 11, 0.2);
+        }
+
+        .win-overlay .win-stats {
+            color: #b0b8c4;
+            font-size: 15px;
+            margin-top: 6px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .win-overlay .win-stats span {
+            color: #f0b90b;
+            font-weight: 600;
+        }
+
+        .win-overlay .btn {
+            margin-top: 16px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .sparkle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 16px;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #f0b90b;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #f0b90b;
+            opacity: 0;
+            animation: sparkle-fly 2s ease-out forwards;
+        }
+
+        @keyframes sparkle-fly {
+            0% { opacity: 0; transform: translate(0, 0) scale(0); }
+            20% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(1.2); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: #2b3139;
+            border: 1px solid #3b424b;
+            color: #eaecef;
+            padding: 7px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background: #3b424b;
+            border-color: #5e6a7a;
+            transform: scale(1.02);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f0b90b, #d49c0a);
+            border-color: #f0b90b;
+            color: #0b0e11;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(240, 185, 11, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #f8c84a, #f0b90b);
+            box-shadow: 0 6px 25px rgba(240, 185, 11, 0.35);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #f87171;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-success {
+            background: rgba(52, 211, 153, 0.15);
+            border-color: rgba(52, 211, 153, 0.2);
+            color: #34d399;
+        }
+
+        .btn-success:hover {
+            background: rgba(52, 211, 153, 0.25);
+        }
+
+        .btn-solution {
+            background: rgba(52, 211, 153, 0.12);
+            border-color: rgba(52, 211, 153, 0.25);
+            color: #34d399;
+        }
+
+        .btn-solution:hover {
+            background: rgba(52, 211, 153, 0.22);
+        }
+        .btn-solution.active {
+            background: rgba(52, 211, 153, 0.25);
+            border-color: #34d399;
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            transform: none !important;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .difficulty-selector label {
+            color: #848e9c;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+
+        .diff-btn {
+            background: #2b3139;
+            border: 1px solid #3b424b;
+            color: #848e9c;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .diff-btn:hover {
+            background: #3b424b;
+            color: #eaecef;
+        }
+
+        .diff-btn.active {
+            background: linear-gradient(135deg, #f0b90b, #d49c0a);
+            border-color: #f0b90b;
+            color: #0b0e11;
+            box-shadow: 0 4px 15px rgba(240, 185, 11, 0.3);
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #848e9c;
+            min-height: 26px;
+            transition: all 0.3s ease;
+        }
+
+        .message.success {
+            color: #f0b90b;
+            font-size: 17px;
+        }
+        .message.error {
+            color: #f87171;
+        }
+        .message.info {
+            color: #34d399;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 16px;
+            color: #3b424b;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .footer span {
+            color: #f0b90b;
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: #1e2329;
+            border: 1px solid #2b3139;
+            border-radius: 24px;
+            max-width: 480px;
+            width: 100%;
+            padding: 32px 28px 28px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #848e9c;
+            font-size: 26px;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #eaecef;
+        }
+
+        .modal h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f0b90b;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal h2 span {
+            font-size: 28px;
+        }
+
+        .modal p, .modal li {
+            color: #b0b8c4;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal ul {
+            padding-left: 20px;
+            margin: 12px 0 16px;
+        }
+
+        .modal li {
+            margin-bottom: 6px;
+        }
+
+        .modal .highlight {
+            color: #f0b90b;
+            font-weight: 500;
+        }
+
+        .modal .key {
+            display: inline-block;
+            background: #2b3139;
+            padding: 0 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #eaecef;
+            border: 1px solid #3b424b;
+            margin: 0 2px;
+        }
+
+        .modal .divider {
+            height: 1px;
+            background: #2b3139;
+            margin: 18px 0;
+        }
+
+        .modal .btn-close-modal {
+            margin-top: 12px;
+            width: 100%;
+            justify-content: center;
+            padding: 12px;
+            font-size: 15px;
+        }
+
+        @media (max-width: 540px) {
+            .game-container {
+                padding: 16px 14px 20px;
+            }
+            .title h1 {
+                font-size: 18px;
+            }
+            .title .icon {
+                font-size: 20px;
+            }
+            .stats {
+                font-size: 11px;
+                gap: 6px;
+            }
+            .stats span {
+                padding: 2px 10px;
+            }
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            .diff-btn {
+                padding: 3px 10px;
+                font-size: 11px;
+            }
+            .win-overlay .big-emoji {
+                font-size: 48px;
+            }
+            .win-overlay h2 {
+                font-size: 24px;
+            }
+            .controls {
+                gap: 8px;
+            }
+            .btn-group {
+                gap: 6px;
+            }
+            .goal-hint {
+                font-size: 10px;
+                padding: 2px 10px;
+            }
+            .modal {
+                padding: 24px 20px 20px;
+            }
+            .footer {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .game-container {
+                padding: 12px 10px 16px;
+            }
+            .title h1 {
+                font-size: 15px;
+            }
+            .stats span {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+            .btn {
+                font-size: 11px;
+                padding: 5px 10px;
+            }
+            .diff-btn {
+                font-size: 10px;
+                padding: 2px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- Header -->
+    <div class="header">
+        <div class="title">
+            <span class="icon">✦</span>
+            <h1>Dot Challenge</h1>
+        </div>
+        <div class="stats">
+            <span>🎯 <span class="num" id="progressText">0/0</span></span>
+            <span>✏️ <span class="num" id="movesText">0</span></span>
+            <span>⏱️ <span class="time-num" id="timerText">60</span>с</span>
+            <span>🏆 <span class="score-num" id="scoreText">0</span></span>
+            <span class="goal-hint" id="goalHint">⭐ Цель: 1 → 2</span>
+        </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-wrapper">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Loading -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p>🔍 Генерация карты…</p>
+            <div class="sub" id="loadingSub">поиск решения</div>
+        </div>
+
+        <!-- Win -->
+        <div class="win-overlay" id="winOverlay">
+            <div class="big-emoji">🎉</div>
+            <h2>Уровень пройден!</h2>
+            <div class="win-stats">
+                Ходов: <span id="winMoves">0</span><br />
+                Время: <span id="winTime">0</span>с<br />
+                Очки: <span id="winScore">0</span>
+            </div>
+            <button class="btn btn-primary" id="winResetBtn">🔄 Следующий уровень</button>
+        </div>
+
+        <div class="sparkle-container" id="sparkleContainer"></div>
+    </div>
+
+    <!-- Message -->
+    <div class="message" id="message">💡 Нажмите на точку, чтобы начать путь</div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="btn-group">
+            <button class="btn" id="undoBtn" disabled>↩ Отменить</button>
+            <button class="btn btn-danger" id="resetBtn">🔄 Сброс</button>
+            <button class="btn btn-success" id="newMapBtn">🗺️ Новая карта</button>
+            <button class="btn btn-solution" id="solutionBtn">💡 Решение</button>
+            <button class="btn btn-help" id="helpBtn">❓</button>
+        </div>
+        <div class="difficulty-selector">
+            <label>Сложность</label>
+            <button class="diff-btn active" data-diff="easy">Лёгкая</button>
+            <button class="diff-btn" data-diff="medium">Средняя</button>
+            <button class="diff-btn" data-diff="hard">Сложная</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        По всем вопросам WhatsApp <span>+375447841340</span>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal-overlay" id="helpModal">
+    <div class="modal">
+        <button class="modal-close" id="helpModalClose">✕</button>
+        <h2><span>📖</span> Как играть</h2>
+        <p><strong>Цель:</strong> Соединить все точки в один путь, посетив цели по порядку.</p>
+        <ul>
+            <li>🔹 Начинайте с любой непосещённой точки (лучше с цели #1).</li>
+            <li>🔹 Ходите на соседние клетки (включая диагонали).</li>
+            <li>🔹 <span class="highlight">Золотые числа</span> — цели, посещайте их строго по порядку.</li>
+            <li>🔹 <span class="highlight">Тёмные точки</span> — стены, их нельзя проходить.</li>
+        </ul>
+        <div class="divider"></div>
+        <p><strong>Сложность:</strong></p>
+        <ul>
+            <li>🟢 Лёгкая — 4×4, мало стен, 3 цели</li>
+            <li>🟡 Средняя — 5×5, среднее число стен, 4 цели</li>
+            <li>🔴 Сложная — 6×6, много стен, 5 целей, таймер 45с</li>
+        </ul>
+        <div class="divider"></div>
+        <p><strong>Управление:</strong></p>
+        <ul>
+            <li>🖱️ Клик / перетаскивание</li>
+            <li><span class="key">Ctrl+Z</span> Отмена</li>
+            <li><span class="key">R</span> Сброс</li>
+            <li><span class="key">N</span> Новая карта</li>
+            <li><span class="key">S</span> Показать решение</li>
+        </ul>
+        <button class="btn btn-primary btn-close-modal" id="helpModalGotIt">Понятно!</button>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // --- DOM ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const progressText = document.getElementById('progressText');
+        const movesText = document.getElementById('movesText');
+        const timerText = document.getElementById('timerText');
+        const scoreText = document.getElementById('scoreText');
+        const messageEl = document.getElementById('message');
+        const winOverlay = document.getElementById('winOverlay');
+        const winMoves = document.getElementById('winMoves');
+        const winTime = document.getElementById('winTime');
+        const winScore = document.getElementById('winScore');
+        const resetBtn = document.getElementById('resetBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const winResetBtn = document.getElementById('winResetBtn');
+        const newMapBtn = document.getElementById('newMapBtn');
+        const solutionBtn = document.getElementById('solutionBtn');
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const helpModalClose = document.getElementById('helpModalClose');
+        const helpModalGotIt = document.getElementById('helpModalGotIt');
+        const sparkleContainer = document.getElementById('sparkleContainer');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingSub = document.getElementById('loadingSub');
+        const goalHint = document.getElementById('goalHint');
+        const diffBtns = document.querySelectorAll('.diff-btn');
+
+        // --- Difficulty config ---
+        const DIFFICULTY = {
+            easy: { size: 4, wallRatio: 0.08, goalCount: 3, timeLimit: 60, label: 'Лёгкая' },
+            medium: { size: 5, wallRatio: 0.14, goalCount: 4, timeLimit: 50, label: 'Средняя' },
+            hard: { size: 6, wallRatio: 0.20, goalCount: 5, timeLimit: 45, label: 'Сложная' }
+        };
+
+        let currentDifficulty = 'easy';
+
+        // --- Game state ---
+        let gridSize = 5;
+        let dots = [];
+        let path = [];
+        let isComplete = false;
+        let moveCount = 0;
+        let isDragging = false;
+        let hoverDot = null;
+        let goalTarget = 1;
+        let totalGoals = 0;
+        let score = 0;
+
+        // Timer
+        let timeLeft = 60;
+        let timerInterval = null;
+        let isTimerRunning = false;
+
+        // Solution
+        let showSolution = false;
+        let solutionPath = [];
+        let isSearching = false;
+
+        // Loading
+        let isLoading = false;
+
+        // Sizing
+        let canvasSize = 0;
+        let padding = 0;
+        let dotRadius = 0;
+        let spacing = 0;
+        let dpr = 1;
+
+        // Colors
+        const COLORS = {
+            bg: 'rgba(0,0,0,0)',
+            dotUnvisited: '#2b3139',
+            dotUnvisitedBorder: '#3b424b',
+            dotVisited: '#f0b90b',
+            dotVisitedGlow: 'rgba(240,185,11,0.3)',
+            dotCurrent: '#f8c84a',
+            dotCurrentGlow: 'rgba(240,185,11,0.5)',
+            dotStart: '#34d399',
+            dotStartGlow: 'rgba(52,211,153,0.3)',
+            pathLine: 'rgba(240,185,11,0.6)',
+            pathLineGlow: 'rgba(240,185,11,0.15)',
+            pathLineComplete: 'rgba(52,211,153,0.8)',
+            dotHover: 'rgba(255,255,255,0.15)',
+            wall: '#1a1e24',
+            wallBorder: '#2b3139',
+            goalGlow: 'rgba(240,185,11,0.4)',
+            goalColor: '#f0b90b',
+            goalVisited: '#f8c84a',
+            solutionLine: 'rgba(52,211,153,0.7)',
+            solutionDotGlow: 'rgba(52,211,153,0.25)',
+        };
+
+        // --- Resize ---
+        function resizeCanvas() {
+            const wrapper = canvas.parentElement;
+            const rect = wrapper.getBoundingClientRect();
+            const size = rect.width;
+            canvasSize = size;
+            dpr = window.devicePixelRatio || 1;
+
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+
+            ctx.scale(dpr, dpr);
+
+            padding = size * 0.08;
+            const available = size - 2 * padding;
+            spacing = available / (gridSize - 1);
+            dotRadius = Math.min(spacing * 0.3, 20);
+
+            recalcDotPositions();
+            draw();
+        }
+
+        function recalcDotPositions() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const idx = r * gridSize + c;
+                    if (idx < dots.length) {
+                        dots[idx].x = padding + c * spacing;
+                        dots[idx].y = padding + r * spacing;
+                    }
+                }
+            }
+        }
+
+        // --- Map generation with guaranteed solvability ---
+        function generateMap(size, wallRatio, goalCount) {
+            const total = size * size;
+            const newDots = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    newDots.push({
+                        row: r,
+                        col: c,
+                        x: 0,
+                        y: 0,
+                        visited: false,
+                        isWall: false,
+                        isGoal: false,
+                        goalOrder: 0,
+                    });
+                }
+            }
+
+            // Walls
+            const wallCount = Math.floor(total * wallRatio);
+            let placedWalls = 0;
+            let attempts = 0;
+            while (placedWalls < wallCount && attempts < 1000) {
+                attempts++;
+                const idx = Math.floor(Math.random() * total);
+                if (!newDots[idx].isWall) {
+                    newDots[idx].isWall = true;
+                    placedWalls++;
+                }
+            }
+
+            // Goals
+            let placedGoals = 0;
+            attempts = 0;
+            while (placedGoals < goalCount && attempts < 1000) {
+                attempts++;
+                const idx = Math.floor(Math.random() * total);
+                const dot = newDots[idx];
+                if (!dot.isWall && !dot.isGoal) {
+                    dot.isGoal = true;
+                    dot.goalOrder = placedGoals + 1;
+                    placedGoals++;
+                }
+            }
+
+            if (placedGoals === 0) {
+                for (let i = 0; i < total; i++) {
+                    if (!newDots[i].isWall) {
+                        newDots[i].isGoal = true;
+                        newDots[i].goalOrder = 1;
+                        placedGoals = 1;
+                        break;
+                    }
+                }
+            }
+
+            return newDots;
+        }
+
+        function generateSimpleSolvableMap(size) {
+            const newDots = [];
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    newDots.push({
+                        row: r,
+                        col: c,
+                        x: 0,
+                        y: 0,
+                        visited: false,
+                        isWall: false,
+                        isGoal: false,
+                        goalOrder: 0,
+                    });
+                }
+            }
+            const numGoals = Math.min(3, size);
+            for (let i = 0; i < numGoals; i++) {
+                const idx = i * size + i;
+                if (idx < size * size) {
+                    newDots[idx].isGoal = true;
+                    newDots[idx].goalOrder = i + 1;
+                }
+            }
+            if (numGoals === 0 && size > 0) {
+                newDots[0].isGoal = true;
+                newDots[0].goalOrder = 1;
+            }
+            return newDots;
+        }
+
+        // --- Solution finder ---
+        function findSolution(dotsParam = null, gridSizeParam = null) {
+            const mapDots = dotsParam || dots;
+            const mapSize = gridSizeParam || gridSize;
+
+            return new Promise((resolve) => {
+                const nonWallDots = mapDots.filter(d => !d.isWall);
+                if (nonWallDots.length === 0) {
+                    resolve(null);
+                    return;
+                }
+
+                const getNeighbors = (row, col) => {
+                    const result = [];
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            if (dr === 0 && dc === 0) continue;
+                            const r = row + dr;
+                            const c = col + dc;
+                            if (r >= 0 && r < mapSize && c >= 0 && c < mapSize) {
+                                const idx = r * mapSize + c;
+                                if (idx >= 0 && idx < mapDots.length) {
+                                    const dot = mapDots[idx];
+                                    if (dot && !dot.isWall) {
+                                        result.push({ row: r, col: c });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return result;
+                };
+
+                const goal1 = mapDots.find(d => d.isGoal && d.goalOrder === 1);
+                let startCandidates = [];
+                if (goal1) {
+                    startCandidates.push({ row: goal1.row, col: goal1.col });
+                } else {
+                    startCandidates = nonWallDots.map(d => ({ row: d.row, col: d.col }));
+                }
+
+                const totalToVisit = nonWallDots.length;
+                const visitedSet = new Set();
+
+                const dfs = (row, col, pathArr, visitedCount, nextGoal) => {
+                    if (Date.now() - startTime > 3000) return null;
+
+                    const key = row + ',' + col;
+                    if (visitedSet.has(key)) return null;
+                    visitedSet.add(key);
+                    pathArr.push({ row, col });
+
+                    const idx = row * mapSize + col;
+                    const dot = mapDots[idx];
+                    let newNextGoal = nextGoal;
+                    if (dot && dot.isGoal) {
+                        if (dot.goalOrder !== nextGoal) {
+                            visitedSet.delete(key);
+                            pathArr.pop();
+                            return null;
+                        }
+                        newNextGoal = nextGoal + 1;
+                    }
+
+                    if (visitedCount + 1 === totalToVisit) {
+                        return pathArr.slice();
+                    }
+
+                    const neighbors = getNeighbors(row, col);
+                    const sorted = neighbors.filter(n => {
+                        const k = n.row + ',' + n.col;
+                        return !visitedSet.has(k);
+                    });
+
+                    for (const n of sorted) {
+                        const result = dfs(n.row, n.col, pathArr, visitedCount + 1, newNextGoal);
+                        if (result !== null) {
+                            visitedSet.delete(key);
+                            return result;
+                        }
+                    }
+
+                    visitedSet.delete(key);
+                    pathArr.pop();
+                    return null;
+                };
+
+                const startTime = Date.now();
+                for (const start of startCandidates) {
+                    visitedSet.clear();
+                    const result = dfs(start.row, start.col, [], 0, 1);
+                    if (result !== null && result.length === totalToVisit) {
+                        resolve(result);
+                        return;
+                    }
+                }
+
+                resolve(null);
+            });
+        }
+
+        async function hasSolution(candidate, size) {
+            const result = await findSolution(candidate, size);
+            return result !== null && result.length > 0;
+        }
+
+        async function generateSolvableMap(size, wallRatio, goalCount, maxAttempts = 40) {
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const candidate = generateMap(size, wallRatio, goalCount);
+                const solvable = await hasSolution(candidate, size);
+                if (solvable) {
+                    return candidate;
+                }
+            }
+            return generateSimpleSolvableMap(size);
+        }
+
+        // --- Timer ---
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            isTimerRunning = true;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerText.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isTimerRunning = false;
+                    setMessage('⏰ Время вышло!', 'error');
+                    isComplete = true;
+                    draw();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isTimerRunning = false;
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            const config = DIFFICULTY[currentDifficulty];
+            timeLeft = config.timeLimit;
+            timerText.textContent = timeLeft;
+        }
+
+        // --- Init ---
+        async function initGame(difficulty, keepMap = false) {
+            if (isLoading) return;
+            isLoading = true;
+            loadingOverlay.classList.add('show');
+            loadingSub.textContent = 'поиск решения...';
+
+            resetBtn.disabled = true;
+            newMapBtn.disabled = true;
+            solutionBtn.disabled = true;
+            undoBtn.disabled = true;
+            diffBtns.forEach(b => b.disabled = true);
+
+            const config = DIFFICULTY[difficulty];
+            gridSize = config.size;
+
+            path = [];
+            moveCount = 0;
+            isComplete = false;
+            winOverlay.classList.remove('show');
+            goalTarget = 1;
+            showSolution = false;
+            solutionPath = [];
+            solutionBtn.textContent = '💡 Решение';
+            solutionBtn.classList.remove('active');
+            score = 0;
+            scoreText.textContent = '0';
+
+            if (!keepMap) {
+                dots = await generateSolvableMap(gridSize, config.wallRatio, config.goalCount);
+            } else {
+                for (const dot of dots) {
+                    dot.visited = false;
+                }
+            }
+
+            totalGoals = dots.filter(d => d.isGoal).length;
+
+            recalcDotPositions();
+            updateUI();
+            updateGoalHint();
+            setMessage('💡 Нажмите на точку, чтобы начать', '');
+            undoBtn.disabled = true;
+
+            resetTimer();
+            stopTimer();
+            if (!isComplete) {
+                startTimer();
+            }
+
+            isLoading = false;
+            loadingOverlay.classList.remove('show');
+
+            resetBtn.disabled = false;
+            newMapBtn.disabled = false;
+            solutionBtn.disabled = false;
+            diffBtns.forEach(b => b.disabled = false);
+
+            resizeCanvas();
+            draw();
+        }
+
+        // --- Adjacency ---
+        function isAdjacent(r1, c1, r2, c2) {
+            const dr = Math.abs(r1 - r2);
+            const dc = Math.abs(c1 - c2);
+            return dr <= 1 && dc <= 1 && (dr + dc > 0);
+        }
+
+        function getDot(row, col) {
+            const idx = row * gridSize + col;
+            if (idx >= 0 && idx < dots.length) return dots[idx];
+            return null;
+        }
+
+        // --- Handle click ---
+        function handleDotClick(row, col) {
+            if (isComplete || isLoading) return;
+            if (timeLeft <= 0) {
+                setMessage('⏰ Время вышло!', 'error');
+                return;
+            }
+
+            if (showSolution) hideSolution();
+
+            const dot = getDot(row, col);
+            if (!dot) return;
+            if (dot.isWall) {
+                setMessage('🚫 Стена!', 'error');
+                return;
+            }
+            if (dot.visited) {
+                setMessage('⏳ Уже посещено', 'error');
+                return;
+            }
+
+            if (path.length === 0) {
+                if (dot.isGoal && dot.goalOrder !== 1) {
+                    setMessage(`❌ Начните с цели #1`, 'error');
+                    return;
+                }
+                path.push({ row, col });
+                dot.visited = true;
+                moveCount = 0;
+                if (dot.isGoal) goalTarget = 2;
+                updateUI();
+                updateGoalHint();
+                setMessage(`📍 Старт (${row+1}, ${col+1})`, '');
+                undoBtn.disabled = false;
+                draw();
+                return;
+            }
+
+            const last = path[path.length - 1];
+            if (!isAdjacent(last.row, last.col, row, col)) {
+                setMessage('❌ Должно быть рядом', 'error');
+                return;
+            }
+
+            if (dot.isGoal) {
+                if (dot.goalOrder !== goalTarget) {
+                    setMessage(`❌ Нужна цель #${goalTarget}`, 'error');
+                    return;
+                }
+                goalTarget++;
+            }
+
+            path.push({ row, col });
+            dot.visited = true;
+            moveCount++;
+            updateUI();
+            updateGoalHint();
+            setMessage(`✓ Соединено (${row+1}, ${col+1})`, '');
+
+            const allVisited = dots.every(d => d.isWall || d.visited);
+            const allGoalsCollected = dots.filter(d => d.isGoal).every(d => d.visited);
+
+            if (allVisited && allGoalsCollected) {
+                isComplete = true;
+                stopTimer();
+                const config = DIFFICULTY[currentDifficulty];
+                const timeBonus = Math.max(0, config.timeLimit - timeLeft);
+                score = Math.round((config.timeLimit * 2) + (100 - moveCount * 2) + timeBonus * 1.5);
+                if (score < 10) score = 10;
+                scoreText.textContent = score;
+
+                setMessage('🎉 Уровень пройден!', 'success');
+                winMoves.textContent = moveCount;
+                winTime.textContent = config.timeLimit - timeLeft;
+                winScore.textContent = score;
+
+                const best = localStorage.getItem('dotChallenge_best');
+                if (!best || score > parseInt(best, 10)) {
+                    localStorage.setItem('dotChallenge_best', String(score));
+                }
+
+                setTimeout(() => {
+                    winOverlay.classList.add('show');
+                    createSparkles();
+                }, 300);
+            }
+
+            undoBtn.disabled = false;
+            draw();
+        }
+
+        // --- Undo ---
+        function undoMove() {
+            if (isComplete || isLoading) return;
+            if (showSolution) hideSolution();
+            if (path.length <= 1) {
+                if (path.length === 1) {
+                    const first = path[0];
+                    const dot = getDot(first.row, first.col);
+                    if (dot) {
+                        dot.visited = false;
+                        if (dot.isGoal && dot.goalOrder === 1) goalTarget = 1;
+                    }
+                    path = [];
+                    moveCount = 0;
+                    undoBtn.disabled = true;
+                    updateUI();
+                    updateGoalHint();
+                    setMessage('💡 Нажмите на точку, чтобы начать', '');
+                    draw();
+                }
+                return;
+            }
+
+            const last = path.pop();
+            const dot = getDot(last.row, last.col);
+            if (dot) {
+                dot.visited = false;
+                if (dot.isGoal) {
+                    const collected = path.filter(p => {
+                        const d = getDot(p.row, p.col);
+                        return d && d.isGoal;
+                    }).length;
+                    goalTarget = collected + 1;
+                }
+            }
+            if (moveCount > 0) moveCount--;
+            updateUI();
+            updateGoalHint();
+            setMessage(`↩ Отменено`, '');
+            if (path.length === 1) undoBtn.disabled = true;
+            draw();
+        }
+
+        // --- Reset & New ---
+        function resetGame() {
+            stopTimer();
+            initGame(currentDifficulty, true);
+        }
+
+        function newMap() {
+            stopTimer();
+            initGame(currentDifficulty, false);
+        }
+
+        // --- UI ---
+        function updateUI() {
+            const total = dots.filter(d => !d.isWall).length;
+            const visited = dots.filter(d => !d.isWall && d.visited).length;
+            progressText.textContent = `${visited}/${total}`;
+            movesText.textContent = moveCount;
+        }
+
+        function updateGoalHint() {
+            if (totalGoals === 0) {
+                goalHint.textContent = '⭐ Нет целей';
+                return;
+            }
+            const remaining = [];
+            for (let i = goalTarget; i <= totalGoals; i++) remaining.push(i);
+            if (remaining.length === 0) {
+                goalHint.textContent = '⭐ Все цели!';
+            } else {
+                goalHint.textContent = `⭐ Цель: ${remaining.join(' → ')}`;
+            }
+        }
+
+        function setMessage(text, cls) {
+            messageEl.textContent = text;
+            messageEl.className = 'message' + (cls ? ' ' + cls : '');
+        }
+
+        // --- Solution ---
+        async function toggleSolution() {
+            if (isSearching || isLoading) return;
+            if (showSolution) {
+                hideSolution();
+                return;
+            }
+
+            isSearching = true;
+            solutionBtn.disabled = true;
+            solutionBtn.textContent = '⏳ Ищем...';
+            setMessage('🔍 Поиск решения...', 'info');
+
+            const result = await findSolution();
+
+            isSearching = false;
+            solutionBtn.disabled = false;
+
+            if (result) {
+                solutionPath = result;
+                showSolution = true;
+                solutionBtn.textContent = '🙈 Скрыть';
+                solutionBtn.classList.add('active');
+                setMessage('💡 Решение найдено (зелёная линия)', 'info');
+                draw();
+            } else {
+                solutionPath = [];
+                showSolution = false;
+                solutionBtn.textContent = '💡 Решение';
+                solutionBtn.classList.remove('active');
+                setMessage('❌ Решение не найдено', 'error');
+            }
+        }
+
+        function hideSolution() {
+            showSolution = false;
+            solutionPath = [];
+            solutionBtn.textContent = '💡 Решение';
+            solutionBtn.classList.remove('active');
+            draw();
+            if (path.length === 0) {
+                setMessage('💡 Нажмите на точку, чтобы начать', '');
+            } else {
+                setMessage(`Путь: ${path.length} точек`, '');
+            }
+        }
+
+        // --- Drawing ---
+        function draw() {
+            if (isLoading) return;
+            const w = canvasSize;
+            const h = canvasSize;
+            ctx.clearRect(0, 0, w, h);
+
+            // Walls
+            for (const dot of dots) {
+                if (dot.isWall) {
+                    const x = dot.x;
+                    const y = dot.y;
+                    const r = dotRadius * 0.9;
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 12;
+                    ctx.shadowOffsetY = 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = COLORS.wall;
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = COLORS.wallBorder;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x - r * 0.4, y - r * 0.4);
+                    ctx.lineTo(x + r * 0.4, y + r * 0.4);
+                    ctx.moveTo(x + r * 0.4, y - r * 0.4);
+                    ctx.lineTo(x - r * 0.4, y + r * 0.4);
+                    ctx.stroke();
+                    continue;
+                }
+            }
+
+            // Solution
+            if (showSolution && solutionPath.length > 1) {
+                ctx.save();
+                ctx.setLineDash([6, 8]);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = COLORS.solutionLine;
+                ctx.shadowColor = 'rgba(52,211,153,0.3)';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                for (let i = 0; i < solutionPath.length; i++) {
+                    const dot = getDot(solutionPath[i].row, solutionPath[i].col);
+                    if (!dot) continue;
+                    if (i === 0) ctx.moveTo(dot.x, dot.y);
+                    else ctx.lineTo(dot.x, dot.y);
+                }
+                ctx.stroke();
+                ctx.restore();
+
+                for (const p of solutionPath) {
+                    const dot = getDot(p.row, p.col);
+                    if (!dot || dot.isWall) continue;
+                    const grad = ctx.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, dotRadius * 2.2);
+                    grad.addColorStop(0, 'rgba(52,211,153,0.15)');
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.beginPath();
+                    ctx.arc(dot.x, dot.y, dotRadius * 2.2, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+            }
+
+            // Player path
+            if (path.length > 1) {
+                ctx.shadowColor = COLORS.pathLineGlow;
+                ctx.shadowBlur = 25;
+                ctx.beginPath();
+                for (let i = 0; i < path.length; i++) {
+                    const dot = getDot(path[i].row, path[i].col);
+                    if (!dot) continue;
+                    if (i === 0) ctx.moveTo(dot.x, dot.y);
+                    else ctx.lineTo(dot.x, dot.y);
+                }
+                ctx.strokeStyle = isComplete ? COLORS.pathLineComplete : COLORS.pathLine;
+                ctx.lineWidth = isComplete ? 4 : 3.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                for (let i = 0; i < path.length; i++) {
+                    const dot = getDot(path[i].row, path[i].col);
+                    if (!dot) continue;
+                    if (i === 0) ctx.moveTo(dot.x, dot.y);
+                    else ctx.lineTo(dot.x, dot.y);
+                }
+                ctx.strokeStyle = isComplete ? 'rgba(52,211,153,0.9)' : 'rgba(240,185,11,0.85)';
+                ctx.lineWidth = isComplete ? 3 : 2.5;
+                ctx.stroke();
+            }
+
+            // Dots
+            for (const dot of dots) {
+                if (dot.isWall) continue;
+
+                const isVisited = dot.visited;
+                const isCurrent = path.length > 0 &&
+                    path[path.length - 1].row === dot.row &&
+                    path[path.length - 1].col === dot.col;
+                const isStart = path.length > 0 &&
+                    path[0].row === dot.row &&
+                    path[0].col === dot.col;
+                const isHover = hoverDot &&
+                    hoverDot.row === dot.row &&
+                    hoverDot.col === dot.col;
+                const isGoal = dot.isGoal;
+
+                const x = dot.x;
+                const y = dot.y;
+                const r = dotRadius;
+
+                if (isVisited) {
+                    let glow = isCurrent ? COLORS.dotCurrentGlow : COLORS.dotVisitedGlow;
+                    if (isGoal) glow = COLORS.goalGlow;
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, r * 2.5);
+                    grad.addColorStop(0, glow);
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.beginPath();
+                    ctx.arc(x, y, r * 2.5, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+
+                ctx.shadowColor = 'rgba(0,0,0,0.4)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 2;
+
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+
+                if (isVisited) {
+                    if (isStart) {
+                        ctx.fillStyle = COLORS.dotStart;
+                        ctx.shadowColor = COLORS.dotStartGlow;
+                        ctx.shadowBlur = 20;
+                    } else if (isCurrent) {
+                        ctx.fillStyle = COLORS.dotCurrent;
+                        ctx.shadowColor = COLORS.dotCurrentGlow;
+                        ctx.shadowBlur = 25;
+                    } else if (isGoal) {
+                        ctx.fillStyle = COLORS.goalVisited;
+                        ctx.shadowColor = COLORS.goalGlow;
+                        ctx.shadowBlur = 20;
+                    } else {
+                        ctx.fillStyle = COLORS.dotVisited;
+                        ctx.shadowColor = COLORS.dotVisitedGlow;
+                        ctx.shadowBlur = 15;
+                    }
+                } else {
+                    ctx.fillStyle = isGoal ? COLORS.goalColor : COLORS.dotUnvisited;
+                    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                    ctx.shadowBlur = 6;
+                }
+
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.strokeStyle = isVisited ?
+                    (isStart ? 'rgba(52,211,153,0.5)' :
+                        isCurrent ? 'rgba(240,185,11,0.6)' :
+                        isGoal ? 'rgba(240,185,11,0.5)' :
+                        'rgba(240,185,11,0.3)') :
+                    (isGoal ? 'rgba(240,185,11,0.5)' : COLORS.dotUnvisitedBorder);
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                if (isHover && !isVisited && !isComplete && timeLeft > 0) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, r + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(240,185,11,0.25)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([4, 6]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                if (isVisited) {
+                    ctx.beginPath();
+                    ctx.arc(x - r * 0.2, y - r * 0.2, r * 0.25, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                    ctx.fill();
+                }
+
+                if (isGoal) {
+                    ctx.fillStyle = isVisited ? '#0b0e11' : '#0b0e11';
+                    ctx.font = `bold ${Math.max(r * 0.7, 12)}px Inter, sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(dot.goalOrder, x, y + 1);
+                } else if (isStart && path.length > 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.font = `${Math.max(r * 0.6, 10)}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('★', x, y + 1);
+                }
+            }
+
+            if (isComplete) {
+                for (const dot of dots) {
+                    if (dot.isWall) continue;
+                    const x = dot.x;
+                    const y = dot.y;
+                    const grad = ctx.createRadialGradient(x, y, 0, x, y, dotRadius * 3);
+                    grad.addColorStop(0, 'rgba(52,211,153,0.08)');
+                    grad.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.beginPath();
+                    ctx.arc(x, y, dotRadius * 3, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+            }
+        }
+
+        // --- Sparkles ---
+        function createSparkles() {
+            const container = sparkleContainer;
+            container.innerHTML = '';
+            const colors = ['#f0b90b', '#f8c84a', '#fcd34d', '#34d399', '#f472b6'];
+            for (let i = 0; i < 40; i++) {
+                const el = document.createElement('div');
+                el.className = 'sparkle';
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const tx = (Math.random() - 0.5) * 300;
+                const ty = (Math.random() - 0.5) * 300;
+                const size = 4 + Math.random() * 8;
+                el.style.cssText = `
+                    left: ${x}%;
+                    top: ${y}%;
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    box-shadow: 0 0 ${size * 2}px ${colors[Math.floor(Math.random() * colors.length)]};
+                    --tx: ${tx}px;
+                    --ty: ${ty}px;
+                    animation-duration: ${1.5 + Math.random() * 1.5}s;
+                    animation-delay: ${Math.random() * 0.8}s;
+                `;
+                container.appendChild(el);
+            }
+            setTimeout(() => { container.innerHTML = ''; }, 4000);
+        }
+
+        // --- Events ---
+        function getGridCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvasSize / rect.width;
+            const scaleY = canvasSize / rect.height;
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+
+            let best = null;
+            let bestDist = Infinity;
+            const threshold = dotRadius * 1.8;
+
+            for (const dot of dots) {
+                if (dot.isWall) continue;
+                const dx = dot.x - x;
+                const dy = dot.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < threshold && dist < bestDist) {
+                    bestDist = dist;
+                    best = dot;
+                }
+            }
+            return best;
+        }
+
+        function onPointerDown(e) {
+            if (isLoading) return;
+            e.preventDefault();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (clientX == null) return;
+
+            const dot = getGridCoords(clientX, clientY);
+            if (dot) {
+                isDragging = true;
+                handleDotClick(dot.row, dot.col);
+            }
+        }
+
+        function onPointerMove(e) {
+            if (isLoading) return;
+            e.preventDefault();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            if (clientX == null) return;
+
+            const dot = getGridCoords(clientX, clientY);
+            if (dot && !dot.visited) {
+                hoverDot = { row: dot.row, col: dot.col };
+            } else {
+                hoverDot = null;
+            }
+            draw();
+
+            if (isDragging && dot && !dot.visited && path.length > 0) {
+                const last = path[path.length - 1];
+                if (isAdjacent(last.row, last.col, dot.row, dot.col)) {
+                    handleDotClick(dot.row, dot.col);
+                }
+            }
+        }
+
+        function onPointerUp(e) {
+            if (isLoading) return;
+            e.preventDefault();
+            isDragging = false;
+            hoverDot = null;
+            draw();
+        }
+
+        canvas.addEventListener('mousedown', onPointerDown);
+        canvas.addEventListener('mousemove', onPointerMove);
+        canvas.addEventListener('mouseup', onPointerUp);
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            hoverDot = null;
+            draw();
+        });
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); onPointerDown(e); }, { passive: false });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); onPointerMove(e); }, { passive: false });
+        canvas.addEventListener('touchend', (e) => { e.preventDefault(); onPointerUp(e); }, { passive: false });
+
+        // --- Buttons ---
+        resetBtn.addEventListener('click', resetGame);
+        winResetBtn.addEventListener('click', () => {
+            winOverlay.classList.remove('show');
+            stopTimer();
+            initGame(currentDifficulty, false);
+        });
+        newMapBtn.addEventListener('click', newMap);
+        undoBtn.addEventListener('click', undoMove);
+        solutionBtn.addEventListener('click', toggleSolution);
+
+        helpBtn.addEventListener('click', () => helpModal.classList.add('open'));
+        helpModalClose.addEventListener('click', () => helpModal.classList.remove('open'));
+        helpModalGotIt.addEventListener('click', () => helpModal.classList.remove('open'));
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) helpModal.classList.remove('open');
+        });
+
+        // Difficulty
+        diffBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const diff = btn.dataset.diff;
+                if (diff === currentDifficulty) return;
+                diffBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDifficulty = diff;
+                stopTimer();
+                initGame(diff, false);
+            });
+        });
+
+        // --- Keyboard ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') resetGame();
+            if (e.key === 'n' || e.key === 'N') newMap();
+            if (e.key === 's' || e.key === 'S') { e.preventDefault(); toggleSolution(); }
+            if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); undoMove(); }
+            if (e.key === 'Escape') helpModal.classList.remove('open');
+            if (e.key === '?' || e.key === 'h' || e.key === 'H') { e.preventDefault(); helpModal.classList.toggle('open'); }
+        });
+
+        // --- Resize ---
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(resizeCanvas, 200);
+        });
+
+        // --- Start ---
+        initGame('easy', false);
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        console.log('✦ Dot Challenge — сложная версия с таймером, очками и уровнями сложности');
+        console.log('По всем вопросам WhatsApp +375447841340');
+    })();
+</script>
+</body>
+</html>
