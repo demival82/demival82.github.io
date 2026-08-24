@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Dot Challenge – Заставка</title>
+    <style>
+        /* ———— Базовый сброс и шрифты ———— */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap');
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0e11;
+            color: #eaecef;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+
+        /* ———— Холст для частиц (фон) ———— */
+        #particles-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ———— Основной слой контента ———— */
+        .splash {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            max-width: 520px;
+            width: 100%;
+        }
+
+        /* ———— Логотип (звезда + вращающиеся точки) ———— */
+        .logo-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 12px;
+            width: 120px;
+            height: 120px;
+        }
+
+        .logo-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            line-height: 1;
+            color: #f0b90b;
+            filter: drop-shadow(0 0 40px rgba(240, 185, 11, 0.35));
+            animation: pulseStar 2.4s ease-in-out infinite;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* вращающиеся точки вокруг звезды */
+        .orbit-dots {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: spinOrbit 12s linear infinite;
+            pointer-events: none;
+        }
+
+        .orbit-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #f8d33a, #f0b90b);
+            box-shadow: 0 0 12px rgba(240, 185, 11, 0.6);
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+        }
+
+        .orbit-dot:nth-child(1) {
+            transform: rotate(0deg) translateX(58px);
+        }
+        .orbit-dot:nth-child(2) {
+            transform: rotate(72deg) translateX(58px);
+        }
+        .orbit-dot:nth-child(3) {
+            transform: rotate(144deg) translateX(58px);
+        }
+        .orbit-dot:nth-child(4) {
+            transform: rotate(216deg) translateX(58px);
+        }
+        .orbit-dot:nth-child(5) {
+            transform: rotate(288deg) translateX(58px);
+        }
+
+        .orbit-dot::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(248, 211, 58, 0.25), transparent 70%);
+            animation: dotGlow 1.8s ease-in-out infinite alternate;
+        }
+
+        /* ———— Тексты ———— */
+        h1 {
+            font-size: 44px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 60%, #ffec8a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+            text-shadow: 0 0 60px rgba(240, 185, 11, 0.15);
+        }
+
+        .sub {
+            color: #848e9c;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+            opacity: 0.8;
+        }
+
+        /* ———— Прогресс-бар ———— */
+        .progress-container {
+            width: 100%;
+            max-width: 340px;
+            margin: 0 auto 18px;
+            background: #1e242b;
+            border-radius: 40px;
+            height: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f0b90b, #f8d33a, #ffec8a);
+            border-radius: 40px;
+            box-shadow: 0 0 20px rgba(240, 185, 11, 0.3);
+            transition: width 0.1s linear;
+            will-change: width;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #6a7482;
+            font-weight: 500;
+            max-width: 340px;
+            margin: 0 auto 20px;
+            letter-spacing: 0.3px;
+            padding: 0 2px;
+        }
+
+        .progress-label .percent {
+            color: #f0b90b;
+            font-weight: 600;
+        }
+
+        /* ———— Статус-текст (печатающийся) ———— */
+        .status-text {
+            color: #b8c2ce;
+            font-size: 14px;
+            font-weight: 400;
+            min-height: 24px;
+            margin-bottom: 28px;
+            letter-spacing: 0.2px;
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        .status-text .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: #f0b90b;
+            margin-left: 4px;
+            vertical-align: text-bottom;
+            animation: blinkCursor 0.9s step-end infinite;
+        }
+
+        /* ———— Анимации ———— */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.94) translateY(12px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes pulseStar {
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                filter: drop-shadow(0 0 40px rgba(240, 185, 11, 0.35));
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.12);
+                opacity: 0.85;
+                filter: drop-shadow(0 0 70px rgba(240, 185, 11, 0.55));
+            }
+        }
+
+        @keyframes spinOrbit {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes dotGlow {
+            0% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0.9;
+                transform: scale(1.6);
+            }
+        }
+
+        @keyframes blinkCursor {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ———— Адаптив ———— */
+        @media (max-width: 480px) {
+            .logo-wrapper {
+                width: 90px;
+                height: 90px;
+            }
+            .logo-star {
+                font-size: 52px;
+            }
+            .orbit-dot {
+                width: 8px;
+                height: 8px;
+            }
+            .orbit-dot:nth-child(1) {
+                transform: rotate(0deg) translateX(44px);
+            }
+            .orbit-dot:nth-child(2) {
+                transform: rotate(72deg) translateX(44px);
+            }
+            .orbit-dot:nth-child(3) {
+                transform: rotate(144deg) translateX(44px);
+            }
+            .orbit-dot:nth-child(4) {
+                transform: rotate(216deg) translateX(44px);
+            }
+            .orbit-dot:nth-child(5) {
+                transform: rotate(288deg) translateX(44px);
+            }
+            .orbit-dot::after {
+                width: 14px;
+                height: 14px;
+                top: -3px;
+                left: -3px;
+            }
+
+            h1 {
+                font-size: 32px;
+            }
+            .sub {
+                font-size: 11px;
+                letter-spacing: 2px;
+                margin-bottom: 24px;
+            }
+            .progress-container {
+                max-width: 260px;
+                height: 5px;
+            }
+            .progress-label {
+                font-size: 11px;
+                max-width: 260px;
+            }
+            .status-text {
+                font-size: 13px;
+                min-height: 20px;
+                margin-bottom: 20px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .logo-wrapper {
+                width: 72px;
+                height: 72px;
+            }
+            .logo-star {
+                font-size: 42px;
+            }
+            .orbit-dot {
+                width: 6px;
+                height: 6px;
+            }
+            .orbit-dot:nth-child(1) {
+                transform: rotate(0deg) translateX(36px);
+            }
+            .orbit-dot:nth-child(2) {
+                transform: rotate(72deg) translateX(36px);
+            }
+            .orbit-dot:nth-child(3) {
+                transform: rotate(144deg) translateX(36px);
+            }
+            .orbit-dot:nth-child(4) {
+                transform: rotate(216deg) translateX(36px);
+            }
+            .orbit-dot:nth-child(5) {
+                transform: rotate(288deg) translateX(36px);
+            }
+            h1 {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas для фоновых частиц -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Основной контент -->
+    <div class="splash">
+        <div class="logo-wrapper">
+            <span class="logo-star">✦</span>
+            <div class="orbit-dots">
+                <span class="orbit-dot"></span>
+                <span class="orbit-dot"></span>
+                <span class="orbit-dot"></span>
+                <span class="orbit-dot"></span>
+                <span class="orbit-dot"></span>
+            </div>
+        </div>
+
+        <h1>Dot Challenge</h1>
+        <div class="sub">проверка карты</div>
+
+        <!-- Прогресс -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-label">
+            <span>Загрузка</span>
+            <span class="percent" id="percentText">0%</span>
+        </div>
+
+        <!-- Динамический статус -->
+        <div class="status-text" id="statusText">
+            Инициализация<span class="cursor"></span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ———————————————————————————————————————
+            // 1. ЧАСТИЦЫ НА CANVAS
+            // ———————————————————————————————————————
+            const canvas = document.getElementById('particles-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+            const PARTICLE_COUNT = 140;
+
+            function resizeCanvas() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() {
+                    this.reset();
+                }
+                reset() {
+                    this.x = Math.random() * width;
+                    this.y = Math.random() * height;
+                    this.size = Math.random() * 2.2 + 0.8;
+                    this.speedX = (Math.random() - 0.5) * 0.35;
+                    this.speedY = (Math.random() - 0.5) * 0.35;
+                    this.opacity = Math.random() * 0.5 + 0.25;
+                    this.pulse = Math.random() * Math.PI * 2;
+                    this.pulseSpeed = 0.008 + Math.random() * 0.015;
+                }
+                update() {
+                    this.x += this.speedX;
+                    this.y += this.speedY;
+                    this.pulse += this.pulseSpeed;
+
+                    if (this.x < 0 || this.x > width) this.speedX *= -1;
+                    if (this.y < 0 || this.y > height) this.speedY *= -1;
+
+                    this.currentOpacity = this.opacity * (0.6 + 0.4 * Math.sin(this.pulse));
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(240, 185, 11, ${this.currentOpacity})`;
+                    ctx.fill();
+                    if (this.size > 1.8) {
+                        ctx.shadowColor = 'rgba(240, 185, 11, 0.15)';
+                        ctx.shadowBlur = 10;
+                        ctx.fill();
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push(new Particle());
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, width, height);
+                for (let p of particles) {
+                    p.update();
+                    p.draw();
+                }
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+
+            // ———————————————————————————————————————
+            // 2. ПРОГРЕСС-БАР И СТАТУСЫ
+            // ———————————————————————————————————————
+            const progressBar = document.getElementById('progressBar');
+            const percentText = document.getElementById('percentText');
+            const statusText = document.getElementById('statusText');
+
+            const STATUS_MESSAGES = [
+                'Инициализация',
+                'Подготовка карты',
+                'Расстановка точек',
+                'Калибровка сетки',
+                'Почти готово'
+            ];
+
+            let startTime = performance.now();
+            const DURATION = 13000;
+            let progress = 0;
+            let animFrameId = null;
+            let finished = false;
+
+            function updateProgress(timestamp) {
+                if (finished) return;
+
+                const elapsed = timestamp - startTime;
+                progress = Math.min(elapsed / DURATION, 1);
+                const percent = Math.round(progress * 100);
+
+                progressBar.style.width = percent + '%';
+                percentText.textContent = percent + '%';
+
+                const msgIndex = Math.min(
+                    Math.floor((progress * STATUS_MESSAGES.length) / 1.05),
+                    STATUS_MESSAGES.length - 1
+                );
+                const baseMsg = STATUS_MESSAGES[msgIndex] || STATUS_MESSAGES[0];
+                statusText.innerHTML = baseMsg + '<span class="cursor"></span>';
+
+                if (progress < 1) {
+                    animFrameId = requestAnimationFrame(updateProgress);
+                } else {
+                    progressBar.style.width = '100%';
+                    percentText.textContent = '100%';
+                    statusText.innerHTML = 'Готово!<span class="cursor"></span>';
+                    finished = true;
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 400);
+                }
+            }
+
+            animFrameId = requestAnimationFrame(updateProgress);
+
+            // ———————————————————————————————————————
+            // 3. ЗАПАСНОЙ ТАЙМАУТ
+            // ———————————————————————————————————————
+            setTimeout(() => {
+                if (!finished) {
+                    if (animFrameId) {
+                        cancelAnimationFrame(animFrameId);
+                        animFrameId = null;
+                    }
+                    progressBar.style.width = '100%';
+                    percentText.textContent = '100%';
+                    statusText.innerHTML = 'Готово!<span class="cursor"></span>';
+                    finished = true;
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 300);
+                }
+            }, 14500);
+
+            // ———————————————————————————————————————
+            // 4. АДАПТИВ ПЕРЕРИСОВКИ ЧАСТИЦ
+            // ———————————————————————————————————————
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                particles = [];
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    particles.push(new Particle());
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
