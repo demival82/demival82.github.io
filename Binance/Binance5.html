@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Crypto Double-Cross + Telegram + Сохранение</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: #0a0c10; color: #e2e4e8; padding: 20px; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: #13161c; padding: 12px 20px; border-radius: 28px; margin-bottom: 20px; }
+        h1 { font-size: 1.5rem; background: linear-gradient(135deg, #f0b90b, #f9d75c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        button { background: #2c2f36; border: none; padding: 8px 18px; border-radius: 40px; color: #fff; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.85rem; }
+        button.primary { background: #f0b90b; color: #000; }
+        button.danger { background: #dc3545; }
+        button.success { background: #02c076; }
+        button.outline { background: transparent; border: 1px solid #f0b90b; color: #f0b90b; }
+        button:hover { filter: brightness(1.05); transform: translateY(-1px); }
+        .flex-row { display: flex; gap: 24px; flex-wrap: wrap; }
+        .settings-panel { flex: 1.2; min-width: 280px; background: #13161c; border-radius: 28px; padding: 20px; border: 1px solid #2a2e38; }
+        .live-panel { flex: 2.2; min-width: 350px; background: #13161c; border-radius: 28px; padding: 20px; border: 1px solid #2a2e38; }
+        .section { background: #1a1e26; border-radius: 20px; padding: 16px; margin-bottom: 18px; }
+        .section h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 1.1rem; color: #f0b90b; }
+        .param-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .param-row label { min-width: 100px; font-weight: 500; }
+        input, select { background: #0f1117; border: 1px solid #2e3340; padding: 8px 12px; border-radius: 40px; color: #fff; font-size: 0.9rem; flex: 1; min-width: 80px; }
+        input:focus { border-color: #f0b90b; outline: none; }
+        .threshold-chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        .threshold-chip { background: #252a35; border-radius: 40px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        .threshold-chip.up { border-left: 3px solid #02c076; }
+        .threshold-chip.down { border-left: 3px solid #f6465d; }
+        .remove-chip { background: none; border: none; color: #aaa; cursor: pointer; font-weight: bold; padding: 0 4px; }
+        .coin-selector { max-height: 280px; overflow-y: auto; background: #0f1117; border-radius: 24px; padding: 8px; margin: 8px 0; }
+        .coin-option { padding: 6px 12px; cursor: pointer; border-radius: 40px; display: flex; justify-content: space-between; }
+        .coin-option:hover { background: #2c2f36; }
+        .coin-option.selected { background: #f0b90b33; border-left: 3px solid #f0b90b; }
+        .search-box { width: 100%; margin-bottom: 8px; }
+        .status-badge { background: #1f232b; border-radius: 40px; padding: 4px 12px; font-size: 0.8rem; display: inline-block; }
+        .log-box { background: #0b0e12; border-radius: 20px; padding: 12px; height: 280px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; margin-top: 12px; }
+        .log-entry { border-bottom: 1px solid #262c34; padding: 4px 0; }
+        .alert-double { color: #f0b90b; font-weight: bold; background: #f0b90b10; border-left: 3px solid #f0b90b; padding-left: 8px; }
+        .price-up { color: #02c076; font-weight: 600; }
+        .price-down { color: #f6465d; font-weight: 600; }
+        .price-table-container { max-height: 280px; overflow-y: auto; border-radius: 20px; background: #0f1117; }
+        .price-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .price-table th { position: sticky; top: 0; background: #1a1e26; padding: 10px 8px; text-align: left; color: #f0b90b; border-bottom: 2px solid #2e3340; }
+        .price-table td { padding: 8px 8px; border-bottom: 1px solid #262c34; }
+        .crossing-badge { background: #f0b90b22; border-radius: 20px; padding: 2px 10px; font-size: 0.7rem; font-weight: bold; color: #f0b90b; display: inline-block; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; max-width: 320px; }
+        .toast { background: #1e232cee; backdrop-filter: blur(10px); border-left: 4px solid #f0b90b; border-radius: 14px; padding: 10px 14px; animation: slideIn 0.25s ease; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+        .footer { text-align: center; margin-top: 30px; font-size: 0.7rem; color: #6a6f7a; border-top: 1px solid #2a2e38; padding-top: 16px; }
+
+        /* Заставка */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0f131c 0%, #05070a 100%);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+        .splash-screen.fade-out { opacity: 0; visibility: hidden; }
+        .splash-card {
+            background: rgba(22, 26, 36, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(240, 185, 11, 0.5);
+            border-radius: 56px;
+            padding: 2rem 2.8rem;
+            text-align: center;
+            max-width: 680px;
+            width: 90%;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.5), 0 0 0 1px rgba(240,185,11,0.2);
+            animation: floatGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes floatGlow {
+            0% { box-shadow: 0 25px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(240,185,11,0.2); transform: translateY(0px);}
+            100% { box-shadow: 0 35px 55px rgba(240,185,11,0.15), 0 0 0 2px rgba(240,185,11,0.4); transform: translateY(-6px);}
+        }
+        .splash-title {
+            font-size: 2.6rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f9e0a0, #f0b90b, #f9d75c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+        }
+        .splash-sub {
+            font-size: 1rem;
+            color: #cbd5e6;
+            margin-bottom: 1rem;
+            border-top: 1px dashed #f0b90b66;
+            padding-top: 1rem;
+        }
+        .splash-desc {
+            font-size: 0.9rem;
+            color: #a7b3cc;
+            margin: 1rem 0 1.5rem;
+            background: #00000055;
+            border-radius: 32px;
+            padding: 12px 18px;
+        }
+        .splash-btn {
+            background: #f0b90b;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #0a0c10;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 6px 14px rgba(240,185,11,0.3);
+        }
+        .splash-btn:hover { transform: scale(1.03); background: #ffce3c; }
+        .feature-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0;
+        }
+        .feature-card {
+            background: #1f2532;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            border: 1px solid #3a4155;
+        }
+
+        /* Модалка справки */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-content {
+            background: #13161c;
+            border-radius: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 28px;
+            border: 1px solid #f0b90b66;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+        }
+        .modal-content h2 { color: #f0b90b; margin-bottom: 16px; font-size: 1.5rem; border-bottom: 1px solid #2e3340; padding-bottom: 8px; }
+        .modal-content h3 { color: #f0b90b; margin: 16px 0 8px; font-size: 1.1rem; }
+        .modal-content p { line-height: 1.4; margin-bottom: 10px; font-size: 0.9rem; color: #cbd5e6; }
+        .modal-content ul { margin: 8px 0 12px 20px; color: #cbd5e6; font-size: 0.9rem; }
+        .modal-content ul li { margin-bottom: 4px; }
+        .close-modal { background: #dc3545; margin-top: 20px; width: 100%; padding: 12px; border-radius: 40px; font-weight: bold; }
+        .example-badge { background: #02c07622; border-radius: 16px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; display: inline-block; margin: 2px; }
+        .telegram-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+        .telegram-row input { flex: 1; min-width: 120px; }
+        .interval-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+        .interval-group label { min-width: auto; font-size: 0.85rem; }
+        .interval-group input { width: 70px; flex: 0 1 70px; }
+        .interval-group button { flex: 0; }
+        .file-input-hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- ЗАСТАВКА -->
+<div id="splashScreen" class="splash-screen">
+    <div class="splash-card">
+        <div class="splash-title">𝕋𝕣𝕒𝕔𝕜𝕚𝕟𝕘 + 𝕋𝕖𝕝𝕖𝕘𝕣𝕒𝕞</div>
+        <div class="splash-sub">Автосохранение • Экспорт/Импорт • Интервалы</div>
+        <div class="splash-desc">
+            ⚡ Отслеживание цен через WebSocket Binance<br>
+            🎯 Двойная фильтрация: пороги + количество пересечений за интервал<br>
+            🤖 Мгновенные алерты в Telegram
+        </div>
+        <div style="font-size:0.8rem; margin-bottom:8px;">🔔 Звук • Голос • Telegram • Сохранение</div>
+        <button class="splash-btn" id="enterAppBtn">⟳ ВОЙТИ В ПАНЕЛЬ ⟳</button>
+        <div style="margin-top:14px; font-size:0.7rem; color:#f0b90baa;">v2.3 — полное сохранение настроек</div>
+    </div>
+</div>
+
+<div class="container" id="mainApp" style="display:none;">
+    <div class="header">
+        <h1>⚡ Crypto Double-Cross</h1>
+        <div class="btn-group">
+            <button id="startBtn" class="primary">▶ СТАРТ</button>
+            <button id="stopBtn" class="danger">⏹ СТОП</button>
+            <button id="refreshCoinsBtn">🔄 Обновить монеты</button>
+            <button id="exportBtn" class="outline">💾 Экспорт</button>
+            <button id="importBtn" class="outline">📂 Импорт</button>
+            <!-- Новая кнопка поддержки -->
+            <button id="donateBtn" class="primary" style="background:#f0b90b; color:#000;" onclick="window.open('https://app.binance.com/uni-qr/request-to-pay?billOrderId=451497195052810240&billType=request_a_payment', '_blank')">❤️ Поддержать</button>
+            <button id="helpModalBtn" class="outline">📖 Справка</button>
+        </div>
+        <input type="file" id="fileInput" class="file-input-hidden" accept=".json">
+    </div>
+
+    <div class="flex-row">
+        <div class="settings-panel">
+            <div class="section">
+                <h3>🎯 Условие срабатывания</h3>
+                <div class="param-row"><label>Интервал (сек):</label><input type="number" id="doubleIntervalSec" value="30" step="1" min="5" max="120"></div>
+                <div class="param-row"><label>Пересечений:</label><input type="number" id="requiredCrossings" value="2" step="1" min="2" max="5"></div>
+                <div class="param-row"><label>Кулдаун (сек):</label><input type="number" id="cooldownSec" value="300" step="30" min="60"></div>
+                <div class="param-row"><label>Звук:</label><select id="soundSelect"><option value="none">Нет</option><option value="alert">Стандарт</option><option value="bell">Колокол</option></select></div>
+                <div class="param-row"><label>Голос:</label><select id="voiceSelect"><option value="on">Вкл</option><option value="off">Выкл</option></select></div>
+            </div>
+
+            <div class="section">
+                <h3>📈 Пороги (рост/падение %)</h3>
+                <!-- Генерация через интервал -->
+                <div style="margin-bottom:12px; border-bottom:1px solid #2e3340; padding-bottom:12px;">
+                    <div style="font-weight:500; margin-bottom:6px;">⚙️ Генерация списка</div>
+                    <div class="interval-group">
+                        <label>Рост от</label>
+                        <input type="number" id="upMin" value="3" step="0.2">
+                        <label>до</label>
+                        <input type="number" id="upMax" value="15" step="0.2">
+                        <label>шаг</label>
+                        <input type="number" id="upStep" value="2" step="0.2">
+                        <button id="genUpBtn" class="outline" style="flex:0;">▶ Рост</button>
+                    </div>
+                    <div class="interval-group">
+                        <label>Падение от</label>
+                        <input type="number" id="downMin" value="3" step="0.2">
+                        <label>до</label>
+                        <input type="number" id="downMax" value="12" step="0.2">
+                        <label>шаг</label>
+                        <input type="number" id="downStep" value="2" step="0.2">
+                        <button id="genDownBtn" class="outline" style="flex:0;">▶ Падение</button>
+                    </div>
+                    <div style="font-size:0.7rem; color:#8f94a0; margin-top:4px;">Диапазон включая границы, значения округляются до 1 знака</div>
+                </div>
+
+                <!-- Ручное добавление и список -->
+                <div><label>➕ РОСТА:</label>
+                    <div class="threshold-chip-list" id="upThresholdList"></div>
+                    <div class="param-row"><input type="number" id="newUpThreshold" placeholder="5" step="0.2"><button id="addUpBtn">+</button></div>
+                </div>
+                <div style="margin-top:8px;"><label>📉 ПАДЕНИЯ:</label>
+                    <div class="threshold-chip-list" id="downThresholdList"></div>
+                    <div class="param-row"><input type="number" id="newDownThreshold" placeholder="4" step="0.2"><button id="addDownBtn">+</button></div>
+                </div>
+                <button id="presetBtn" style="margin-top:8px;">✨ Классический (5,10,15 / 4,8,12)</button>
+            </div>
+
+            <div class="section">
+                <h3>🤖 Telegram</h3>
+                <div class="telegram-row">
+                    <input type="text" id="botToken" placeholder="Bot Token (пример: 123456:ABC-DEF...)">
+                </div>
+                <div class="telegram-row">
+                    <input type="text" id="chatId" placeholder="Chat ID (число)">
+                    <button id="testTelegramBtn" class="outline" style="flex:0;">🧪 Тест</button>
+                </div>
+                <div style="font-size:0.75rem; color:#8f94a0; margin-top:4px;">
+                    ⚡ При старте и алертах будет отправляться сообщение, если токен и ID заполнены.
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>💰 Монеты (USDT)</h3>
+                <input type="text" id="searchCoin" class="search-box" placeholder="🔍 Поиск...">
+                <div class="coin-selector" id="coinListContainer"></div>
+                <div class="btn-group" style="margin-top:8px;">
+                    <button id="selectTop10Btn">🔥 Топ-10</button>
+                    <button id="selectAllBtn">✅ Все</button>
+                    <button id="clearAllBtn">🗑 Очистить</button>
+                </div>
+                <div class="status-badge" id="selectedCountBadge">Выбрано: 0</div>
+            </div>
+            <div class="status-badge" id="trackerStatus">⚫ Статус: Неактивен</div>
+        </div>
+
+        <div class="live-panel">
+            <div class="section">
+                <h3>📡 Текущие цены</h3>
+                <div class="price-table-container" id="pricesLiveContainer">
+                    <div style="text-align:center; padding:30px; color:#6a6f7a;">Выберите монеты и нажмите СТАРТ</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⚡ Монеты в алерте</h3>
+                <div id="doubleCrossList"><div style="color:#8f94a0; text-align:center; padding:16px;">Ожидание...</div></div>
+            </div>
+
+            <div class="section">
+                <h3>📜 Журнал</h3>
+                <div class="log-box" id="logBox"></div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">Двойной порог за 30 сек | Звук + голос + Telegram + Автосохранение</div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО СПРАВКИ -->
+<div id="helpModal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>📘 Crypto Double-Cross + Telegram</h2>
+        <p><strong>Профессиональный мониторинг резких движений цены</strong> с двойной фильтрацией и отправкой алертов в Telegram.</p>
+        
+        <h3>🎯 Принцип работы</h3>
+        <p>Алгоритм отслеживает цену выбранных монет в реальном времени через WebSocket Binance. При изменении цены вычисляется процент изменения относительно <strong>базовой цены</strong> (цены на момент запуска трекера).</p>
+        <p><strong>Механизм "Double Cross":</strong> Вы задаёте список порогов для роста и падения. Если монета <strong>впервые</strong> пересекает любой из порогов, это фиксируется как одно пересечение. За заданный интервал времени необходимо набрать заданное количество пересечений — тогда генерируется <span class="example-badge">АЛЕРТ</span>.</p>
+        <p>Каждый порог срабатывает только один раз за "сессию".</p>
+        
+        <h3>📈 Настройка порогов через интервал</h3>
+        <p>В блоке «Пороги» вы можете автоматически сгенерировать списки порогов роста и падения, указав:</p>
+        <ul>
+            <li><strong>от</strong> — минимальное значение (включительно)</li>
+            <li><strong>до</strong> — максимальное значение (включительно)</li>
+            <li><strong>шаг</strong> — приращение между значениями</li>
+        </ul>
+        <p>Например, диапазон 3–15 с шагом 2 даст пороги: 3, 5, 7, 9, 11, 13, 15. Значения округляются до одного знака после запятой.</p>
+        <p>Также вы можете добавлять отдельные пороги вручную или удалять их крестиком. Кнопка «Классический» загружает предустановленный набор.</p>
+        
+        <h3>🤖 Настройка Telegram</h3>
+        <ul>
+            <li>Найдите в Telegram <strong>@BotFather</strong>, создайте нового бота командой <code>/newbot</code>.</li>
+            <li>Получите <strong>Bot Token</strong> (пример: 123456:ABC-DEF1234ghIkl).</li>
+            <li>Напишите своему боту любое сообщение, затем перейдите по ссылке <code>https://api.telegram.org/bot&lt;ваш_токен&gt;/getUpdates</code> — найдите там <strong>chat id</strong> (число).</li>
+            <li>Вставьте токен и chat id в соответствующие поля. Кнопка "Тест" отправит проверочное сообщение.</li>
+        </ul>
+        <p>При запуске трекера и при каждом срабатывании двойного алерта будет отправляться сообщение в Telegram (если поля заполнены).</p>
+        
+        <h3>💾 Автосохранение и экспорт</h3>
+        <p>Все настройки автоматически сохраняются в браузере (localStorage) при каждом изменении. При повторном открытии страницы настройки восстанавливаются.</p>
+        <p>Вы также можете <strong>экспортировать</strong> настройки в JSON-файл (кнопка «Экспорт») и <strong>импортировать</strong> их обратно (кнопка «Импорт»), чтобы перенести конфигурацию между устройствами или сохранить резервную копию.</p>
+        
+        <h3>⚙️ Остальные настройки</h3>
+        <ul>
+            <li><strong>Интервал (сек):</strong> окно времени для набора пересечений.</li>
+            <li><strong>Пересечений:</strong> сколько порогов должно быть пересечено за интервал.</li>
+            <li><strong>Кулдаун (сек):</strong> после срабатывания алерта монета игнорируется на это время.</li>
+            <li><strong>Звук и Голос:</strong> опциональные оповещения в браузере.</li>
+        </ul>
+        
+        <h3>📊 Интерфейс</h3>
+        <p><strong>Таблица текущих цен</strong> показывает последнюю цену, изменение, количество пересечений и статус. <strong>Монеты в алерте</strong> — список монет, набравших нужное количество пересечений (можно вручную протестировать оповещение). <strong>Журнал событий</strong> — хронология всех пересечений и алертов.</p>
+        
+        <button id="closeHelpModal" class="close-modal">✖ Закрыть справку</button>
+    </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+<script>
+    // ---- Заставка ----
+    const splash = document.getElementById('splashScreen');
+    const mainApp = document.getElementById('mainApp');
+    document.getElementById('enterAppBtn').addEventListener('click', () => {
+        splash.classList.add('fade-out');
+        setTimeout(() => {
+            splash.style.display = 'none';
+            mainApp.style.display = 'block';
+        }, 600);
+    });
+
+    // ---- Модалка справки ----
+    const helpModal = document.getElementById('helpModal');
+    document.getElementById('helpModalBtn').onclick = () => helpModal.classList.add('active');
+    document.getElementById('closeHelpModal').onclick = () => helpModal.classList.remove('active');
+    helpModal.onclick = (e) => { if(e.target === helpModal) helpModal.classList.remove('active'); };
+
+    // ---- Основной код ----
+    let allCoins = [], selectedSymbols = new Set(), active = false, ws = null, priceMap = new Map();
+    let upThresholds = [5, 10, 15], downThresholds = [4, 8, 12];
+    let doubleIntervalSec = 30, requiredCrossings = 2, cooldownSec = 300, alertSound = 'none', voiceEnabled = true;
+
+    const logBox = document.getElementById('logBox'), coinContainer = document.getElementById('coinListContainer');
+    const searchInput = document.getElementById('searchCoin'), pricesContainer = document.getElementById('pricesLiveContainer');
+    const doubleCrossDiv = document.getElementById('doubleCrossList'), trackerStatusSpan = document.getElementById('trackerStatus');
+    const selectedCountSpan = document.getElementById('selectedCountBadge');
+
+    // ---- Сохранение и загрузка ----
+    const STORAGE_KEY = 'cryptoDoubleCrossSettings';
+
+    function getSettingsObject() {
+        return {
+            upThresholds: upThresholds,
+            downThresholds: downThresholds,
+            doubleIntervalSec: doubleIntervalSec,
+            requiredCrossings: requiredCrossings,
+            cooldownSec: cooldownSec,
+            alertSound: alertSound,
+            voiceEnabled: voiceEnabled,
+            selectedSymbols: Array.from(selectedSymbols),
+            botToken: document.getElementById('botToken').value.trim(),
+            chatId: document.getElementById('chatId').value.trim()
+        };
+    }
+
+    function saveSettings() {
+        const settings = getSettingsObject();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return false;
+        try {
+            const s = JSON.parse(saved);
+            if (s.upThresholds) upThresholds = s.upThresholds;
+            if (s.downThresholds) downThresholds = s.downThresholds;
+            if (s.doubleIntervalSec) doubleIntervalSec = s.doubleIntervalSec;
+            if (s.requiredCrossings) requiredCrossings = s.requiredCrossings;
+            if (s.cooldownSec) cooldownSec = s.cooldownSec;
+            if (s.alertSound) alertSound = s.alertSound;
+            if (s.voiceEnabled !== undefined) voiceEnabled = s.voiceEnabled;
+            if (s.selectedSymbols) selectedSymbols = new Set(s.selectedSymbols);
+            if (s.botToken) document.getElementById('botToken').value = s.botToken;
+            if (s.chatId) document.getElementById('chatId').value = s.chatId;
+            // Обновить UI
+            document.getElementById('doubleIntervalSec').value = doubleIntervalSec;
+            document.getElementById('requiredCrossings').value = requiredCrossings;
+            document.getElementById('cooldownSec').value = cooldownSec;
+            document.getElementById('soundSelect').value = alertSound;
+            document.getElementById('voiceSelect').value = voiceEnabled ? 'on' : 'off';
+            renderThresholds();
+            renderCoinList();
+            updateSelectedCounter();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Автосохранение при любом изменении – вызываем saveSettings() в обработчиках
+
+    // ---- Экспорт / Импорт файла ----
+    function exportSettings() {
+        const settings = getSettingsObject();
+        const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `crypto_settings_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('💾 Экспорт', 'Настройки сохранены в файл', false, 2000);
+    }
+
+    function importSettings(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const s = JSON.parse(e.target.result);
+                // Применить все поля
+                if (s.upThresholds) upThresholds = s.upThresholds;
+                if (s.downThresholds) downThresholds = s.downThresholds;
+                if (s.doubleIntervalSec) doubleIntervalSec = s.doubleIntervalSec;
+                if (s.requiredCrossings) requiredCrossings = s.requiredCrossings;
+                if (s.cooldownSec) cooldownSec = s.cooldownSec;
+                if (s.alertSound) alertSound = s.alertSound;
+                if (s.voiceEnabled !== undefined) voiceEnabled = s.voiceEnabled;
+                if (s.selectedSymbols) selectedSymbols = new Set(s.selectedSymbols);
+                if (s.botToken) document.getElementById('botToken').value = s.botToken;
+                if (s.chatId) document.getElementById('chatId').value = s.chatId;
+                // Обновить UI
+                document.getElementById('doubleIntervalSec').value = doubleIntervalSec;
+                document.getElementById('requiredCrossings').value = requiredCrossings;
+                document.getElementById('cooldownSec').value = cooldownSec;
+                document.getElementById('soundSelect').value = alertSound;
+                document.getElementById('voiceSelect').value = voiceEnabled ? 'on' : 'off';
+                renderThresholds();
+                renderCoinList();
+                updateSelectedCounter();
+                saveSettings(); // сохранить в localStorage
+                showToast('📂 Импорт', 'Настройки загружены из файла', false, 2500);
+                // Если трекер активен, обновить вебсокет
+                if (active) refreshWebsocket();
+            } catch (err) {
+                showToast('❌ Ошибка', 'Неверный формат файла', true);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // ---- Telegram ----
+    async function sendTelegramMessage(text, isStartup = false) {
+        const token = document.getElementById('botToken').value.trim();
+        const chatId = document.getElementById('chatId').value.trim();
+        if (!token || !chatId) return false;
+        try {
+            const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' })
+            });
+            if (resp.ok) {
+                if (isStartup) logMessage('📢 Стартовое Telegram-сообщение отправлено', 'info');
+                return true;
+            }
+            return false;
+        } catch(e) {
+            return false;
+        }
+    }
+
+    async function sendStartupTelegramMessage() {
+        const token = document.getElementById('botToken').value.trim();
+        if (!token || !document.getElementById('chatId').value.trim()) return;
+        const symbolList = Array.from(selectedSymbols).map(s=>s.toUpperCase()).join(', ') || 'не выбраны';
+        const upStr = upThresholds.map(t=>`+${t}%`).join(', ') || 'нет';
+        const downStr = downThresholds.map(t=>`-${t}%`).join(', ') || 'нет';
+        const msg = `🚀 <b>Трекер активирован</b>\n\n📊 Монет: ${selectedSymbols.size}\n🎯 Условие: ${requiredCrossings} пересечений за ${doubleIntervalSec}с\n📈 Рост: ${upStr}\n📉 Падение: ${downStr}\n⏱ Кулдаун: ${cooldownSec}с\n✅ Мониторинг запущен.`;
+        await sendTelegramMessage(msg, true);
+    }
+
+    // ---- Вспомогательные функции ----
+    function showToast(title, msg, isError = false, duration = 4000) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.borderLeftColor = isError ? '#f6465d' : '#f0b90b';
+        toast.innerHTML = `<strong>${title}</strong><br><small>${msg}</small>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), duration);
+    }
+
+    function logMessage(text, type = 'info') {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        if (type === 'double') entry.classList.add('alert-double');
+        entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${text}`;
+        logBox.appendChild(entry);
+        entry.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        while (logBox.children.length > 200) logBox.removeChild(logBox.firstChild);
+    }
+
+    function playSound(type) {
+        if (type === 'none') return;
+        let src = type === 'alert' ? 'https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3' : 'https://www.soundjay.com/misc/sounds/bell-ringing-06.mp3';
+        let a = new Audio(src);
+        a.volume = 0.4;
+        a.play().catch(() => {});
+    }
+
+    function speak(text) {
+        if (voiceEnabled && window.speechSynthesis) {
+            let u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ru-RU';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(u);
+        }
+    }
+
+    // ---- Генерация порогов через интервал ----
+    function generateThresholds(minVal, maxVal, step) {
+        let list = [];
+        let current = Math.round(minVal * 10) / 10;
+        let max = Math.round(maxVal * 10) / 10;
+        while (current <= max + 0.001) {
+            let rounded = Math.round(current * 10) / 10;
+            if (!list.includes(rounded)) list.push(rounded);
+            current += step;
+        }
+        return list;
+    }
+
+    // ---- Пороги ----
+    function renderThresholds() {
+        const upDiv = document.getElementById('upThresholdList'), downDiv = document.getElementById('downThresholdList');
+        upDiv.innerHTML = upThresholds.map((th, i) =>
+            `<div class="threshold-chip up">+${th}% <button class="remove-chip" data-type="up" data-idx="${i}">✕</button></div>`).join('');
+        downDiv.innerHTML = downThresholds.map((th, i) =>
+            `<div class="threshold-chip down">-${th}% <button class="remove-chip" data-type="down" data-idx="${i}">✕</button></div>`).join('');
+        document.querySelectorAll('.remove-chip').forEach(btn => {
+            btn.onclick = () => {
+                const type = btn.dataset.type, idx = parseInt(btn.dataset.idx);
+                if (type === 'up') upThresholds.splice(idx, 1);
+                else downThresholds.splice(idx, 1);
+                renderThresholds();
+                saveSettings();
+            };
+        });
+    }
+
+    // ---- Загрузка монет ----
+    async function loadCoins() {
+        try {
+            const exchangeInfo = await fetch('https://api.binance.com/api/v3/exchangeInfo').then(r => r.json());
+            const usdtPairs = exchangeInfo.symbols.filter(s => s.symbol.endsWith('USDT') && s.status === 'TRADING');
+            const tickers = await fetch('https://api.binance.com/api/v3/ticker/24hr').then(r => r.json());
+            const volMap = new Map();
+            tickers.forEach(t => volMap.set(t.symbol, parseFloat(t.quoteVolume) || 0));
+            allCoins = usdtPairs.map(p => ({ symbol: p.symbol, volume: volMap.get(p.symbol) || 0 }))
+                .sort((a, b) => b.volume - a.volume);
+            renderCoinList();
+            logMessage(`✅ Загружено ${allCoins.length} монет`, 'info');
+            showToast('✅ API', `Загружено ${allCoins.length} монет`, false, 2500);
+        } catch (e) {
+            logMessage('❌ Ошибка загрузки монет', 'error');
+            showToast('❌ Ошибка', 'Не удалось загрузить монеты', true);
+        }
+    }
+
+    function renderCoinList() {
+        const term = searchInput.value.toLowerCase();
+        let filtered = allCoins.filter(c => c.symbol.toLowerCase().includes(term));
+        coinContainer.innerHTML = filtered.map(coin =>
+            `<div class="coin-option ${selectedSymbols.has(coin.symbol.toLowerCase()) ? 'selected' : ''}" data-symbol="${coin.symbol}">
+                ${coin.symbol.replace('USDT', '/USDT')} <span style="font-size:0.7rem;">${(coin.volume/1e6).toFixed(1)}M$</span>
+            </div>`
+        ).join('');
+        document.querySelectorAll('.coin-option').forEach(div => {
+            div.addEventListener('click', () => {
+                const sym = div.dataset.symbol.toLowerCase();
+                if (selectedSymbols.has(sym)) selectedSymbols.delete(sym);
+                else selectedSymbols.add(sym);
+                renderCoinList();
+                updateSelectedCounter();
+                saveSettings();
+                if (active) refreshWebsocket();
+            });
+        });
+        updateSelectedCounter();
+    }
+
+    function updateSelectedCounter() { selectedCountSpan.innerText = `Выбрано: ${selectedSymbols.size}`; }
+
+    // ---- WebSocket ----
+    function refreshWebsocket() {
+        if (!active) return;
+        if (ws) ws.close();
+        if (selectedSymbols.size === 0) return;
+        const streams = Array.from(selectedSymbols).map(s => `${s}@miniTicker`).join('/');
+        ws = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${streams}`);
+        ws.onmessage = (e) => {
+            const { data } = JSON.parse(e.data);
+            const sym = data.s.toLowerCase();
+            if (!selectedSymbols.has(sym)) return;
+            const price = parseFloat(data.c);
+            let item = priceMap.get(sym);
+            if (!item) {
+                item = { currentPrice: price, basePrice: price, lastCrossTimestamps: [], lastAlertTime: 0, triggeredPortals: new Set() };
+                priceMap.set(sym, item);
+                updatePricesUI();
+                return;
+            }
+            item.currentPrice = price;
+            if (!item.basePrice) item.basePrice = price;
+            const change = ((price - item.basePrice) / item.basePrice) * 100;
+            updatePricesUI();
+            if (item.basePrice && Math.abs(change) > 0.01) checkThresholdCross(sym, change, item);
+        };
+        ws.onclose = () => { if (active) setTimeout(refreshWebsocket, 5000); };
+    }
+
+    // ---- Проверка пересечений ----
+    function checkThresholdCross(symbol, changePercent, data) {
+        let triggered = false, isUp = false;
+        for (let th of upThresholds) {
+            if (changePercent >= th && !data.triggeredPortals.has(`up_${th}`)) {
+                triggered = true; isUp = true;
+                data.triggeredPortals.add(`up_${th}`);
+                break;
+            }
+        }
+        if (!triggered) {
+            for (let th of downThresholds) {
+                if (changePercent <= -th && !data.triggeredPortals.has(`down_${th}`)) {
+                    triggered = true; isUp = false;
+                    data.triggeredPortals.add(`down_${th}`);
+                    break;
+                }
+            }
+        }
+        if (triggered) {
+            const now = Date.now();
+            data.lastCrossTimestamps.push(now);
+            data.lastCrossTimestamps = data.lastCrossTimestamps.filter(ts => ts > now - doubleIntervalSec * 1000);
+            logMessage(`📌 ${symbol.toUpperCase()} ${isUp ? 'РОСТ' : 'ПАДЕНИЕ'} ${Math.abs(changePercent).toFixed(2)}% | Пересечений: ${data.lastCrossTimestamps.length}`, 'info');
+            updatePricesUI();
+            if (data.lastCrossTimestamps.length >= requiredCrossings && (now - data.lastAlertTime) > cooldownSec * 1000) {
+                data.lastAlertTime = now;
+                const msg = `🚨 ДВОЙНОЙ АЛЕРТ! ${symbol.toUpperCase()} ${requiredCrossings} раз(а) за ${doubleIntervalSec} сек! Изм: ${changePercent.toFixed(2)}%`;
+                logMessage(msg, 'double');
+                showToast('⚡ Двойной алерт', msg, false, 10000);
+                if (alertSound !== 'none') playSound(alertSound);
+                speak(`${symbol}  пересек порог за ${doubleIntervalSec} секунд`);
+                // Отправка в Telegram
+                const token = document.getElementById('botToken').value.trim();
+                const chatId = document.getElementById('chatId').value.trim();
+                if (token && chatId) {
+                    const tgMsg = `🔔 <b>💲</b>\nМонета: ${symbol.toUpperCase()}\nСобытие: ${requiredCrossings} пересечений за ${doubleIntervalSec}с\nИзменение: ${changePercent.toFixed(2)}%\nВремя: ${new Date().toLocaleString()}`;
+                    sendTelegramMessage(tgMsg);
+                }
+                updateDoubleCrossUI();
+            }
+            updateDoubleCrossUI();
+        }
+    }
+
+    // ---- Обновление UI ----
+    function updatePricesUI() {
+        if (!active) { pricesContainer.innerHTML = '<div style="text-align:center;padding:30px;">⚫ Трекер остановлен</div>'; return; }
+        if (selectedSymbols.size === 0) { pricesContainer.innerHTML = '<div style="text-align:center;padding:30px;">💰 Выберите монеты</div>'; return; }
+        let html = `<table class="price-table"><thead><tr><th>Монета</th><th>Цена</th><th>Изм.%</th><th>Пересеч.</th><th>Статус</th></tr></thead><tbody>`;
+        for (let sym of selectedSymbols) {
+            const data = priceMap.get(sym);
+            if (data?.currentPrice) {
+                let change = data.basePrice ? ((data.currentPrice - data.basePrice) / data.basePrice) * 100 : 0;
+                let cls = change >= 0 ? 'price-up' : 'price-down';
+                let cnt = data.lastCrossTimestamps?.length || 0;
+                let inCooldown = (Date.now() - (data.lastAlertTime || 0)) < cooldownSec * 1000;
+                let status = cnt >= requiredCrossings ? (inCooldown ? '⏱ Кулдаун' : '⚡ АКТИВЕН') : (cnt > 0 ? `${requiredCrossings - cnt} до алерта` : '—');
+                html += `<tr><td><b>${sym.toUpperCase()}</b></td><td>${data.currentPrice > 1 ? data.currentPrice.toFixed(2) : data.currentPrice.toFixed(6)}</td>
+                    <td class="${cls}">${change >= 0 ? '+' : ''}${change.toFixed(2)}%</td>
+                    <td><span class="crossing-badge">${cnt}/${requiredCrossings}</span></td><td>${status}</td></tr>`;
+            } else {
+                html += `<tr><td>${sym.toUpperCase()}</td><td colspan="4">загрузка...</td></tr>`;
+            }
+        }
+        html += `</tbody></table>`;
+        pricesContainer.innerHTML = html;
+    }
+
+    function updateDoubleCrossUI() {
+        let list = [];
+        for (let sym of selectedSymbols) {
+            const d = priceMap.get(sym);
+            if (d && d.lastCrossTimestamps?.length >= requiredCrossings && (Date.now() - d.lastAlertTime) > cooldownSec * 1000)
+                list.push(sym);
+        }
+        if (!list.length) {
+            doubleCrossDiv.innerHTML = '<div style="padding:16px;text-align:center;">📭 Монеты с условием появятся здесь</div>';
+            return;
+        }
+        let html = `<table class="price-table"><thead><tr><th>Монета</th><th>Пересечения (время)</th><th>Действие</th></tr></thead><tbody>`;
+        for (let sym of list) {
+            const d = priceMap.get(sym);
+            html += `<tr><td><b>${sym.toUpperCase()}</b></td>
+                <td>${d.lastCrossTimestamps.map(ts => new Date(ts).toLocaleTimeString()).join(', ')}</td>
+                <td><button class="manual-alert-btn" data-sym="${sym}">🔔 ALERT</button></td></tr>`;
+        }
+        html += `</tbody></table>`;
+        doubleCrossDiv.innerHTML = html;
+        document.querySelectorAll('.manual-alert-btn').forEach(btn => {
+            btn.onclick = () => {
+                const sym = btn.dataset.sym, d = priceMap.get(sym);
+                if (d && (Date.now() - d.lastAlertTime) > cooldownSec * 1000) {
+                    d.lastAlertTime = Date.now();
+                    const msg = `🔔 Тест: ${sym.toUpperCase()} алерт`;
+                    logMessage(msg, 'double');
+                    showToast('Тест', msg, false);
+                    speak(`${sym} тестовый алерт`);
+                    // Отправка тестового Telegram
+                    const token = document.getElementById('botToken').value.trim();
+                    const chatId = document.getElementById('chatId').value.trim();
+                    if (token && chatId) {
+                        sendTelegramMessage(`🧪 Тестовый алерт для ${sym.toUpperCase()}`);
+                    }
+                    updateDoubleCrossUI();
+                }
+            };
+        });
+    }
+
+    // ---- Управление трекером ----
+    async function startTracker() {
+        if (selectedSymbols.size === 0) { showToast('Ошибка', 'Выберите монеты!', true); return; }
+        if (active) stopTracker();
+        active = true;
+        priceMap.clear();
+        for (let s of selectedSymbols) priceMap.set(s, { currentPrice: null, basePrice: null, lastCrossTimestamps: [], lastAlertTime: 0, triggeredPortals: new Set() });
+        trackerStatusSpan.innerHTML = '🟢 Статус: АКТИВЕН';
+        refreshWebsocket();
+        logMessage('✅ Трекер запущен', 'success');
+        await sendStartupTelegramMessage();
+        setInterval(() => { if (active) updateDoubleCrossUI(); }, 2000);
+        setInterval(() => { if (active) updatePricesUI(); }, 1500);
+    }
+
+    function stopTracker() {
+        active = false;
+        if (ws) { ws.close(); ws = null; }
+        trackerStatusSpan.innerHTML = '⚫ Статус: Неактивен';
+        logMessage('⏹ Трекер остановлен', 'info');
+        pricesContainer.innerHTML = '<div style="text-align:center;padding:30px;">⚫ Трекер остановлен</div>';
+        doubleCrossDiv.innerHTML = '<div style="padding:16px;text-align:center;">⏹ Мониторинг остановлен</div>';
+    }
+
+    // ---- Обработчики событий с автосохранением ----
+    document.getElementById('startBtn').onclick = startTracker;
+    document.getElementById('stopBtn').onclick = stopTracker;
+    document.getElementById('refreshCoinsBtn').onclick = loadCoins;
+
+    // Генерация порогов через интервал
+    document.getElementById('genUpBtn').onclick = () => {
+        const min = parseFloat(document.getElementById('upMin').value);
+        const max = parseFloat(document.getElementById('upMax').value);
+        const step = parseFloat(document.getElementById('upStep').value);
+        if (isNaN(min) || isNaN(max) || isNaN(step) || min < 0 || max > 100 || step <= 0 || min > max) {
+            showToast('Ошибка', 'Проверьте значения (min ≤ max, шаг > 0)', true);
+            return;
+        }
+        const generated = generateThresholds(min, max, step);
+        if (generated.length === 0) { showToast('Ошибка', 'Ничего не сгенерировано', true); return; }
+        upThresholds = generated;
+        renderThresholds();
+        saveSettings();
+        showToast('Генерация', `Создано ${upThresholds.length} порогов роста`, false, 2000);
+    };
+
+    document.getElementById('genDownBtn').onclick = () => {
+        const min = parseFloat(document.getElementById('downMin').value);
+        const max = parseFloat(document.getElementById('downMax').value);
+        const step = parseFloat(document.getElementById('downStep').value);
+        if (isNaN(min) || isNaN(max) || isNaN(step) || min < 0 || max > 100 || step <= 0 || min > max) {
+            showToast('Ошибка', 'Проверьте значения (min ≤ max, шаг > 0)', true);
+            return;
+        }
+        const generated = generateThresholds(min, max, step);
+        if (generated.length === 0) { showToast('Ошибка', 'Ничего не сгенерировано', true); return; }
+        downThresholds = generated;
+        renderThresholds();
+        saveSettings();
+        showToast('Генерация', `Создано ${downThresholds.length} порогов падения`, false, 2000);
+    };
+
+    // Ручное добавление
+    document.getElementById('addUpBtn').onclick = () => {
+        let v = parseFloat(document.getElementById('newUpThreshold').value);
+        if (!isNaN(v) && v > 0 && !upThresholds.includes(v)) { upThresholds.push(v); upThresholds.sort((a,b)=>a-b); renderThresholds(); saveSettings(); }
+    };
+    document.getElementById('addDownBtn').onclick = () => {
+        let v = parseFloat(document.getElementById('newDownThreshold').value);
+        if (!isNaN(v) && v > 0 && !downThresholds.includes(v)) { downThresholds.push(v); downThresholds.sort((a,b)=>a-b); renderThresholds(); saveSettings(); }
+    };
+    document.getElementById('presetBtn').onclick = () => { upThresholds = [5,10,15]; downThresholds = [4,8,12]; renderThresholds(); saveSettings(); };
+
+    // Монеты
+    document.getElementById('selectTop10Btn').onclick = () => { selectedSymbols.clear(); allCoins.slice(0,10).forEach(c => selectedSymbols.add(c.symbol.toLowerCase())); renderCoinList(); saveSettings(); if (active) refreshWebsocket(); };
+    document.getElementById('selectAllBtn').onclick = () => { selectedSymbols.clear(); allCoins.forEach(c => selectedSymbols.add(c.symbol.toLowerCase())); renderCoinList(); saveSettings(); if (active) refreshWebsocket(); };
+    document.getElementById('clearAllBtn').onclick = () => { selectedSymbols.clear(); renderCoinList(); saveSettings(); if (active) refreshWebsocket(); };
+    searchInput.addEventListener('input', renderCoinList);
+
+    // Параметры
+    document.getElementById('doubleIntervalSec').addEventListener('change', (e) => { doubleIntervalSec = parseInt(e.target.value); saveSettings(); });
+    document.getElementById('requiredCrossings').addEventListener('change', (e) => { requiredCrossings = parseInt(e.target.value); saveSettings(); });
+    document.getElementById('cooldownSec').addEventListener('change', (e) => { cooldownSec = parseInt(e.target.value); saveSettings(); });
+    document.getElementById('soundSelect').onchange = (e) => { alertSound = e.target.value; saveSettings(); };
+    document.getElementById('voiceSelect').onchange = (e) => { voiceEnabled = e.target.value === 'on'; saveSettings(); };
+    document.getElementById('botToken').addEventListener('input', saveSettings);
+    document.getElementById('chatId').addEventListener('input', saveSettings);
+
+    // Telegram тест
+    document.getElementById('testTelegramBtn').onclick = async () => {
+        const token = document.getElementById('botToken').value.trim();
+        const chatId = document.getElementById('chatId').value.trim();
+        if (!token || !chatId) {
+            showToast('Ошибка', 'Заполните Token и Chat ID', true);
+            return;
+        }
+        const ok = await sendTelegramMessage('🧪 Тестовое сообщение от Crypto Double-Cross');
+        if (ok) {
+            showToast('✅ Telegram', 'Тест успешно отправлен', false, 2500);
+            logMessage('🧪 Тестовое Telegram отправлено', 'info');
+        } else {
+            showToast('❌ Ошибка', 'Не удалось отправить. Проверьте токен и ID.', true);
+            logMessage('❌ Ошибка отправки тестового Telegram', 'error');
+        }
+    };
+
+    // Экспорт / Импорт
+    document.getElementById('exportBtn').onclick = exportSettings;
+    document.getElementById('importBtn').onclick = () => document.getElementById('fileInput').click();
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            importSettings(e.target.files[0]);
+            e.target.value = ''; // сброс для повторного выбора того же файла
+        }
+    });
+
+    // ---- Инициализация ----
+    // Сначала загружаем монеты, потом восстанавливаем настройки (чтобы применить выбранные монеты)
+    loadCoins().then(() => {
+        const loaded = loadSettings();
+        if (loaded) {
+            // Если загружены настройки, перерисовываем список монет с учётом выбранных
+            renderCoinList();
+            updateSelectedCounter();
+            // Обновить значения полей генерации, чтобы они соответствовали текущим порогам? Нет, оставляем как есть.
+        }
+    });
+    renderThresholds();
+    setInterval(() => { if (active) updateDoubleCrossUI(); }, 3000);
+</script>
+</body>
+</html>
