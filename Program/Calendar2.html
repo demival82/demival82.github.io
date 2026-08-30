@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ежедневный голосовой календарь</title>
+    <style>
+        /* ----- Сброс и база ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b1120 0%, #19233c 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ----- Карточка ----- */
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 48px;
+            padding: 40px 44px 48px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* ----- Заголовок ----- */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .header .icon {
+            font-size: 36px;
+            line-height: 1;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #f0f3fa;
+            letter-spacing: -0.3px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .badge {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* ----- День недели (крупно) ----- */
+        .day-display {
+            text-align: center;
+            padding: 24px 0 18px;
+            margin-bottom: 22px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .day-display .day-name {
+            font-size: 52px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            transition: color 0.4s ease;
+        }
+
+        .day-display .day-name.speaking {
+            color: #b7d0ff;
+        }
+
+        .day-display .day-sub {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ----- Настройка времени ----- */
+        .time-section {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 24px;
+            padding: 22px 26px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 20px;
+        }
+
+        .time-section label {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-section label .label-icon {
+            font-size: 20px;
+        }
+
+        .time-section input[type="time"] {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.35);
+            color: #f0f3fa;
+            font-size: 22px;
+            font-weight: 500;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .time-section input[type="time"]:focus {
+            border-color: rgba(120, 170, 255, 0.5);
+            box-shadow: 0 0 0 4px rgba(120, 170, 255, 0.12);
+        }
+
+        .time-section input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8) sepia(1) saturate(3) hue-rotate(190deg);
+            cursor: pointer;
+        }
+
+        /* ----- Кнопки ----- */
+        .actions {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 17px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.2px;
+        }
+
+        .actions button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #4a7cf7, #6a4cf7);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(74, 124, 247, 0.35);
+        }
+
+        .btn-start:hover {
+            box-shadow: 0 12px 32px rgba(74, 124, 247, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-start:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 4px 12px rgba(74, 124, 247, 0.15);
+        }
+
+        .btn-stop {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-stop:hover {
+            background: rgba(255, 70, 70, 0.2);
+            border-color: rgba(255, 70, 70, 0.25);
+            color: #ff7a7a;
+        }
+
+        .btn-stop:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-speak-now {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            flex: 0.5;
+        }
+
+        .btn-speak-now:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* ----- Статус ----- */
+        .status {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 18px;
+            padding: 16px 22px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 4px;
+        }
+
+        .status .label {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .status .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #e8ecf5;
+        }
+
+        .status .value .highlight {
+            color: #8ab4ff;
+            font-weight: 600;
+        }
+
+        .status .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .dot.inactive {
+            background: #4a4f5e;
+            box-shadow: none;
+        }
+
+        .dot.active {
+            background: #4ade80;
+            box-shadow: 0 0 16px rgba(74, 222, 128, 0.5);
+            animation: pulse-dot 1.6s ease-in-out infinite;
+        }
+
+        .dot.waiting {
+            background: #facc15;
+            box-shadow: 0 0 16px rgba(250, 204, 21, 0.35);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        /* ----- Инфо-строка ----- */
+        .footer-info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.3px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 18px;
+        }
+
+        .footer-info span {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ----- Адаптив ----- */
+        @media (max-width: 500px) {
+            .card {
+                padding: 28px 20px 32px;
+                border-radius: 32px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .header .badge {
+                font-size: 11px;
+                padding: 4px 12px;
+            }
+            .day-display .day-name {
+                font-size: 38px;
+            }
+            .time-section {
+                padding: 16px 18px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .time-section label {
+                font-size: 14px;
+            }
+            .time-section input[type="time"] {
+                font-size: 20px;
+                padding: 10px 14px;
+            }
+            .actions {
+                flex-direction: column;
+            }
+            .btn-speak-now {
+                flex: 1;
+            }
+            .status {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .day-display .day-name {
+                font-size: 30px;
+            }
+            .card {
+                padding: 20px 14px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Шапка -->
+        <div class="header">
+            <span class="icon">🗓️</span>
+            <h1>Голосовой календарь</h1>
+            <span class="badge">v1.0</span>
+        </div>
+
+        <!-- Крупный день недели -->
+        <div class="day-display">
+            <div class="day-name" id="dayName">—</div>
+            <div class="day-sub" id="daySub">сегодня</div>
+        </div>
+
+        <!-- Выбор времени -->
+        <div class="time-section">
+            <label>
+                <span class="label-icon">⏰</span>
+                Время оповещения
+            </label>
+            <input type="time" id="timePicker" value="09:00" />
+        </div>
+
+        <!-- Кнопки -->
+        <div class="actions">
+            <button class="btn-start" id="btnStart">▶ &nbsp;Запустить</button>
+            <button class="btn-stop" id="btnStop" disabled>⏹ &nbsp;Остановить</button>
+            <button class="btn-speak-now" id="btnSpeakNow" title="Проговорить прямо сейчас">🔊</button>
+        </div>
+
+        <!-- Статус -->
+        <div class="status">
+            <span class="label">Статус</span>
+            <span class="value" id="statusText">
+                <span class="dot inactive" id="statusDot"></span>
+                <span id="statusMessage">Ожидание запуска</span>
+            </span>
+            <span class="label">Следующее</span>
+            <span class="value" id="nextTimeDisplay">—</span>
+        </div>
+
+        <div class="footer-info">
+            <span>Каждый день в заданное время будет произнесён день недели</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ----- DOM-ссылки -----
+            const dayNameEl = document.getElementById('dayName');
+            const daySubEl = document.getElementById('daySub');
+            const timePicker = document.getElementById('timePicker');
+            const btnStart = document.getElementById('btnStart');
+            const btnStop = document.getElementById('btnStop');
+            const btnSpeakNow = document.getElementById('btnSpeakNow');
+            const statusDot = document.getElementById('statusDot');
+            const statusMessage = document.getElementById('statusMessage');
+            const nextTimeDisplay = document.getElementById('nextTimeDisplay');
+
+            // ----- Константы -----
+            const DAYS_RU = [
+                'Воскресенье',
+                'Понедельник',
+                'Вторник',
+                'Среда',
+                'Четверг',
+                'Пятница',
+                'Суббота'
+            ];
+
+            // ----- Состояние -----
+            let isActive = false; // запущен ли таймер
+            let timerId = null; // ID setInterval
+            let lastSpokenDate = null; // строка 'YYYY-MM-DD' — чтобы не повторять в один день
+
+            // ----- Вспомогательные функции -----
+
+            /** Получить сегодняшнюю дату в виде 'YYYY-MM-DD' */
+            function getTodayStr() {
+                const d = new Date();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+
+            /** Получить текущий день недели (0=Вс, 6=Сб) */
+            function getWeekdayIndex() {
+                return new Date().getDay();
+            }
+
+            /** Обновить отображение дня недели на экране */
+            function updateDayDisplay() {
+                const idx = getWeekdayIndex();
+                dayNameEl.textContent = DAYS_RU[idx];
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                daySubEl.textContent = `сегодня, ${h}:${m}`;
+            }
+
+            /** Проговорить день недели (с использованием SpeechSynthesis) */
+            function speakDayOfWeek() {
+                const idx = getWeekdayIndex();
+                const dayName = DAYS_RU[idx];
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+
+                // Фраза: "Сегодня [день недели]"
+                const phrase = `Сегодня ${dayName}`;
+
+                // Проверка поддержки SpeechSynthesis
+                if (!('speechSynthesis' in window)) {
+                    console.warn('SpeechSynthesis не поддерживается в этом браузере.');
+                    statusMessage.textContent = '⚠️ Синтез речи недоступен';
+                    return false;
+                }
+
+                // Отменяем предыдущие, чтобы не накладывались
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1;
+
+                // Визуальный фидбек во время речи
+                dayNameEl.classList.add('speaking');
+                utterance.onend = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+                utterance.onerror = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+
+                window.speechSynthesis.speak(utterance);
+
+                // Запоминаем, что сегодня уже говорили
+                lastSpokenDate = getTodayStr();
+
+                // Обновляем статус
+                statusMessage.textContent = `🔊 Сказано: «${phrase}»`;
+                statusDot.className = 'dot active';
+
+                console.log(`[${hours}:${minutes}] Проговорено: ${phrase}`);
+                return true;
+            }
+
+            /** Проверить, нужно ли произнести день недели прямо сейчас */
+            function checkAndSpeak() {
+                if (!isActive) return false;
+
+                const now = new Date();
+                const pickerVal = timePicker.value;
+                if (!pickerVal) return false;
+
+                const [targetHours, targetMinutes] = pickerVal.split(':').map(Number);
+                const currentHours = now.getHours();
+                const currentMinutes = now.getMinutes();
+
+                // Совпадает ли текущее время с заданным (с точностью до минуты)
+                const timeMatches = (currentHours === targetHours && currentMinutes === targetMinutes);
+
+                if (!timeMatches) {
+                    // Обновляем статус "ожидание", если время не совпадает
+                    if (isActive) {
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                        statusDot.className = 'dot waiting';
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    }
+                    return false;
+                }
+
+                // Время совпало! Но нужно проверить, не говорили ли уже сегодня
+                const today = getTodayStr();
+                if (lastSpokenDate === today) {
+                    // Уже говорили сегодня — ничего не делаем
+                    statusDot.className = 'dot waiting';
+                    statusMessage.textContent = `✅ Уже сказано сегодня`;
+                    return false;
+                }
+
+                // Говорим!
+                speakDayOfWeek();
+                return true;
+            }
+
+            /** Получить строку следующего срабатывания (время) */
+            function getNextOccurrenceTime() {
+                const val = timePicker.value;
+                if (!val) return '—';
+                const now = new Date();
+                const [h, m] = val.split(':').map(Number);
+                const target = new Date(now);
+                target.setHours(h, m, 0, 0);
+
+                if (target <= now) {
+                    target.setDate(target.getDate() + 1);
+                }
+                const hh = String(target.getHours()).padStart(2, '0');
+                const mm = String(target.getMinutes()).padStart(2, '0');
+                return `сегодня ${hh}:${mm}`;
+            }
+
+            /** Обновить всю статику (день, статус, время) */
+            function refreshUI() {
+                updateDayDisplay();
+
+                if (isActive) {
+                    const next = getNextOccurrenceTime();
+                    nextTimeDisplay.textContent = next;
+                    if (statusDot.className !== 'dot active') {
+                        statusDot.className = 'dot waiting';
+                    }
+                    if (!statusMessage.textContent.includes('Сказано') &&
+                        !statusMessage.textContent.includes('Уже')) {
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    }
+                } else {
+                    nextTimeDisplay.textContent = '—';
+                    statusDot.className = 'dot inactive';
+                    if (!statusMessage.textContent.includes('⚠️') &&
+                        !statusMessage.textContent.includes('🔊')) {
+                        statusMessage.textContent = 'Ожидание запуска';
+                    }
+                }
+            }
+
+            // ----- Управление таймером -----
+
+            function startService() {
+                if (isActive) return;
+
+                const pickerVal = timePicker.value;
+                if (!pickerVal) {
+                    statusMessage.textContent = '⚠️ Укажите время';
+                    return;
+                }
+
+                // Сбрасываем флаг "уже сказано", чтобы при запуске в тот же день
+                // если время уже прошло, мы не пропустили объявление
+                // Но если мы запускаем после времени, то сегодня уже не скажем
+                // (это логично — пользователь запустил после времени, значит сегодня пропущено)
+                const now = new Date();
+                const [h, m] = pickerVal.split(':').map(Number);
+                const target = new Date(now);
+                target.setHours(h, m, 0, 0);
+                if (target > now) {
+                    // Если заданное время ещё не наступило сегодня — сбрасываем lastSpokenDate
+                    lastSpokenDate = null;
+                } else {
+                    // Если время уже прошло сегодня — помечаем, что сегодня уже "сказано"
+                    // чтобы не сработало сразу при запуске
+                    lastSpokenDate = getTodayStr();
+                }
+
+                isActive = true;
+                btnStart.disabled = true;
+                btnStop.disabled = false;
+                timePicker.disabled = true;
+
+                // Сразу проверяем (если время совпало с текущей минутой)
+                const spoke = checkAndSpeak();
+
+                // Запускаем интервал (каждую секунду)
+                if (timerId) clearInterval(timerId);
+                timerId = setInterval(() => {
+                    checkAndSpeak();
+                    // Обновляем отображение дня каждую минуту (для красоты)
+                    const nowSec = new Date().getSeconds();
+                    if (nowSec === 0) {
+                        updateDayDisplay();
+                    }
+                }, 1000);
+
+                // Обновляем UI
+                if (!spoke) {
+                    const next = getNextOccurrenceTime();
+                    statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    statusDot.className = 'dot waiting';
+                    nextTimeDisplay.textContent = next;
+                }
+                refreshUI();
+            }
+
+            function stopService() {
+                if (!isActive) return;
+
+                isActive = false;
+                if (timerId) {
+                    clearInterval(timerId);
+                    timerId = null;
+                }
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                timePicker.disabled = false;
+
+                // Отменяем речь, если она играет
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                dayNameEl.classList.remove('speaking');
+
+                statusDot.className = 'dot inactive';
+                statusMessage.textContent = 'Остановлен';
+                nextTimeDisplay.textContent = '—';
+                refreshUI();
+            }
+
+            // ----- Ручное озвучивание -----
+
+            function speakNow() {
+                // Если служба активна — не сбрасываем lastSpokenDate, просто говорим
+                const idx = getWeekdayIndex();
+                const dayName = DAYS_RU[idx];
+                const phrase = `Сегодня ${dayName}`;
+
+                if (!('speechSynthesis' in window)) {
+                    statusMessage.textContent = '⚠️ Синтез речи недоступен';
+                    return;
+                }
+
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1;
+
+                dayNameEl.classList.add('speaking');
+                utterance.onend = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+                utterance.onerror = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+
+                window.speechSynthesis.speak(utterance);
+
+                // Если служба не активна — показываем в статусе
+                if (!isActive) {
+                    statusMessage.textContent = `🔊 Сказано: «${phrase}» (вручную)`;
+                    statusDot.className = 'dot active';
+                    setTimeout(() => {
+                        if (!isActive) {
+                            statusDot.className = 'dot inactive';
+                            statusMessage.textContent = 'Ожидание запуска';
+                        }
+                    }, 4000);
+                } else {
+                    // Если активна — обновим статус, но не сбиваем lastSpokenDate
+                    statusMessage.textContent = `🔊 Сказано: «${phrase}»`;
+                    statusDot.className = 'dot active';
+                }
+
+                // Обновляем отображение
+                updateDayDisplay();
+            }
+
+            // ----- Инициализация и обработчики -----
+
+            function init() {
+                // Устанавливаем время по умолчанию 09:00
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                // Если сейчас позже 09:00, оставляем 09:00, иначе ставим текущее + 1 минута
+                // Но для удобства оставим 09:00 по умолчанию
+                if (!timePicker.value) {
+                    timePicker.value = '09:00';
+                }
+
+                // Обновляем день
+                updateDayDisplay();
+
+                // Статус
+                statusDot.className = 'dot inactive';
+                statusMessage.textContent = 'Ожидание запуска';
+                nextTimeDisplay.textContent = '—';
+                btnStop.disabled = true;
+
+                // Обработчики
+                btnStart.addEventListener('click', startService);
+                btnStop.addEventListener('click', stopService);
+                btnSpeakNow.addEventListener('click', speakNow);
+
+                // При изменении времени вручную — обновляем nextTimeDisplay если активно
+                timePicker.addEventListener('change', function() {
+                    if (isActive) {
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                        // Сбрасываем lastSpokenDate, т.к. время изменилось
+                        lastSpokenDate = null;
+                    } else {
+                        nextTimeDisplay.textContent = '—';
+                    }
+                });
+
+                // Автообновление дня каждые 10 секунд (на случай, если страница открыта долго)
+                setInterval(() => {
+                    updateDayDisplay();
+                    if (isActive) {
+                        // Обновляем nextTimeDisplay на всякий случай
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                    }
+                }, 10000);
+
+                // Если браузер переходит в фоновый режим, SpeechSynthesis может
+                // отменять речь — обработаем это мягко.
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && isActive) {
+                        // Ничего не делаем, просто сохраняем состояние.
+                        // При возврате таймер продолжит работать.
+                    }
+                });
+
+                console.log('🗓️ Голосовой календарь инициализирован');
+            }
+
+            // Запуск после загрузки DOM
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
