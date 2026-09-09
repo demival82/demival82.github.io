@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Криптокроссворд • Pro</title>
+    <style>
+        /* ── Сброс и база (светлая тема + градиенты) ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1a202c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(2px);
+            border-radius: 24px;
+            padding: 20px 18px 28px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(203, 213, 224, 0.6);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #f0b90b, #f8d33a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+        }
+        .top-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .top-controls select,
+        .top-controls button {
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            color: #2d3748;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .top-controls select:hover,
+        .top-controls button:hover {
+            background: #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .top-controls select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        .stats {
+            display: flex;
+            gap: 16px;
+            font-size: 0.8rem;
+            color: #4a5568;
+            background: #f7fafc;
+            padding: 4px 14px;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            align-items: center;
+        }
+        .stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stats .num {
+            color: #f0b90b;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .crossword-layout {
+            display: flex;
+            flex-direction: row;
+            gap: 24px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .grid-wrapper {
+            flex: 0 0 auto;
+            overflow-x: auto;
+            padding: 4px 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ── Сетка ── */
+        .grid {
+            display: grid;
+            gap: 2px;
+            background: #edf2f7;
+            border-radius: 12px;
+            padding: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .cell {
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #1a202c;
+            transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+            position: relative;
+            cursor: pointer;
+            box-shadow: inset 0 0 0 1px #e2e8f0;
+            outline: none;
+            touch-action: manipulation;
+        }
+        .cell.empty {
+            background: transparent;
+            box-shadow: none;
+            cursor: default;
+            pointer-events: none;
+        }
+        .cell .number {
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            font-size: 0.5rem;
+            font-weight: 700;
+            color: #a0aec0;
+            line-height: 1;
+            pointer-events: none;
+        }
+        .cell.filled {
+            background: #f7fafc;
+            box-shadow: inset 0 0 0 1px #cbd5e0;
+        }
+        .cell.selected {
+            background: #e2e8f0;
+            box-shadow: inset 0 0 0 2px #f0b90b, 0 0 20px rgba(240, 185, 11, 0.15);
+            transform: scale(1.02);
+            z-index: 2;
+        }
+        .cell.highlighted {
+            background: #edf2f7;
+            box-shadow: inset 0 0 0 1px #cbd5e0;
+        }
+        .cell.correct {
+            background: #c6f6d5;
+            box-shadow: inset 0 0 0 1px #48bb78;
+        }
+        .cell.wrong {
+            background: #fed7d7;
+            box-shadow: inset 0 0 0 1px #fc8181;
+            animation: shake 0.3s ease;
+        }
+        .cell.revealed {
+            background: #e2e8f0;
+            box-shadow: inset 0 0 0 1px #cbd5e0;
+            color: #4a5568;
+        }
+        .cell.error-highlight {
+            background: #feb2b2;
+            box-shadow: inset 0 0 0 2px #e53e3e;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px); }
+            60% { transform: translateX(-4px); }
+        }
+        @keyframes glow {
+            0% { box-shadow: inset 0 0 0 1px #f0b90b, 0 0 10px rgba(240, 185, 11, 0.3); }
+            50% { box-shadow: inset 0 0 0 2px #f0b90b, 0 0 30px rgba(240, 185, 11, 0.6); }
+            100% { box-shadow: inset 0 0 0 1px #f0b90b, 0 0 10px rgba(240, 185, 11, 0.3); }
+        }
+        .cell.completed-word {
+            animation: glow 1.2s ease 2;
+        }
+
+        /* ── Подсказки ── */
+        .clues {
+            flex: 1 1 280px;
+            min-width: 200px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 18px 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 0 0 1px #e2e8f0;
+            max-height: 520px;
+            overflow-y: auto;
+        }
+        .clues::-webkit-scrollbar {
+            width: 4px;
+        }
+        .clues::-webkit-scrollbar-track {
+            background: #f7fafc;
+        }
+        .clues::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+        .clues h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #4a5568;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        .clue-group {
+            margin-bottom: 14px;
+        }
+        .clue-group h4 {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #718096;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .clue-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 3px 0 3px 4px;
+            border-radius: 4px;
+            transition: background 0.15s;
+            cursor: default;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #2d3748;
+        }
+        .clue-item:hover {
+            background: #f7fafc;
+        }
+        .clue-item .num {
+            font-weight: 700;
+            color: #f0b90b;
+            min-width: 22px;
+            font-size: 0.8rem;
+        }
+        .clue-item .text {
+            color: #2d3748;
+        }
+        .clue-item .word-hint {
+            color: #a0aec0;
+            font-size: 0.7rem;
+            margin-left: auto;
+            font-weight: 400;
+        }
+        .clue-item.done .text {
+            color: #48bb78;
+        }
+        .clue-item.done .num {
+            color: #48bb78;
+        }
+        .clue-item.active {
+            background: #f7fafc;
+            border-left: 2px solid #f0b90b;
+            padding-left: 6px;
+        }
+        .clue-item .status-icon {
+            font-size: 0.7rem;
+            margin-left: 4px;
+        }
+
+        /* ── Управление ── */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            align-items: center;
+        }
+        .controls button {
+            background: #edf2f7;
+            border: 1px solid #cbd5e0;
+            color: #2d3748;
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 7px 16px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        .controls button:hover {
+            background: #e2e8f0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+        .controls button:active {
+            transform: translateY(0px);
+        }
+        .controls button.primary {
+            background: linear-gradient(135deg, #f0b90b, #f8d33a);
+            border-color: #f0b90b;
+            color: #0b0e11;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(240, 185, 11, 0.2);
+        }
+        .controls button.primary:hover {
+            background: linear-gradient(135deg, #f8c82a, #fadc5a);
+            box-shadow: 0 4px 16px rgba(240, 185, 11, 0.3);
+        }
+        .controls button.danger {
+            background: #fed7d7;
+            border-color: #fc8181;
+            color: #c53030;
+        }
+        .controls button.danger:hover {
+            background: #feb2b2;
+            border-color: #f56565;
+        }
+        .controls button.success {
+            background: #c6f6d5;
+            border-color: #48bb78;
+            color: #276749;
+        }
+        .controls button.success:hover {
+            background: #9ae6b4;
+            border-color: #38a169;
+        }
+        .controls .status {
+            font-size: 0.75rem;
+            color: #4a5568;
+            padding: 4px 12px;
+            background: #f7fafc;
+            border-radius: 40px;
+            border: 1px solid #e2e8f0;
+            min-width: 120px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .controls .timer {
+            font-weight: 600;
+            color: #f0b90b;
+        }
+
+        /* ── Виртуальная клавиатура ── */
+        .keyboard {
+            display: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 14px;
+            padding: 8px 4px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .keyboard .key {
+            background: #edf2f7;
+            border: none;
+            color: #2d3748;
+            font-size: 1rem;
+            font-weight: 600;
+            width: 34px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.05s;
+            touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .keyboard .key:active {
+            background: #e2e8f0;
+            transform: scale(0.95);
+        }
+        .keyboard .key.back {
+            width: 52px;
+            font-size: 0.85rem;
+            background: #fed7d7;
+            color: #c53030;
+        }
+        .keyboard .key.space {
+            width: 70px;
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        @media (pointer: coarse) {
+            .keyboard { display: flex; }
+        }
+        @media (max-width: 820px) {
+            .container { padding: 14px 8px 18px; }
+            .crossword-layout { flex-direction: column; align-items: center; }
+            .clues { flex: 1 1 auto; width: 100%; max-height: 200px; }
+            .cell { width: 34px; height: 34px; font-size: 1rem; }
+            .cell .number { font-size: 0.4rem; top: 1px; left: 3px; }
+            .grid { gap: 2px; padding: 4px; }
+            h1 { font-size: 1.4rem; }
+            .controls button { padding: 5px 10px; font-size: 0.7rem; }
+            .keyboard .key { width: 28px; height: 34px; font-size: 0.85rem; }
+            .keyboard .key.back { width: 44px; }
+            .keyboard .key.space { width: 54px; }
+            .stats { font-size: 0.7rem; padding: 2px 10px; gap: 8px; }
+            .top-controls select { font-size: 0.7rem; padding: 4px 22px 4px 10px; }
+        }
+        @media (max-width: 480px) {
+            .cell { width: 26px; height: 26px; font-size: 0.75rem; }
+            .cell .number { font-size: 0.3rem; top: 1px; left: 2px; }
+            .grid { gap: 1.5px; padding: 3px; }
+            .controls { gap: 4px; }
+            .controls button { padding: 3px 6px; font-size: 0.6rem; }
+            .clues { padding: 6px 8px; max-height: 160px; }
+            .clue-item { font-size: 0.7rem; }
+            .keyboard .key { width: 24px; height: 30px; font-size: 0.75rem; }
+            .keyboard .key.back { width: 36px; }
+            .keyboard .key.space { width: 44px; }
+            .stats span { font-size: 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>⧫ Криптокроссворд</h1>
+            <div class="top-controls">
+                <select id="difficultySelect">
+                    <option value="easy">Лёгкий</option>
+                    <option value="medium" selected>Средний</option>
+                    <option value="hard">Сложный</option>
+                </select>
+                <button id="newGameBtn">🔄 Новая игра</button>
+                <div class="stats" id="statsDisplay">
+                    <span>✅ <span class="num" id="correctCount">0</span></span>
+                    <span>❌ <span class="num" id="errorCount">0</span></span>
+                    <span>⏱ <span class="num timer" id="timerDisplay">00:00</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="subtitle">Крипто-словарь • Уровень: <span id="levelLabel">Средний</span></div>
+
+        <div class="crossword-layout">
+            <div class="grid-wrapper">
+                <div class="grid" id="crosswordGrid" role="grid" aria-label="Кроссворд"></div>
+            </div>
+            <div class="clues" id="cluesPanel">
+                <h3>🔍 Подсказки</h3>
+                <div id="cluesContent"></div>
+            </div>
+        </div>
+
+        <!-- Виртуальная клавиатура -->
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="controls">
+            <button class="primary" id="checkBtn">✔ Проверить всё</button>
+            <button class="success" id="checkWordBtn">📝 Проверить слово</button>
+            <button class="success" id="hintBtn">💡 Буква</button>
+            <button class="success" id="revealWordBtn">🔓 Показать слово</button>
+            <button id="showErrorsBtn" style="background:#fef0e6; border-color:#f6ad9e; color:#9c4221;">⚠ Ошибки</button>
+            <button class="danger" id="clearBtn">✖ Очистить</button>
+            <span class="status" id="statusDisplay">
+                <span id="progressText">0 / 0</span>
+                <span id="statusMessage">Готово</span>
+            </span>
+        </div>
+    </div>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  БАЗА СЛОВ (30 терминов) – без изменений
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        const WORD_POOL = [
+            { word: 'BITCOIN', clue: 'Первая криптовалюта' },
+            { word: 'BLOCK', clue: 'Группа транзакций в цепи' },
+            { word: 'ETHEREUM', clue: 'Вторая по капитализации' },
+            { word: 'MINER', clue: 'Добытчик криптовалюты' },
+            { word: 'SATOSHI', clue: 'Минимальная единица биткоина' },
+            { word: 'WALLET', clue: 'Хранилище для криптоактивов' },
+            { word: 'HASH', clue: 'Результат криптофункции' },
+            { word: 'TOKEN', clue: 'Цифровой актив на блокчейне' },
+            { word: 'POOL', clue: 'Объединение майнеров' },
+            { word: 'STAKE', clue: 'Залог монет для консенсуса' },
+            { word: 'NODE', clue: 'Компьютер в сети блокчейна' },
+            { word: 'CHAIN', clue: 'Цепочка блоков' },
+            { word: 'MINING', clue: 'Процесс добычи' },
+            { word: 'NONCE', clue: 'Число для майнинга' },
+            { word: 'EXCHANGE', clue: 'Площадка для обмена' },
+            { word: 'SMART', clue: 'Умный контракт (часть)' },
+            { word: 'CONTRACT', clue: 'Смарт-контракт (часть)' },
+            { word: 'PROOF', clue: 'Подтверждение работы' },
+            { word: 'VALIDATOR', clue: 'Проверяющий транзакции' },
+            { word: 'LEDGER', clue: 'Реестр транзакций' },
+            { word: 'FORK', clue: 'Разветвление блокчейна' },
+            { word: 'GAS', clue: 'Комиссия за транзакцию' },
+            { word: 'DELEGATE', clue: 'Делегирование голосов' },
+            { word: 'PEG', clue: 'Привязка к активу' },
+            { word: 'SWAP', clue: 'Обмен токенов' },
+            { word: 'ORACLE', clue: 'Внешний источник данных' },
+            { word: 'BRIDGE', clue: 'Мост между блокчейнами' },
+            { word: 'YIELD', clue: 'Доходность от стейкинга' },
+            { word: 'LIQUIDITY', clue: 'Ликвидность на бирже' },
+            { word: 'ARBITRAGE', clue: 'Заработок на разнице цен' }
+        ];
+
+        const STORAGE_KEY = 'cryptocrossword_pro_v2';
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  УЛУЧШЕННЫЙ ГЕНЕРАТОР (без изменений)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        function generateCrossword(wordCount) {
+            const MAX_ATTEMPTS = 100;
+            for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+                const shuffled = [...WORD_POOL].sort(() => Math.random() - 0.5);
+                const selected = shuffled.slice(0, wordCount);
+                selected.sort((a, b) => b.word.length - a.word.length);
+
+                const result = buildCrosswordWithAll(selected);
+                if (result && result.words.length >= wordCount * 0.8) {
+                    return result;
+                }
+            }
+            for (let attempt = 0; attempt < 30; attempt++) {
+                const shuffled = [...WORD_POOL].sort(() => Math.random() - 0.5);
+                const count = Math.floor(wordCount * 0.7);
+                const selected = shuffled.slice(0, Math.max(count, 5));
+                selected.sort((a, b) => b.word.length - a.word.length);
+                const result = buildCrosswordWithAll(selected);
+                if (result && result.words.length >= 5) {
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        function buildCrosswordWithAll(words) {
+            const baseWord = words[0];
+            const placed = [];
+            const gridMap = {};
+            const usedCells = {};
+
+            const startRow = 15,
+                startCol = 15;
+            for (let i = 0; i < baseWord.word.length; i++) {
+                const r = startRow;
+                const c = startCol + i;
+                const key = r + ',' + c;
+                gridMap[key] = baseWord.word[i];
+                usedCells[key] = baseWord.word[i];
+            }
+            placed.push({
+                word: baseWord.word,
+                row: startRow,
+                col: startCol,
+                dir: 'across',
+                clue: baseWord.clue,
+                number: 1,
+                isVertical: false
+            });
+
+            let number = 2;
+            const remaining = words.slice(1);
+
+            const maxRetries = 200;
+            for (let retry = 0; retry < maxRetries; retry++) {
+                const shuffledRemaining = [...remaining].sort(() => Math.random() - 0.5);
+                let success = true;
+                const tempPlaced = [...placed];
+                const tempGrid = { ...gridMap };
+                const tempUsed = { ...usedCells };
+                let tempNumber = number;
+
+                for (const w of shuffledRemaining) {
+                    let placedOk = false;
+                    const candidates = [];
+                    for (const existing of tempPlaced) {
+                        for (let ei = 0; ei < existing.word.length; ei++) {
+                            for (let wi = 0; wi < w.word.length; wi++) {
+                                if (existing.word[ei] !== w.word[wi]) continue;
+                                let row, col, dir;
+                                if (existing.dir === 'across') {
+                                    row = existing.row - wi;
+                                    col = existing.col + ei;
+                                    dir = 'down';
+                                } else {
+                                    row = existing.row + ei;
+                                    col = existing.col - wi;
+                                    dir = 'across';
+                                }
+                                let canPlace = true;
+                                const wlen = w.word.length;
+                                for (let i = 0; i < wlen; i++) {
+                                    const r = dir === 'across' ? row : row + i;
+                                    const c = dir === 'across' ? col + i : col;
+                                    const key = r + ',' + c;
+                                    if (tempUsed[key] && tempUsed[key] !== w.word[i]) {
+                                        canPlace = false;
+                                        break;
+                                    }
+                                }
+                                if (canPlace) {
+                                    candidates.push({ row, col, dir, word: w });
+                                }
+                            }
+                        }
+                    }
+                    candidates.sort((a, b) => {
+                        const aCross = countIntersections(a, tempPlaced);
+                        const bCross = countIntersections(b, tempPlaced);
+                        return bCross - aCross;
+                    });
+                    let found = false;
+                    for (const cand of candidates) {
+                        const { row, col, dir, word } = cand;
+                        let conflict = false;
+                        const wlen = word.word.length;
+                        for (let i = 0; i < wlen; i++) {
+                            const r = dir === 'across' ? row : row + i;
+                            const c = dir === 'across' ? col + i : col;
+                            const key = r + ',' + c;
+                            if (tempUsed[key] && tempUsed[key] !== word.word[i]) {
+                                conflict = true;
+                                break;
+                            }
+                        }
+                        if (conflict) continue;
+                        for (let i = 0; i < wlen; i++) {
+                            const r = dir === 'across' ? row : row + i;
+                            const c = dir === 'across' ? col + i : col;
+                            const key = r + ',' + c;
+                            tempGrid[key] = word.word[i];
+                            tempUsed[key] = word.word[i];
+                        }
+                        tempPlaced.push({
+                            word: word.word,
+                            row: row,
+                            col: col,
+                            dir: dir,
+                            clue: word.clue,
+                            number: tempNumber++,
+                            isVertical: dir === 'down'
+                        });
+                        found = true;
+                        break;
+                    }
+                    if (!found) {
+                        success = false;
+                        break;
+                    }
+                }
+                if (success) {
+                    let minRow = Infinity,
+                        maxRow = -Infinity,
+                        minCol = Infinity,
+                        maxCol = -Infinity;
+                    for (const key of Object.keys(tempGrid)) {
+                        const [r, c] = key.split(',').map(Number);
+                        if (r < minRow) minRow = r;
+                        if (r > maxRow) maxRow = r;
+                        if (c < minCol) minCol = c;
+                        if (c > maxCol) maxCol = c;
+                    }
+                    const offsetR = minRow;
+                    const offsetC = minCol;
+                    const shiftedPlaced = tempPlaced.map(p => ({
+                        ...p,
+                        row: p.row - offsetR,
+                        col: p.col - offsetC
+                    }));
+                    const shiftedGrid = {};
+                    for (const key of Object.keys(tempGrid)) {
+                        const [r, c] = key.split(',').map(Number);
+                        const newKey = (r - offsetR) + ',' + (c - offsetC);
+                        shiftedGrid[newKey] = tempGrid[key];
+                    }
+                    return {
+                        words: shiftedPlaced,
+                        grid: shiftedGrid,
+                        rows: maxRow - minRow + 1,
+                        cols: maxCol - minCol + 1
+                    };
+                }
+            }
+            return null;
+        }
+
+        function countIntersections(candidate, placed) {
+            let count = 0;
+            const { row, col, dir, word } = candidate;
+            for (let i = 0; i < word.word.length; i++) {
+                const r = dir === 'across' ? row : row + i;
+                const c = dir === 'across' ? col + i : col;
+                for (const existing of placed) {
+                    for (let ei = 0; ei < existing.word.length; ei++) {
+                        const er = existing.dir === 'across' ? existing.row : existing.row + ei;
+                        const ec = existing.dir === 'across' ? existing.col + ei : existing.col;
+                        if (r === er && c === ec) {
+                            count++;
+                            break;
+                        }
+                    }
+                }
+            }
+            return count;
+        }
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  ОСНОВНАЯ ЛОГИКА (без изменений, только рендеринг завязан на классы)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        let WORDS = [];
+        let gridData = [];
+        let ROWS = 0,
+            COLS = 0;
+        let userGrid = [];
+        let selectedRow = -1,
+            selectedCol = -1;
+        let revealedMode = false;
+        let statusTimeout = null;
+        let timerInterval = null;
+        let seconds = 0;
+        let isFinished = false;
+        let correctAttempts = 0;
+        let errorAttempts = 0;
+
+        const gridEl = document.getElementById('crosswordGrid');
+        const cluesContent = document.getElementById('cluesContent');
+        const statusMessage = document.getElementById('statusMessage');
+        const progressText = document.getElementById('progressText');
+        const keyboardEl = document.getElementById('keyboard');
+        const difficultySelect = document.getElementById('difficultySelect');
+        const levelLabel = document.getElementById('levelLabel');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const correctCountEl = document.getElementById('correctCount');
+        const errorCountEl = document.getElementById('errorCount');
+
+        // ── Сохранение / загрузка ──
+
+        function saveState() {
+            try {
+                const state = {
+                    words: WORDS,
+                    gridData: gridData,
+                    rows: ROWS,
+                    cols: COLS,
+                    userGrid: userGrid,
+                    selectedRow: selectedRow,
+                    selectedCol: selectedCol,
+                    revealedMode: revealedMode,
+                    seconds: seconds,
+                    correctAttempts: correctAttempts,
+                    errorAttempts: errorAttempts,
+                    isFinished: isFinished,
+                    difficulty: difficultySelect.value
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) { /* ignore */ }
+        }
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return null;
+                const state = JSON.parse(raw);
+                if (!state.words || !state.gridData || !state.userGrid) return null;
+                return state;
+            } catch (e) { return null; }
+        }
+
+        // ── Инициализация ──
+
+        function initCrossword(forceNew = false) {
+            let state = null;
+            if (!forceNew) {
+                state = loadState();
+            }
+            if (state && !forceNew) {
+                WORDS = state.words;
+                gridData = state.gridData;
+                ROWS = state.rows;
+                COLS = state.cols;
+                userGrid = state.userGrid;
+                selectedRow = state.selectedRow;
+                selectedCol = state.selectedCol;
+                revealedMode = state.revealedMode || false;
+                seconds = state.seconds || 0;
+                correctAttempts = state.correctAttempts || 0;
+                errorAttempts = state.errorAttempts || 0;
+                isFinished = state.isFinished || false;
+                difficultySelect.value = state.difficulty || 'medium';
+                updateStatsAndTimer();
+                renderGrid();
+                renderClues();
+                updateStatus('Восстановлено', '#718096');
+                if (selectedRow < 0 || selectedCol < 0 || gridData[selectedRow]?.[selectedCol] === null) {
+                    selectFirstCell();
+                }
+                if (!isFinished) startTimer();
+                return;
+            }
+
+            const diff = difficultySelect.value;
+            let wordCount = 7;
+            if (diff === 'easy') wordCount = 6;
+            else if (diff === 'medium') wordCount = 8;
+            else wordCount = 10;
+            levelLabel.textContent = diff === 'easy' ? 'Лёгкий' : diff === 'medium' ? 'Средний' : 'Сложный';
+
+            let result = null;
+            let attempts = 0;
+            while (result === null && attempts < 30) {
+                result = generateCrossword(wordCount);
+                attempts++;
+            }
+            if (result === null) {
+                alert('Не удалось сгенерировать кроссворд, попробуйте другой уровень');
+                return;
+            }
+            WORDS = result.words;
+            ROWS = result.rows;
+            COLS = result.cols;
+            gridData = [];
+            for (let r = 0; r < ROWS; r++) {
+                gridData[r] = [];
+                for (let c = 0; c < COLS; c++) {
+                    const key = r + ',' + c;
+                    gridData[r][c] = result.grid[key] || null;
+                }
+            }
+            userGrid = [];
+            for (let r = 0; r < ROWS; r++) {
+                userGrid[r] = [];
+                for (let c = 0; c < COLS; c++) {
+                    userGrid[r][c] = gridData[r][c] ? '' : null;
+                }
+            }
+            selectedRow = -1;
+            selectedCol = -1;
+            revealedMode = false;
+            seconds = 0;
+            correctAttempts = 0;
+            errorAttempts = 0;
+            isFinished = false;
+            stopTimer();
+            renderGrid();
+            renderClues();
+            selectFirstCell();
+            updateStatsAndTimer();
+            updateStatus('🔄 Новая игра', '#718096');
+            startTimer();
+            saveState();
+        }
+
+        function selectFirstCell() {
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        selectCell(r, c);
+                        return;
+                    }
+                }
+            }
+        }
+
+        // ── Таймер ──
+
+        function startTimer() {
+            if (timerInterval) return;
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+                saveState();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const s = String(seconds % 60).padStart(2, '0');
+            timerDisplay.textContent = `${m}:${s}`;
+        }
+
+        function updateStatsAndTimer() {
+            correctCountEl.textContent = correctAttempts;
+            errorCountEl.textContent = errorAttempts;
+            updateTimerDisplay();
+        }
+
+        // ── Вспомогательные функции ──
+
+        function getStartCells() {
+            const startCells = {};
+            WORDS.forEach(w => {
+                const key = w.row + ',' + w.col;
+                if (!startCells[key]) startCells[key] = [];
+                startCells[key].push(w);
+            });
+            return startCells;
+        }
+
+        function getWordAt(row, col) {
+            for (const w of WORDS) {
+                const { word, row: wr, col: wc, dir } = w;
+                for (let i = 0; i < word.length; i++) {
+                    const r = dir === 'across' ? wr : wr + i;
+                    const c = dir === 'across' ? wc + i : wc;
+                    if (r === row && c === col) return w;
+                }
+            }
+            return null;
+        }
+
+        function getWordCells(wordObj) {
+            const { word, row, col, dir } = wordObj;
+            const cells = [];
+            for (let i = 0; i < word.length; i++) {
+                const r = dir === 'across' ? row : row + i;
+                const c = dir === 'across' ? col + i : col;
+                cells.push([r, c]);
+            }
+            return cells;
+        }
+
+        function isWordComplete(wordObj) {
+            const { word, row, col, dir } = wordObj;
+            for (let i = 0; i < word.length; i++) {
+                const r = dir === 'across' ? row : row + i;
+                const c = dir === 'across' ? col + i : col;
+                if (userGrid[r][c] !== word[i]) return false;
+            }
+            return true;
+        }
+
+        function allWordsComplete() {
+            return WORDS.every(w => isWordComplete(w));
+        }
+
+        function getFilledCount() {
+            let count = 0,
+                total = 0;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        total++;
+                        if (userGrid[r][c] && userGrid[r][c] !== '') count++;
+                    }
+                }
+            }
+            return { filled: count, total };
+        }
+
+        function updateStatus(msg, color = '#718096') {
+            statusMessage.textContent = msg;
+            statusMessage.style.color = color;
+            const { filled, total } = getFilledCount();
+            progressText.textContent = `${filled} / ${total}`;
+            clearTimeout(statusTimeout);
+            statusTimeout = setTimeout(() => {
+                if (allWordsComplete()) {
+                    statusMessage.textContent = '🎉 Полный комплект!';
+                    statusMessage.style.color = '#48bb78';
+                } else {
+                    statusMessage.textContent = 'Готово';
+                    statusMessage.style.color = '#718096';
+                }
+                const { filled: f, total: t } = getFilledCount();
+                progressText.textContent = `${f} / ${t}`;
+            }, 3000);
+            saveState();
+        }
+
+        function getNextEmptyInWord(wordObj) {
+            const cells = getWordCells(wordObj);
+            let startIdx = cells.findIndex(([r, c]) => r === selectedRow && c === selectedCol);
+            if (startIdx === -1) startIdx = 0;
+            for (let i = 1; i < cells.length; i++) {
+                const idx = (startIdx + i) % cells.length;
+                const [r, c] = cells[idx];
+                if (userGrid[r][c] === '') return [r, c];
+            }
+            return null;
+        }
+
+        function getPrevEmptyInWord(wordObj) {
+            const cells = getWordCells(wordObj);
+            let startIdx = cells.findIndex(([r, c]) => r === selectedRow && c === selectedCol);
+            if (startIdx === -1) startIdx = 0;
+            for (let i = 1; i < cells.length; i++) {
+                const idx = (startIdx - i + cells.length) % cells.length;
+                const [r, c] = cells[idx];
+                if (userGrid[r][c] === '') return [r, c];
+            }
+            return null;
+        }
+
+        function checkWord(wordObj) {
+            const cells = getWordCells(wordObj);
+            let hasError = false;
+            for (const [r, c] of cells) {
+                const user = userGrid[r][c] || '';
+                const correct = gridData[r][c];
+                if (user !== correct) {
+                    hasError = true;
+                    break;
+                }
+            }
+            if (hasError) {
+                for (const [r, c] of cells) {
+                    const user = userGrid[r][c] || '';
+                    const correct = gridData[r][c];
+                    if (user !== '' && user !== correct) {
+                        const idx = r * COLS + c;
+                        const cellEl = gridEl.querySelectorAll('.cell')[idx];
+                        if (cellEl) {
+                            cellEl.classList.add('wrong');
+                            setTimeout(() => cellEl.classList.remove('wrong'), 800);
+                        }
+                    }
+                }
+                errorAttempts++;
+                updateStatsAndTimer();
+                updateStatus('❌ В слове есть ошибка', '#e53e3e');
+                saveState();
+                return false;
+            } else {
+                correctAttempts++;
+                updateStatsAndTimer();
+                for (const [r, c] of cells) {
+                    const idx = r * COLS + c;
+                    const cellEl = gridEl.querySelectorAll('.cell')[idx];
+                    if (cellEl) {
+                        cellEl.classList.add('correct');
+                        setTimeout(() => cellEl.classList.remove('correct'), 1000);
+                    }
+                }
+                updateStatus('✅ Слово верно!', '#48bb78');
+                saveState();
+                return true;
+            }
+        }
+
+        function revealWord(wordObj) {
+            const cells = getWordCells(wordObj);
+            for (const [r, c] of cells) {
+                userGrid[r][c] = gridData[r][c];
+            }
+            renderGrid();
+            renderClues();
+            updateStatus(`🔓 Слово "${wordObj.word}" показано`, '#f0b90b');
+            saveState();
+        }
+
+        // ── Рендеринг ──
+
+        function renderGrid() {
+            const startCells = getStartCells();
+            gridEl.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+            gridEl.innerHTML = '';
+
+            let activeWord = null;
+            if (selectedRow >= 0 && selectedCol >= 0) {
+                activeWord = getWordAt(selectedRow, selectedCol);
+            }
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.setAttribute('role', 'gridcell');
+                    cell.setAttribute('tabindex', '-1');
+
+                    const letter = gridData[r]?.[c];
+                    const userLetter = userGrid[r]?.[c];
+
+                    if (letter === null) {
+                        cell.classList.add('empty');
+                    } else {
+                        const key = r + ',' + c;
+                        if (startCells[key]) {
+                            const num = startCells[key][0].number;
+                            const span = document.createElement('span');
+                            span.className = 'number';
+                            span.textContent = num;
+                            cell.appendChild(span);
+                        }
+
+                        if (userLetter && userLetter !== '') {
+                            cell.textContent = userLetter;
+                            cell.classList.add('filled');
+                            if (revealedMode) {
+                                cell.classList.add('revealed');
+                            }
+                        }
+
+                        if (activeWord) {
+                            const wordCells = getWordCells(activeWord);
+                            const isInWord = wordCells.some(([wr, wc]) => wr === r && wc === c);
+                            if (isInWord && !(r === selectedRow && c === selectedCol)) {
+                                cell.classList.add('highlighted');
+                            }
+                            if (isWordComplete(activeWord) && wordCells.some(([wr, wc]) => wr === r && wc === c)) {
+                                cell.classList.add('completed-word');
+                            }
+                        }
+
+                        if (r === selectedRow && c === selectedCol) {
+                            cell.classList.add('selected');
+                        }
+
+                        cell.addEventListener('click', () => selectCell(r, c));
+                        cell.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            selectCell(r, c);
+                        }, { passive: false });
+                        cell.setAttribute('tabindex', '0');
+                    }
+
+                    gridEl.appendChild(cell);
+                }
+            }
+
+            if (selectedRow >= 0 && selectedCol >= 0) {
+                const idx = selectedRow * COLS + selectedCol;
+                const cells = gridEl.querySelectorAll('.cell');
+                if (cells[idx]) cells[idx].focus();
+            }
+            updateStatus('', '#718096');
+        }
+
+        function renderClues() {
+            const across = WORDS.filter(w => w.dir === 'across').sort((a, b) => a.number - b.number);
+            const down = WORDS.filter(w => w.dir === 'down').sort((a, b) => a.number - b.number);
+
+            let html = '';
+            html += '<div class="clue-group"><h4>По горизонтали</h4>';
+            across.forEach(w => {
+                const done = isWordComplete(w);
+                const active = getWordAt(selectedRow, selectedCol) === w;
+                const icon = done ? '✅' : '';
+                html +=
+                    `<div class="clue-item${done ? ' done' : ''}${active ? ' active' : ''}"><span class="num">${w.number}.</span><span class="text">${w.clue}</span><span class="word-hint">${w.word.length} букв</span><span class="status-icon">${icon}</span></div>`;
+            });
+            html += '</div>';
+
+            html += '<div class="clue-group"><h4>По вертикали</h4>';
+            down.forEach(w => {
+                const done = isWordComplete(w);
+                const active = getWordAt(selectedRow, selectedCol) === w;
+                const icon = done ? '✅' : '';
+                html +=
+                    `<div class="clue-item${done ? ' done' : ''}${active ? ' active' : ''}"><span class="num">${w.number}.</span><span class="text">${w.clue}</span><span class="word-hint">${w.word.length} букв</span><span class="status-icon">${icon}</span></div>`;
+            });
+            html += '</div>';
+
+            cluesContent.innerHTML = html;
+        }
+
+        // ── Выделение ──
+
+        function selectCell(row, col) {
+            if (row < 0 || row >= ROWS || col < 0 || col >= COLS) return;
+            if (gridData[row]?.[col] === null) return;
+            selectedRow = row;
+            selectedCol = col;
+            revealedMode = false;
+            renderGrid();
+            renderClues();
+            const idx = row * COLS + col;
+            const cells = gridEl.querySelectorAll('.cell');
+            if (cells[idx]) cells[idx].focus();
+            saveState();
+        }
+
+        // ── Обработка ввода букв ──
+
+        function handleLetterInput(letter) {
+            if (isFinished) return;
+            if (selectedRow < 0 || selectedCol < 0) return;
+            if (gridData[selectedRow]?.[selectedCol] === null) return;
+            if (userGrid[selectedRow][selectedCol] !== '') {
+                const word = getWordAt(selectedRow, selectedCol);
+                if (word) {
+                    const next = getNextEmptyInWord(word);
+                    if (next) {
+                        selectCell(next[0], next[1]);
+                    }
+                }
+                return;
+            }
+
+            const correct = gridData[selectedRow][selectedCol];
+            const input = letter.toUpperCase();
+            userGrid[selectedRow][selectedCol] = input;
+
+            if (input !== correct) {
+                errorAttempts++;
+                const idx = selectedRow * COLS + selectedCol;
+                const cellEl = gridEl.querySelectorAll('.cell')[idx];
+                if (cellEl) {
+                    cellEl.classList.add('wrong');
+                    setTimeout(() => cellEl.classList.remove('wrong'), 600);
+                }
+                updateStatsAndTimer();
+                updateStatus('❌ Неверная буква', '#e53e3e');
+                userGrid[selectedRow][selectedCol] = '';
+                saveState();
+                return;
+            } else {
+                correctAttempts++;
+                updateStatsAndTimer();
+                const idx = selectedRow * COLS + selectedCol;
+                const cellEl = gridEl.querySelectorAll('.cell')[idx];
+                if (cellEl) {
+                    cellEl.classList.add('correct');
+                    setTimeout(() => cellEl.classList.remove('correct'), 500);
+                }
+                const word = getWordAt(selectedRow, selectedCol);
+                if (word) {
+                    const next = getNextEmptyInWord(word);
+                    if (next) {
+                        selectCell(next[0], next[1]);
+                    } else {
+                        if (isWordComplete(word)) {
+                            const cells = getWordCells(word);
+                            for (const [r, c] of cells) {
+                                const idx2 = r * COLS + c;
+                                const el = gridEl.querySelectorAll('.cell')[idx2];
+                                if (el) el.classList.add('completed-word');
+                            }
+                            updateStatus(`✅ Слово "${word.word}" завершено!`, '#48bb78');
+                            if (allWordsComplete()) {
+                                isFinished = true;
+                                stopTimer();
+                                updateStatus('🎉 ПОЗДРАВЛЯЕМ! Кроссворд разгадан!', '#48bb78');
+                                for (let r = 0; r < ROWS; r++) {
+                                    for (let c = 0; c < COLS; c++) {
+                                        if (gridData[r]?.[c] !== null) {
+                                            const idx3 = r * COLS + c;
+                                            const el = gridEl.querySelectorAll('.cell')[idx3];
+                                            if (el) el.classList.add('correct');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                renderGrid();
+                renderClues();
+                saveState();
+            }
+        }
+
+        function handleBackspace() {
+            if (isFinished) return;
+            if (selectedRow < 0 || selectedCol < 0) return;
+            if (gridData[selectedRow]?.[selectedCol] === null) return;
+            if (userGrid[selectedRow][selectedCol] === '') {
+                const word = getWordAt(selectedRow, selectedCol);
+                if (word) {
+                    const cells = getWordCells(word);
+                    let idx = cells.findIndex(([r, c]) => r === selectedRow && c === selectedCol);
+                    for (let i = 1; i < cells.length; i++) {
+                        const j = (idx - i + cells.length) % cells.length;
+                        const [r, c] = cells[j];
+                        if (userGrid[r][c] !== '') {
+                            selectCell(r, c);
+                            return;
+                        }
+                    }
+                }
+                return;
+            }
+            userGrid[selectedRow][selectedCol] = '';
+            renderGrid();
+            renderClues();
+            const word = getWordAt(selectedRow, selectedCol);
+            if (word) {
+                const prev = getPrevEmptyInWord(word);
+                if (prev) {
+                    selectCell(prev[0], prev[1]);
+                }
+            }
+            saveState();
+        }
+
+        // ── Клавиатурный ввод ──
+
+        document.addEventListener('keydown', (e) => {
+            if (selectedRow < 0 || selectedCol < 0) return;
+
+            const key = e.key.toUpperCase();
+            if (key >= 'A' && key <= 'Z' && key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                handleLetterInput(key);
+                return;
+            }
+            if (e.key === 'Backspace' || e.key === 'Delete') {
+                e.preventDefault();
+                handleBackspace();
+                return;
+            }
+            const dirs = {
+                'ArrowUp': [-1, 0],
+                'ArrowDown': [1, 0],
+                'ArrowLeft': [0, -1],
+                'ArrowRight': [0, 1]
+            };
+            if (dirs[e.key]) {
+                e.preventDefault();
+                const [dr, dc] = dirs[e.key];
+                let nr = selectedRow + dr,
+                    nc = selectedCol + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && gridData[nr]?.[nc] !== null) {
+                    selectCell(nr, nc);
+                }
+            }
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const words = WORDS.sort((a, b) => a.number - b.number);
+                const current = getWordAt(selectedRow, selectedCol);
+                if (!current) return;
+                let idx = words.findIndex(w => w.number === current.number);
+                if (e.shiftKey) {
+                    idx = (idx - 1 + words.length) % words.length;
+                } else {
+                    idx = (idx + 1) % words.length;
+                }
+                const nextWord = words[idx];
+                const cells = getWordCells(nextWord);
+                if (cells.length) {
+                    let found = false;
+                    for (const [r, c] of cells) {
+                        if (userGrid[r][c] === '') {
+                            selectCell(r, c);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        selectCell(cells[0][0], cells[0][1]);
+                    }
+                }
+            }
+        });
+
+        // ── Кнопки управления ──
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            revealedMode = false;
+            let allCorrect = true;
+            let anyFilled = false;
+            const cells = gridEl.querySelectorAll('.cell');
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        const user = userGrid[r][c] || '';
+                        const correct = gridData[r][c];
+                        if (user !== '') anyFilled = true;
+                        if (user !== correct) allCorrect = false;
+                    }
+                }
+            }
+            if (!anyFilled) {
+                updateStatus('✏️ Заполните хотя бы одну ячейку', '#718096');
+                return;
+            }
+            document.querySelectorAll('.cell.correct, .cell.wrong').forEach(el => el.classList.remove('correct', 'wrong'));
+            let errorCount = 0;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        const user = userGrid[r][c] || '';
+                        const correct = gridData[r][c];
+                        const idx = r * COLS + c;
+                        if (cells[idx]) {
+                            if (user === correct && user !== '') {
+                                cells[idx].classList.add('correct');
+                            } else if (user !== '' && user !== correct) {
+                                cells[idx].classList.add('wrong');
+                                errorCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            if (allCorrect && anyFilled) {
+                isFinished = true;
+                stopTimer();
+                updateStatus('🎉 ПОЗДРАВЛЯЕМ! Кроссворд разгадан!', '#48bb78');
+                for (let r = 0; r < ROWS; r++) {
+                    for (let c = 0; c < COLS; c++) {
+                        if (gridData[r]?.[c] !== null) {
+                            const idx = r * COLS + c;
+                            if (cells[idx]) {
+                                cells[idx].classList.add('correct');
+                            }
+                        }
+                    }
+                }
+                renderClues();
+                saveState();
+            } else {
+                updateStatus(`❌ Найдено ${errorCount} ошибок`, '#e53e3e');
+                clearTimeout(statusTimeout);
+                statusTimeout = setTimeout(() => {
+                    document.querySelectorAll('.cell.wrong').forEach(el => el.classList.remove('wrong'));
+                    if (!allCorrect) {
+                        updateStatus('🔍 Попробуйте ещё раз', '#718096');
+                    }
+                }, 2000);
+                renderClues();
+                saveState();
+            }
+        });
+
+        document.getElementById('checkWordBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            const word = getWordAt(selectedRow, selectedCol);
+            if (!word) {
+                updateStatus('Выберите ячейку в слове', '#718096');
+                return;
+            }
+            checkWord(word);
+        });
+
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            const emptyCells = [];
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null && userGrid[r][c] === '') {
+                        emptyCells.push([r, c]);
+                    }
+                }
+            }
+            if (emptyCells.length === 0) {
+                updateStatus('✨ Все клетки уже заполнены!', '#718096');
+                return;
+            }
+            const activeWord = getWordAt(selectedRow, selectedCol);
+            let target = null;
+            if (activeWord) {
+                const cells = getWordCells(activeWord);
+                const emptyInWord = cells.filter(([r, c]) => userGrid[r][c] === '');
+                if (emptyInWord.length > 0) {
+                    const rand = Math.floor(Math.random() * emptyInWord.length);
+                    target = emptyInWord[rand];
+                }
+            }
+            if (!target) {
+                const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                target = emptyCells[randomIndex];
+            }
+            const [r, c] = target;
+            userGrid[r][c] = gridData[r][c];
+            revealedMode = false;
+            renderGrid();
+            renderClues();
+            selectCell(r, c);
+            updateStatus('💡 Подсказка: открыта одна буква', '#f0b90b');
+            saveState();
+        });
+
+        document.getElementById('revealWordBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            const word = getWordAt(selectedRow, selectedCol);
+            if (!word) {
+                updateStatus('Выберите ячейку в слове', '#718096');
+                return;
+            }
+            if (isWordComplete(word)) {
+                updateStatus('Слово уже полностью заполнено', '#718096');
+                return;
+            }
+            revealWord(word);
+        });
+
+        document.getElementById('showErrorsBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            let hasErrors = false;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        const user = userGrid[r][c] || '';
+                        const correct = gridData[r][c];
+                        if (user !== '' && user !== correct) {
+                            const idx = r * COLS + c;
+                            const cellEl = gridEl.querySelectorAll('.cell')[idx];
+                            if (cellEl) {
+                                cellEl.classList.add('error-highlight');
+                                setTimeout(() => cellEl.classList.remove('error-highlight'), 1500);
+                            }
+                            hasErrors = true;
+                        }
+                    }
+                }
+            }
+            if (!hasErrors) {
+                updateStatus('✅ Ошибок не найдено!', '#48bb78');
+            } else {
+                updateStatus('⚠️ Ошибки подсвечены', '#e53e3e');
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (isFinished) return;
+            revealedMode = false;
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (gridData[r]?.[c] !== null) {
+                        userGrid[r][c] = '';
+                    }
+                }
+            }
+            renderGrid();
+            renderClues();
+            document.querySelectorAll('.cell.correct, .cell.wrong, .cell.error-highlight').forEach(el => {
+                el.classList.remove('correct', 'wrong', 'error-highlight');
+            });
+            updateStatus('✖ Очищено', '#718096');
+            saveState();
+        });
+
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            if (confirm('Начать новую игру? Текущий прогресс будет потерян.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                stopTimer();
+                initCrossword(true);
+            }
+        });
+
+        difficultySelect.addEventListener('change', () => {
+            if (confirm('Сменить уровень сложности? Текущий прогресс будет потерян.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                stopTimer();
+                initCrossword(true);
+            } else {
+                difficultySelect.value = difficultySelect.dataset.prev || 'medium';
+            }
+        });
+        difficultySelect.addEventListener('focus', function() {
+            this.dataset.prev = this.value;
+        });
+
+        // ── Виртуальная клавиатура ──
+
+        function buildKeyboard() {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            keyboardEl.innerHTML = '';
+            letters.forEach(letter => {
+                const key = document.createElement('button');
+                key.className = 'key';
+                key.textContent = letter;
+                key.addEventListener('click', () => handleLetterInput(letter));
+                keyboardEl.appendChild(key);
+            });
+            const back = document.createElement('button');
+            back.className = 'key back';
+            back.textContent = '⌫';
+            back.addEventListener('click', handleBackspace);
+            keyboardEl.appendChild(back);
+        }
+        buildKeyboard();
+
+        // ── Запуск ──
+
+        initCrossword(false);
+    </script>
+</body>
+</html>
