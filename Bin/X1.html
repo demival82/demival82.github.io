@@ -1,0 +1,2997 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+  <meta name="theme-color" content="#f0b90b">
+  <meta name="description" content="Отслеживание монет Binance с ростом 50–1000% за 24 часа. Уведомления в Telegram.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="BNB Tracker">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <title>Binance: рост 50% – 1000% + Telegram</title>
+  <link rel="manifest" id="manifestLink">
+  <link rel="apple-touch-icon" id="appleTouchIcon">
+  <link rel="icon" id="faviconLink">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --gold: #f0b90b;
+      --gold-light: #f8d33a;
+      --green: #14a06b;
+      --red: #e0245e;
+      --violet: #8e44ad;
+      --blue: #3b82f6;
+      --whatsapp: #25d366;
+      --text: #1a1d21;
+      --text-muted: #6b7280;
+      --text-soft: #9ca3af;
+      --border: rgba(200, 210, 225, 0.55);
+      --border-hover: rgba(160, 175, 200, 0.7);
+      --card-shadow:
+        0 1px 2px rgba(120, 140, 180, 0.04),
+        0 4px 16px rgba(120, 140, 180, 0.08);
+      --card-shadow-hover:
+        0 2px 4px rgba(120, 140, 180, 0.06),
+        0 8px 28px rgba(120, 140, 180, 0.14);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'tnum';
+      color: var(--text);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      background: #fafbff;
+      padding: 12px 14px calc(160px + var(--safe-bottom));
+      padding-top: calc(12px + var(--safe-top));
+    }
+
+    /* Убираем зум на iOS при фокусе на input */
+    input, button, textarea, select { font-size: 16px; }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(ellipse 80% 60% at 15% 0%,  rgba(240, 185, 11, 0.12), transparent 60%),
+        radial-gradient(ellipse 70% 50% at 85% 10%, rgba(142, 68, 173, 0.10),  transparent 60%),
+        radial-gradient(ellipse 90% 60% at 50% 100%, rgba(20, 160, 107, 0.10), transparent 65%),
+        linear-gradient(180deg, #ffffff 0%, #f8faff 50%, #f5f9f8 100%);
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* ============================================================
+       ЗАСТАВКА (SPLASH SCREEN) — 5 секунд
+       ============================================================ */
+    .splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      padding: 24px;
+      background:
+        radial-gradient(ellipse 90% 70% at 50% 0%,  rgba(240, 185, 11, 0.22), transparent 60%),
+        radial-gradient(ellipse 80% 60% at 50% 100%, rgba(142, 68, 173, 0.18), transparent 65%),
+        linear-gradient(180deg, #ffffff 0%, #f8faff 55%, #f5f9f8 100%);
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash__logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 96px;
+      height: 96px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 50%, #e0245e 100%);
+      box-shadow:
+        0 8px 28px rgba(240, 185, 11, 0.4),
+        0 4px 12px rgba(224, 36, 94, 0.25),
+        inset 0 2px 0 rgba(255, 255, 255, 0.5);
+      font-size: 3rem;
+      animation: splashPulse 1.6s ease-in-out infinite;
+    }
+
+    .splash__title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #1a1d21 0%, #4a5568 50%, #8e44ad 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    .splash__subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.5;
+      max-width: 320px;
+    }
+
+    .splash__subtitle b { color: var(--text); font-weight: 700; }
+
+    .splash__bar {
+      position: relative;
+      width: min(260px, 78vw);
+      height: 6px;
+      background: rgba(120, 140, 180, 0.15);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .splash__bar-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #f0b90b 0%, #f8d33a 50%, #e0245e 100%);
+      box-shadow: 0 0 10px rgba(240, 185, 11, 0.6);
+      transition: width 5s linear;
+    }
+
+    .splash.counting .splash__bar-fill {
+      width: 100%;
+    }
+
+    .splash__counter {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1);    box-shadow: 0 8px 28px rgba(240, 185, 11, 0.4), 0 4px 12px rgba(224, 36, 94, 0.25), inset 0 2px 0 rgba(255, 255, 255, 0.5); }
+      50%      { transform: scale(1.08); box-shadow: 0 12px 36px rgba(240, 185, 11, 0.55), 0 6px 18px rgba(224, 36, 94, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.5); }
+    }
+
+    /* ============================================================
+       TOP-BAR
+       ============================================================ */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(120, 140, 180, 0.08);
+      position: sticky;
+      top: calc(8px + var(--safe-top));
+      z-index: 50;
+    }
+
+    .top-bar__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--text);
+      text-decoration: none;
+      min-width: 0;
+    }
+
+    .top-bar__brand .logo-mini {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 50%, #e0245e 100%);
+      box-shadow:
+        0 2px 8px rgba(240, 185, 11, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    /* Скрываем часть кнопок на мобильном — они уходят в bottom-nav */
+    .top-bar__actions {
+      display: none;
+    }
+
+    /* ============================================================
+       ЗАГОЛОВОК
+       ============================================================ */
+    .header {
+      margin-bottom: 14px;
+      animation: fadeUp 0.4s ease-out;
+    }
+
+    .header h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .header h1 .logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 50%, #e0245e 100%);
+      box-shadow:
+        0 3px 10px rgba(240, 185, 11, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .header h1 .title-text {
+      background: linear-gradient(90deg, #1a1d21 0%, #4a5568 50%, #8e44ad 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header .subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .header .subtitle b { color: var(--text); font-weight: 600; }
+
+    /* ============================================================
+       STAT-КАРТОЧКИ (2×2 на мобильном)
+       ============================================================ */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+      animation: fadeUp 0.4s ease-out 0.05s backwards;
+    }
+
+    .stat-card {
+      position: relative;
+      padding: 11px 13px;
+      background: linear-gradient(145deg, #ffffff 0%, #fafbfe 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+
+    .stat-card.gold::before   { background: linear-gradient(90deg, #f0b90b, #f8d33a); }
+    .stat-card.green::before  { background: linear-gradient(90deg, #14a06b, #4ade80); }
+    .stat-card.violet::before { background: linear-gradient(90deg, #8e44ad, #a78bfa); }
+    .stat-card.blue::before   { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+
+    .stat-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-value {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stat-value.green  { color: var(--green); }
+    .stat-value.gold   { color: #b8860b; }
+    .stat-value.violet { color: var(--violet); }
+    .stat-value.blue   { color: var(--blue); }
+
+    .stat-hint {
+      font-size: 0.68rem;
+      color: var(--text-soft);
+      margin-top: 3px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ============================================================
+       ПАНЕЛИ — на мобильном коллапсируемые
+       ============================================================ */
+    .panel {
+      background: linear-gradient(145deg, #ffffff 0%, #fbfcfe 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+    }
+
+    .panel-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 14px 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: left;
+      gap: 10px;
+      min-height: 52px;
+      transition: background 0.15s;
+    }
+
+    .panel-toggle:active { background: rgba(240, 185, 11, 0.06); }
+
+    .panel-toggle__left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .panel-toggle__icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .panel-toggle__icon.gold   { background: rgba(240, 185, 11, 0.14); }
+    .panel-toggle__icon.violet { background: rgba(142, 68, 173, 0.14); }
+    .panel-toggle__icon.blue   { background: rgba(59, 130, 246, 0.14); }
+
+    .panel-toggle__arrow {
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      transition: transform 0.25s;
+      flex-shrink: 0;
+    }
+
+    .panel.open .panel-toggle__arrow {
+      transform: rotate(180deg);
+    }
+
+    .panel-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.3s ease-out;
+    }
+
+    .panel.open .panel-body {
+      grid-template-rows: 1fr;
+    }
+
+    .panel-body__inner {
+      overflow: hidden;
+    }
+
+    .panel-content {
+      padding: 0 16px 16px;
+    }
+
+    /* ============================================================
+       ПОЛЯ ВВОДА
+       ============================================================ */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .field input {
+      padding: 12px 14px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      font-family: inherit;
+      font-variant-numeric: tabular-nums;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      width: 100%;
+      min-height: 46px;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(240, 185, 11, 0.14);
+    }
+
+    .field input[type="password"] { font-family: 'SF Mono', 'Consolas', monospace; font-size: 14px; }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* ============================================================
+       КНОПКИ — крупные для пальца
+       ============================================================ */
+    button {
+      padding: 13px 18px;
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 100%);
+      color: var(--text);
+      border: none;
+      border-radius: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.92rem;
+      font-family: inherit;
+      letter-spacing: -0.005em;
+      transition: transform 0.1s, box-shadow 0.15s, filter 0.15s;
+      box-shadow:
+        0 1px 2px rgba(240, 185, 11, 0.25),
+        0 3px 10px rgba(240, 185, 11, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 46px;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.97);
+      filter: brightness(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+      box-shadow: none;
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #ffffff 0%, #f3f5f9 100%);
+      color: #374151;
+      border: 1px solid var(--border);
+      box-shadow:
+        0 1px 2px rgba(120, 140, 180, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    button.secondary:active:not(:disabled) {
+      background: linear-gradient(135deg, #fafbfe 0%, #eef1f7 100%);
+    }
+
+    button.secondary.active-voice {
+      background: linear-gradient(135deg, rgba(20, 160, 107, 0.14), rgba(20, 160, 107, 0.05));
+      color: var(--green);
+      border-color: rgba(20, 160, 107, 0.35);
+      box-shadow: 0 0 0 3px rgba(20, 160, 107, 0.08);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-row.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .btn-row button { padding: 12px 10px; font-size: 0.85rem; }
+
+    /* ============================================================
+       СТАТУС
+       ============================================================ */
+    .status {
+      font-size: 0.76rem;
+      color: var(--text-soft);
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      line-height: 1.4;
+    }
+
+    .status.error { color: var(--red); }
+    .status.ok    { color: var(--green); }
+
+    .status::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
+      flex-shrink: 0;
+    }
+
+    .status:empty::before { display: none; }
+
+    .hint {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 10px;
+      line-height: 1.55;
+    }
+
+    .hint code {
+      background: linear-gradient(135deg, #f5f7fb, #eef2f9);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      color: #374151;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       ЖУРНАЛ СОБЫТИЙ
+       ============================================================ */
+    .log-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .log-stat {
+      padding: 10px 12px;
+      background: linear-gradient(145deg, #ffffff 0%, #fafbfe 100%);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-width: 0;
+    }
+
+    .log-stat__label {
+      display: block;
+      font-size: 0.63rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .log-stat__value {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .log-stat__value.live { color: var(--green); }
+
+    .log-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .log-controls button {
+      padding: 10px 8px;
+      font-size: 0.8rem;
+      min-height: 40px;
+    }
+
+    .event-log {
+      max-height: 300px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 2px 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+
+    .event-log::-webkit-scrollbar { width: 5px; }
+    .event-log::-webkit-scrollbar-track { background: transparent; }
+    .event-log::-webkit-scrollbar-thumb {
+      background: rgba(160, 175, 200, 0.4);
+      border-radius: 3px;
+    }
+
+    .event-log:empty::before {
+      content: 'Пока нет событий — ожидание данных…';
+      display: block;
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.8rem;
+      padding: 24px 12px;
+      line-height: 1.5;
+    }
+
+    .event-item {
+      display: flex;
+      gap: 8px;
+      padding: 8px 10px;
+      background: linear-gradient(145deg, #ffffff 0%, #fafbfe 100%);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--text-soft);
+      border-radius: 8px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      animation: fadeUp 0.25s ease-out;
+    }
+
+    .event-item.info    { border-left-color: var(--blue); }
+    .event-item.success { border-left-color: var(--green); background: linear-gradient(145deg, #f6fdf9 0%, #f0faf5 100%); }
+    .event-item.warn    { border-left-color: var(--gold);  background: linear-gradient(145deg, #fffdf5 0%, #fff9e6 100%); }
+    .event-item.error   { border-left-color: var(--red);   background: linear-gradient(145deg, #fff5f8 0%, #ffeff4 100%); }
+
+    .event-item__time {
+      color: var(--text-soft);
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+      min-width: 54px;
+      padding-top: 1px;
+    }
+
+    .event-item__text {
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* ============================================================
+       КАРТОЧКИ МОНЕТ (заменяют таблицу на мобильном)
+       ============================================================ */
+    .coins-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .coin-card {
+      position: relative;
+      background: linear-gradient(145deg, #ffffff 0%, #fdfefe 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px 14px 18px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      animation: fadeUp 0.35s ease-out;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .coin-card.is-new {
+      background: linear-gradient(145deg, #fffdf5 0%, #fff9e6 100%);
+      border-color: rgba(240, 185, 11, 0.4);
+    }
+
+    .coin-card.is-new::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #f0b90b, #f8d33a);
+    }
+
+    .coin-card__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .coin-card__rank {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 6px;
+      background: rgba(120, 140, 180, 0.1);
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+
+    .coin-card__name {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .coin-card__symbol {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .coin-card__quote {
+      color: var(--text-soft);
+      font-size: 0.78rem;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+
+    .coin-card__pct {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--green);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .coin-card__pct.medium { color: #d99a00; }
+    .coin-card__pct.high   { color: var(--red); }
+
+    .coin-card__badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    .coin-card__metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 14px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(200, 210, 225, 0.7);
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .metric__label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-soft);
+    }
+
+    .metric__value {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric__value.muted {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    /* ============================================================
+       БЕЙДЖИ
+       ============================================================ */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(20, 160, 107, 0.14), rgba(20, 160, 107, 0.06));
+      color: var(--green);
+      border: 1px solid rgba(20, 160, 107, 0.2);
+      white-space: nowrap;
+    }
+
+    .badge.gold {
+      background: linear-gradient(135deg, rgba(240, 185, 11, 0.2), rgba(240, 185, 11, 0.08));
+      color: #b8860b;
+      border-color: rgba(240, 185, 11, 0.3);
+    }
+
+    .badge.red {
+      background: linear-gradient(135deg, rgba(224, 36, 94, 0.14), rgba(224, 36, 94, 0.05));
+      color: var(--red);
+      border-color: rgba(224, 36, 94, 0.22);
+    }
+
+    .badge.new {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: var(--text);
+      border-color: transparent;
+      box-shadow: 0 1px 4px rgba(240, 185, 11, 0.4);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    .growth-bar {
+      position: relative;
+      width: 100%;
+      height: 5px;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .growth-bar-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #14a06b 0%, #4ade80 100%);
+      box-shadow: 0 0 8px rgba(20, 160, 107, 0.4);
+      transition: width 0.5s ease-out;
+    }
+
+    .growth-bar-fill.medium {
+      background: linear-gradient(90deg, #f0b90b 0%, #f8d33a 100%);
+      box-shadow: 0 0 8px rgba(240, 185, 11, 0.5);
+    }
+
+    .growth-bar-fill.high {
+      background: linear-gradient(90deg, #e0245e 0%, #f97316 100%);
+      box-shadow: 0 0 8px rgba(224, 36, 94, 0.5);
+    }
+
+    /* ============================================================
+       ПУСТОЕ СОСТОЯНИЕ
+       ============================================================ */
+    .empty-state {
+      background: linear-gradient(145deg, #ffffff 0%, #fdfefe 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 48px 20px;
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      box-shadow: var(--card-shadow);
+    }
+
+    .empty-state .emoji {
+      font-size: 2.2rem;
+      display: block;
+      margin-bottom: 12px;
+      opacity: 0.55;
+    }
+
+    /* ============================================================
+       СКЕЛЕТОН
+       ============================================================ */
+    .skeleton-card {
+      background: linear-gradient(145deg, #ffffff 0%, #fdfefe 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 10px;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg,
+        rgba(220, 228, 240, 0.3) 25%,
+        rgba(220, 228, 240, 0.6) 50%,
+        rgba(220, 228, 240, 0.3) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      display: block;
+      height: 14px;
+    }
+
+    /* ============================================================
+       НИЖНЯЯ НАВИГАЦИЯ
+       ============================================================ */
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      padding: 8px 12px calc(8px + var(--safe-bottom));
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -4px 20px rgba(120, 140, 180, 0.1);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 8px 4px;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      min-height: 54px;
+      transition: background 0.15s, color 0.15s, transform 0.1s;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .nav-btn:active {
+      transform: scale(0.95);
+      background: rgba(240, 185, 11, 0.1);
+    }
+
+    .nav-btn .icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+    }
+
+    .nav-btn.gold { color: #b8860b; }
+    .nav-btn.green { color: var(--green); }
+    .nav-btn.blue { color: var(--blue); }
+    .nav-btn.violet { color: var(--violet); }
+
+    .nav-btn.install-nav.hidden { display: none; }
+
+    /* ============================================================
+       МОДАЛЬНОЕ ОКНО — полный экран на мобильном
+       ============================================================ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      background: rgba(15, 20, 30, 0.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: linear-gradient(145deg, #ffffff 0%, #fbfcfe 100%);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 720px;
+      max-height: 92vh;
+      max-height: 92dvh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 -20px 60px rgba(20, 30, 50, 0.25);
+      animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(160, 175, 200, 0.4);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .modal-header h3 .modal-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(240, 185, 11, 0.2), rgba(240, 185, 11, 0.08));
+      border: 1px solid rgba(240, 185, 11, 0.25);
+      font-size: 0.9rem;
+    }
+
+    .modal-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      box-shadow: 0 1px 2px rgba(120, 140, 180, 0.08);
+      padding: 0;
+      flex-shrink: 0;
+      min-height: 38px;
+    }
+
+    .modal-close:active {
+      background: #f5f7fb;
+      transform: scale(0.92);
+    }
+
+    .modal-body {
+      padding: 18px 20px 26px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      line-height: 1.65;
+      color: #374151;
+      font-size: 0.88rem;
+      flex: 1;
+    }
+
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb {
+      background: rgba(160, 175, 200, 0.35);
+      border-radius: 3px;
+    }
+
+    .help-section { margin-bottom: 22px; }
+    .help-section:last-child { margin-bottom: 0; }
+
+    .help-section h4 {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.005em;
+    }
+
+    .help-section h4 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: var(--text);
+      font-size: 0.75rem;
+      font-weight: 800;
+      box-shadow: 0 1px 3px rgba(240, 185, 11, 0.3);
+      flex-shrink: 0;
+    }
+
+    .help-section p {
+      margin-bottom: 8px;
+      font-size: 0.86rem;
+    }
+
+    .help-section ul { list-style: none; padding: 0; }
+
+    .help-section ul li {
+      padding: 6px 0 6px 22px;
+      position: relative;
+      font-size: 0.86rem;
+      color: #4a5568;
+    }
+
+    .help-section ul li::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 15px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f0b90b, #e0245e);
+      opacity: 0.7;
+    }
+
+    .help-section code {
+      background: linear-gradient(135deg, #f5f7fb, #eef2f9);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 5px;
+      font-size: 0.78rem;
+      color: #374151;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .help-tip {
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(240, 185, 11, 0.1), rgba(240, 185, 11, 0.02));
+      border: 1px solid rgba(240, 185, 11, 0.2);
+      border-left: 3px solid var(--gold);
+      border-radius: 10px;
+      font-size: 0.84rem;
+      color: #5a4a10;
+      margin-top: 10px;
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       ПОДВАЛ (только на мобильном — компактный)
+       ============================================================ */
+    .footer {
+      margin-top: 24px;
+      padding: 18px;
+      background: linear-gradient(145deg, #ffffff 0%, #f7fafc 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--card-shadow);
+      text-align: center;
+      animation: fadeUp 0.4s ease-out 0.2s backwards;
+    }
+
+    .footer-info h4 {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .footer-info p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+
+    .footer-info a {
+      color: var(--green);
+      font-weight: 700;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .footer-copy {
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 0.7rem;
+      color: var(--text-soft);
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       ТОСТ
+       ============================================================ */
+    .toast {
+      position: fixed;
+      left: 14px;
+      right: 14px;
+      bottom: calc(80px + var(--safe-bottom));
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #1a1d21 0%, #2d3748 100%);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 14px;
+      box-shadow: 0 12px 32px rgba(20, 30, 50, 0.35);
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      transform: translateY(30px);
+      text-align: center;
+      line-height: 1.45;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* ============================================================
+       АНИМАЦИИ
+       ============================================================ */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.75; transform: scale(0.97); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+
+    /* ============================================================
+       DESKTOP (>= 768px)
+       ============================================================ */
+    @media (min-width: 768px) {
+      body {
+        padding: 32px 24px 80px;
+        padding-top: calc(32px + var(--safe-top));
+      }
+
+      .top-bar {
+        top: calc(12px + var(--safe-top));
+        padding: 10px 14px;
+        margin-bottom: 22px;
+      }
+
+      .top-bar__actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .tb-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 14px;
+        font-size: 0.84rem;
+        font-weight: 600;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: linear-gradient(145deg, #ffffff 0%, #f7f9fc 100%);
+        color: #374151;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform 0.12s, box-shadow 0.18s;
+        box-shadow: 0 1px 2px rgba(120, 140, 180, 0.06);
+        font-family: inherit;
+        white-space: nowrap;
+        min-height: 36px;
+      }
+
+      .tb-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(120, 140, 180, 0.15);
+      }
+
+      .tb-btn.support {
+        background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 100%);
+        border-color: transparent;
+        color: var(--text);
+        box-shadow:
+          0 1px 2px rgba(240, 185, 11, 0.25),
+          0 3px 10px rgba(240, 185, 11, 0.2);
+      }
+
+      .tb-btn.email {
+        background: linear-gradient(135deg, #14a06b 0%, #4ade80 100%);
+        border-color: transparent;
+        color: #ffffff;
+      }
+
+      .tb-btn.install {
+        background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+        border-color: transparent;
+        color: #ffffff;
+        display: none;
+      }
+
+      .tb-btn.install.visible { display: inline-flex; }
+
+      .header h1 {
+        font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+        margin-bottom: 10px;
+        gap: 12px;
+      }
+
+      .header h1 .logo {
+        width: 42px;
+        height: 42px;
+        font-size: 1.3rem;
+      }
+
+      .header .subtitle { font-size: 0.92rem; max-width: 760px; }
+
+      .stats {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+
+      .stat-card { padding: 16px 18px; border-radius: 14px; }
+      .stat-label { font-size: 0.72rem; }
+      .stat-value { font-size: 1.55rem; }
+      .stat-hint { font-size: 0.74rem; }
+
+      .panel {
+        border-radius: 16px;
+        padding: 18px 22px;
+        margin-bottom: 18px;
+      }
+
+      .panel-toggle { display: none; }
+
+      .panel-body {
+        display: block !important;
+        grid-template-rows: 1fr !important;
+      }
+
+      .panel-body__inner { overflow: visible; }
+
+      .panel-content {
+        padding: 0;
+      }
+
+      .panel h2 {
+        font-size: 0.88rem;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .panel h2 .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        font-size: 0.85rem;
+      }
+
+      .panel h2 .icon.gold   { background: rgba(240, 185, 11, 0.14); }
+      .panel h2 .icon.violet { background: rgba(142, 68, 173, 0.14); }
+
+      .controls {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .field { flex-direction: row; align-items: center; gap: 8px; }
+      .field label { text-transform: none; font-size: 0.82rem; }
+      .field input { width: auto; padding: 9px 13px; font-size: 0.88rem; min-height: auto; }
+
+      .field input#botToken,
+      .field input#chatId {
+        font-size: 0.8rem;
+      }
+
+      .field-row { display: flex; gap: 12px; }
+
+      button {
+        padding: 9px 20px;
+        font-size: 0.86rem;
+        min-height: auto;
+      }
+
+      .btn-row { display: flex; gap: 8px; }
+
+      .status { margin-left: auto; }
+
+      .log-stats { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+      .log-stat__value { font-size: 1.15rem; }
+      .log-controls { grid-template-columns: auto auto; justify-content: start; max-width: 420px; }
+      .event-log { max-height: 340px; }
+
+      .coins-list {
+        background: linear-gradient(145deg, #ffffff 0%, #fdfefe 100%);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        gap: 0;
+      }
+
+      .coin-card {
+        border: none;
+        border-bottom: 1px solid rgba(220, 228, 240, 0.5);
+        border-radius: 0;
+        box-shadow: none;
+        padding: 13px 16px;
+      }
+
+      .coin-card:last-child { border-bottom: none; }
+
+      .coin-card.is-new::before {
+        width: 3px;
+      }
+
+      .coin-card.is-new {
+        background: linear-gradient(90deg, rgba(240, 185, 11, 0.10), rgba(240, 185, 11, 0.02));
+      }
+
+      .coin-card__top {
+        display: grid;
+        grid-template-columns: 40px 1fr 140px 110px 130px 140px;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 0;
+      }
+
+      .coin-card__rank {
+        margin-right: 0;
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+      }
+
+      .coin-card__name { gap: 0; }
+      .coin-card__symbol { font-size: 0.94rem; }
+      .coin-card__pct { font-size: 0.98rem; text-align: left; }
+
+      .coin-card__badges { display: none; }
+
+      .coin-card__metrics {
+        display: contents;
+      }
+
+      .coin-card__metrics .metric {
+        padding: 0;
+      }
+
+      .metric__label { display: none; }
+
+      .metric__value {
+        font-size: 0.88rem;
+        font-weight: 600;
+      }
+
+      /* Desktop: псевдо-таблица */
+      .coins-list::before {
+        content: '';
+        display: none;
+      }
+
+      .desktop-head {
+        display: grid;
+        grid-template-columns: 40px 1fr 140px 110px 130px 140px;
+        gap: 16px;
+        padding: 14px 16px;
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        border-bottom: 1px solid var(--border);
+        background: #fafbfe;
+      }
+
+      .growth-bar { display: none; }
+
+      .bottom-nav { display: none; }
+      .nav-install-wrap { display: none; }
+
+      .modal-backdrop { align-items: center; padding: 20px; }
+      .modal {
+        border-radius: 20px;
+        max-height: 85vh;
+        animation: modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .modal::before { display: none; }
+
+      .modal-header { padding: 20px 24px; }
+      .modal-body { padding: 22px 24px 26px; }
+
+      .footer {
+        padding: 24px 26px;
+        text-align: left;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 22px;
+        align-items: center;
+      }
+
+      .footer-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .footer-copy {
+        grid-column: 1 / -1;
+        text-align: center;
+      }
+    }
+
+    /* Скрываем таблицу-стиль на мобильном */
+    .desktop-head { display: none; }
+
+    /* Скрываем tablet-версию для средних экранов */
+    @media (min-width: 500px) and (max-width: 767px) {
+      .stats { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .stat-label { font-size: 0.6rem; }
+      .stat-value { font-size: 1.05rem; }
+      .stat-hint { font-size: 0.62rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ====== ЗАСТАВКА (SPLASH SCREEN) ====== -->
+  <div class="splash" id="splash">
+    <div class="splash__logo">🚀</div>
+    <div class="splash__title">Binance Tracker</div>
+    <div class="splash__subtitle">
+      Монеты с ростом <b>50–1000%</b> за 24 часа<br>
+      Подготовка данных…
+    </div>
+    <div class="splash__bar">
+      <div class="splash__bar-fill" id="splashBarFill"></div>
+    </div>
+    <div class="splash__counter" id="splashCounter">5</div>
+  </div>
+
+  <div class="container">
+
+    <!-- ====== TOP-BAR ====== -->
+    <div class="top-bar">
+      <a href="#" class="top-bar__brand" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+        <span class="logo-mini">🚀</span>
+        <span>Binance Tracker</span>
+      </a>
+      <div class="top-bar__actions">
+        <button class="tb-btn install" id="installBtnDesktop" type="button" title="Установить приложение">
+          <span>📲</span> Установить
+        </button>
+        <button class="tb-btn" id="helpBtnDesktop" type="button">
+          <span>❓</span> Справка
+        </button>
+        <a class="tb-btn support"
+           href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=453177055439781888&billType=request_a_payment"
+           target="_blank" rel="noopener noreferrer">
+          <span>💛</span> Поддержать
+        </a>
+        <a class="tb-btn email"
+           href="mailto:Demival82@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BF%D0%BE%20Binance%20Tracker">
+          <span>✉️</span> Email
+        </a>
+      </div>
+    </div>
+
+    <!-- ====== ШАПКА ====== -->
+    <header class="header">
+      <h1>
+        <span class="logo">🚀</span>
+        <span class="title-text">Binance Tracker</span>
+      </h1>
+      <p class="subtitle">
+        Монеты с ростом за 24ч от <b>50%</b> до <b>1000%</b>.
+        Только активные пары USDT. Обновление каждые 30 сек. Голосовые оповещения об изменениях.
+      </p>
+    </header>
+
+    <!-- ====== STATS ====== -->
+    <div class="stats">
+      <div class="stat-card gold">
+        <div class="stat-label">📊 Найдено</div>
+        <div class="stat-value gold" id="statFound">—</div>
+        <div class="stat-hint">по фильтрам</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">🔥 Лидер</div>
+        <div class="stat-value green" id="statTop">—</div>
+        <div class="stat-hint" id="statTopHint">—</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">📈 Средний</div>
+        <div class="stat-value blue" id="statAvg">—</div>
+        <div class="stat-hint">рост 24ч</div>
+      </div>
+      <div class="stat-card violet">
+        <div class="stat-label">✨ Новых</div>
+        <div class="stat-value violet" id="statNew">—</div>
+        <div class="stat-hint">в этом скане</div>
+      </div>
+    </div>
+
+    <!-- ====== ФИЛЬТРЫ (коллапсируемая панель на мобильном) ====== -->
+    <div class="panel" id="filtersPanel">
+      <button class="panel-toggle" type="button" onclick="togglePanel('filtersPanel')">
+        <span class="panel-toggle__left">
+          <span class="panel-toggle__icon gold">⚙️</span>
+          <span>Фильтры поиска</span>
+        </span>
+        <span class="panel-toggle__arrow">▼</span>
+      </button>
+      <div class="panel-body">
+        <div class="panel-body__inner">
+          <div class="panel-content">
+            <div class="controls">
+              <div class="field-row">
+                <div class="field">
+                  <label for="minChange">Мин. рост, %</label>
+                  <input type="number" id="minChange" value="50" min="0" step="1" inputmode="numeric">
+                </div>
+                <div class="field">
+                  <label for="maxChange">Макс. рост, %</label>
+                  <input type="number" id="maxChange" value="1000" min="1" step="1" inputmode="numeric">
+                </div>
+              </div>
+              <div class="field">
+                <label for="minVolume">Мин. объём (USDT)</label>
+                <input type="number" id="minVolume" value="100000" min="0" step="1000" inputmode="numeric">
+              </div>
+              <button id="refreshBtn" type="button">↻ Обновить</button>
+              <span class="status" id="status">Загрузка…</span>
+            </div>
+            <p class="hint">
+              Монеты с меньшим объёмом отсеиваются — это защита от неликвидных пар
+              с манипулятивным ростом. Рекомендуем оставлять порог ≥ <code>100 000</code> USDT.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== ЖУРНАЛ СОБЫТИЙ ====== -->
+    <div class="panel" id="logPanel">
+      <button class="panel-toggle" type="button" onclick="togglePanel('logPanel')">
+        <span class="panel-toggle__left">
+          <span class="panel-toggle__icon blue">📋</span>
+          <span>Журнал событий</span>
+        </span>
+        <span class="panel-toggle__arrow">▼</span>
+      </button>
+      <div class="panel-body">
+        <div class="panel-body__inner">
+          <div class="panel-content">
+
+            <div class="log-stats">
+              <div class="log-stat">
+                <span class="log-stat__label">⏱ Время работы</span>
+                <span class="log-stat__value live" id="uptimeValue">00:00:00</span>
+              </div>
+              <div class="log-stat">
+                <span class="log-stat__label">🔄 Сканов</span>
+                <span class="log-stat__value" id="scanCount">0</span>
+              </div>
+              <div class="log-stat">
+                <span class="log-stat__label">⏰ Последний скан</span>
+                <span class="log-stat__value" id="lastScanTime">—</span>
+              </div>
+              <div class="log-stat">
+                <span class="log-stat__label">🔔 Оповещений</span>
+                <span class="log-stat__value" id="alertCount">0</span>
+              </div>
+            </div>
+
+            <div class="log-controls">
+              <button class="secondary active-voice" id="voiceToggle" type="button">
+                🔊 Озвучка: вкл
+              </button>
+              <button class="secondary" id="clearLogBtn" type="button">
+                🗑 Очистить
+              </button>
+            </div>
+
+            <div class="event-log" id="eventLogList"></div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== TELEGRAM ====== -->
+    <div class="panel" id="tgPanel">
+      <button class="panel-toggle" type="button" onclick="togglePanel('tgPanel')">
+        <span class="panel-toggle__left">
+          <span class="panel-toggle__icon violet">📨</span>
+          <span>Telegram-уведомления</span>
+        </span>
+        <span class="panel-toggle__arrow">▼</span>
+      </button>
+      <div class="panel-body">
+        <div class="panel-body__inner">
+          <div class="panel-content">
+            <div class="controls">
+              <div class="field">
+                <label for="botToken">Bot Token</label>
+                <input type="password" id="botToken" placeholder="123456789:AAH..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <div class="field">
+                <label for="chatId">Chat ID</label>
+                <input type="text" id="chatId" placeholder="123456789" autocomplete="off" inputmode="numeric" autocorrect="off">
+              </div>
+              <div class="btn-row three">
+                <button id="saveTgBtn" class="secondary" type="button">Сохранить</button>
+                <button id="testTgBtn" class="secondary" type="button">Тест</button>
+                <button id="clearTgBtn" class="secondary" type="button">Забыть</button>
+              </div>
+              <span class="status" id="tgStatus">Не настроено</span>
+            </div>
+            <p class="hint">
+              Уведомления приходят только по <b>новым</b> монетам. Chat ID — у
+              <code>@userinfobot</code>, токен — у <code>@BotFather</code>.
+              Хранится в <b>localStorage</b> вашего браузера.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== СПИСОК МОНЕТ ====== -->
+    <div class="coins-list" id="coinsList">
+      <div class="skeleton-card">
+        <div class="skeleton" style="width:40%; margin-bottom:10px"></div>
+        <div class="skeleton" style="width:70%; height:24px; margin-bottom:12px"></div>
+        <div class="skeleton" style="width:100%; height:14px"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton" style="width:35%; margin-bottom:10px"></div>
+        <div class="skeleton" style="width:60%; height:24px; margin-bottom:12px"></div>
+        <div class="skeleton" style="width:100%; height:14px"></div>
+      </div>
+      <div class="skeleton-card">
+        <div class="skeleton" style="width:45%; margin-bottom:10px"></div>
+        <div class="skeleton" style="width:65%; height:24px; margin-bottom:12px"></div>
+        <div class="skeleton" style="width:100%; height:14px"></div>
+      </div>
+    </div>
+
+    <!-- ====== ПОДВАЛ ====== -->
+    <footer class="footer">
+      <div class="footer-info">
+        <h4>💬 Связь и поддержка</h4>
+        <p>
+          По всем вопросам — Email:
+          <a href="mailto:Demival82@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BF%D0%BE%20Binance%20Tracker">
+            Demival82@gmail.com
+          </a>
+        </p>
+        <p>
+          Поддержать:
+          <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=453177055439781888&billType=request_a_payment"
+             target="_blank" rel="noopener noreferrer">Binance Pay</a> 💛
+        </p>
+      </div>
+      <div class="footer-actions">
+        <a class="tb-btn support"
+           href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=453177055439781888&billType=request_a_payment"
+           target="_blank" rel="noopener noreferrer">
+          <span>💛</span> Поддержать
+        </a>
+        <a class="tb-btn email"
+           href="mailto:Demival82@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BF%D0%BE%20Binance%20Tracker">
+          <span>✉️</span> Email
+        </a>
+      </div>
+      <div class="footer-copy">
+        © <span id="year">2025</span> Binance Tracker · Публичный API Binance · Не является инвестиционной рекомендацией
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ====== НИЖНЯЯ НАВИГАЦИЯ (мобильная) ====== -->
+  <nav class="bottom-nav">
+    <button class="nav-btn gold" id="navRefresh" type="button">
+      <span class="icon">↻</span>
+      <span>Обновить</span>
+    </button>
+    <button class="nav-btn blue install-nav hidden" id="installBtnMobile" type="button">
+      <span class="icon">📲</span>
+      <span>Установить</span>
+    </button>
+    <button class="nav-btn violet" id="helpBtnMobile" type="button">
+      <span class="icon">❓</span>
+      <span>Справка</span>
+    </button>
+    <a class="nav-btn green"
+       href="mailto:Demival82@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BF%D0%BE%20Binance%20Tracker">
+      <span class="icon">✉️</span>
+      <span>Email</span>
+    </a>
+  </nav>
+
+  <!-- ====== МОДАЛЬНОЕ ОКНО «СПРАВКА» ====== -->
+  <div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="helpTitle">
+          <span class="modal-icon">❓</span>
+          Справка
+        </h3>
+        <button class="modal-close" id="helpClose" type="button" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="help-section">
+          <h4><span class="num">1</span> Что делает приложение</h4>
+          <p>
+            Сканирует <b>все активные спотовые пары USDT</b> на Binance и показывает те,
+            что выросли за 24 часа в заданном диапазоне (<code>50% – 1000%</code> по умолчанию).
+            Автообновление каждые 30 секунд.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">2</span> Фильтры поиска</h4>
+          <ul>
+            <li><b>Мин. / Макс. рост, %</b> — диапазон процентного изменения за 24 часа.</li>
+            <li><b>Мин. объём (USDT)</b> — минимальный оборот за 24 часа. Защищает от неликвидных пар.</li>
+          </ul>
+          <div class="help-tip">
+            💡 Для «горячих» движений порог объёма — от <code>500 000</code> USDT.
+            Для ранних сигналов — до <code>50 000</code>, но риск выше.
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">3</span> Журнал событий и озвучка</h4>
+          <ul>
+            <li><b>Журнал событий</b> — все действия приложения с отметкой времени.</li>
+            <li><b>Время работы</b> — сколько приложение открыто с момента запуска.</li>
+            <li><b>Сканов</b> — сколько раз обновлялись данные.</li>
+            <li><b>Оповещений</b> — сколько раз сработала озвучка/уведомления.</li>
+            <li>Кнопка <b>🔊 Озвучка</b> включает/выключает голосовые оповещения об изменениях.</li>
+          </ul>
+          <div class="help-tip">
+            💡 Озвучка работает через встроенный синтезатор речи браузера.
+            Если звук не появляется — нажмите любую кнопку на странице (некоторые браузеры
+            требуют взаимодействия пользователя) и включите озвучку заново.
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">4</span> Telegram-уведомления</h4>
+          <ul>
+            <li>У <code>@BotFather</code> — команда <code>/newbot</code> → получите <b>Bot Token</b>.</li>
+            <li>Напишите боту любое сообщение.</li>
+            <li>У <code>@userinfobot</code> узнайте свой <b>Chat ID</b>.</li>
+            <li>Вставьте оба поля, нажмите <b>Сохранить</b> → <b>Тест</b>.</li>
+          </ul>
+          <p style="margin-top:10px">
+            Уведомления приходят только по новым монетам, повторно — не чаще раза в час.
+          </p>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">5</span> Обозначения</h4>
+          <ul>
+            <li><b>📈 &gt;50%</b> — обычный рост.</li>
+            <li><b>⚡ &gt;100%</b> — сильное движение.</li>
+            <li><b>🔥 &gt;500%</b> — очень сильный рост, высокий риск отката.</li>
+            <li><b>NEW</b> — монета впервые появилась в фильтре.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">6</span> Частые вопросы</h4>
+          <ul>
+            <li><b>Пустой список?</b> — Снизьте «Мин. рост» или «Мин. объём».</li>
+            <li><b>Задержка данных?</b> — Публичный API Binance, задержка 1–3 сек.</li>
+            <li><b>Делистингованные монеты?</b> — Отсеиваются по статусу <code>TRADING</code>.</li>
+            <li><b>Куда идёт токен?</b> — Только в <code>api.telegram.org</code>, хранится локально.</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h4><span class="num">7</span> Связь и поддержка</h4>
+          <p>
+            Email:
+            <a href="mailto:Demival82@gmail.com?subject=%D0%92%D0%BE%D0%BF%D1%80%D0%BE%D1%81%20%D0%BF%D0%BE%20Binance%20Tracker"
+               style="color:#14a06b;font-weight:700;text-decoration:none;word-break:break-all">
+              Demival82@gmail.com
+            </a>
+          </p>
+          <p style="margin-top:6px">
+            Поддержать:
+            <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=453177055439781888&billType=request_a_payment"
+               target="_blank" rel="noopener noreferrer"
+               style="color:#b8860b;font-weight:700;text-decoration:none">
+              Binance Pay
+            </a> 💛
+          </p>
+        </div>
+
+        <div class="help-tip" style="border-left-color:#e0245e;background:linear-gradient(135deg,rgba(224,36,94,0.06),rgba(224,36,94,0.01));border-color:rgba(224,36,94,0.2);color:#8a1338">
+          ⚠️ <b>Дисклеймер:</b> данные предоставляются для справки и <b>не являются инвестиционной рекомендацией</b>.
+          Рост за 24 часа может сопровождаться резким откатом. Всегда делайте собственный анализ.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== ТОСТ ====== -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const TICKER_URL   = 'https://api.binance.com/api/v3/ticker/24hr';
+      const EXCHANGE_URL = 'https://api.binance.com/api/v3/exchangeInfo';
+      const REFRESH_MS   = 30_000;
+      const CACHE_TTL_MS = 5 * 60 * 1000;
+      const TG_STORAGE_KEY    = 'binance_tracker_tg';
+      const VOICE_STORAGE_KEY = 'binance_tracker_voice';
+      const ALERT_COOLDOWN_MS = 60 * 60 * 1000;
+      const MAX_LOG_ITEMS = 120;
+
+      const $ = (id) => document.getElementById(id);
+      const coinsList = $('coinsList');
+      const statusEl  = $('status');
+      const tgStatus  = $('tgStatus');
+      const btn       = $('refreshBtn');
+
+      let timerId = null;
+      let loading = false;
+      let activeSymbolsCache = null;
+      let activeSymbolsCacheTime = 0;
+      const alertedSymbols = new Map();
+
+      // === Состояние журнала ===
+      const START_TIME = Date.now();
+      let scanCount = 0;
+      let alertCount = 0;
+      let lastScanTs = null;
+      let previousSymbols = new Set();
+      let firstScanDone = false;
+      const eventLog = [];
+
+      // === Озвучка ===
+      let voiceEnabled = localStorage.getItem(VOICE_STORAGE_KEY) !== 'off';
+      let speechSupported = ('speechSynthesis' in window);
+
+      // ============================================================
+      //  ПАНЕЛИ — коллапс
+      // ============================================================
+      window.togglePanel = function (id) {
+        const el = $(id);
+        if (!el) return;
+        el.classList.toggle('open');
+      };
+
+      // По умолчанию: фильтры + журнал открыты, Telegram закрыта
+      $('filtersPanel').classList.add('open');
+      $('logPanel').classList.add('open');
+
+      // ============================================================
+      //  УТИЛИТЫ
+      // ============================================================
+      function readNumber(id, fallback) {
+        const v = Number($(id).value);
+        return Number.isFinite(v) ? v : fallback;
+      }
+
+      function fmt(n, digits = 2) {
+        return Number(n).toLocaleString('ru-RU', {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits,
+        });
+      }
+
+      function fmtVolume(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return '—';
+        if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
+        if (n >= 1_000_000)     return (n / 1_000_000).toFixed(2) + 'M';
+        if (n >= 1_000)         return (n / 1_000).toFixed(1) + 'K';
+        return n.toFixed(0);
+      }
+
+      function pctClass(pct) {
+        if (pct >= 500) return 'high';
+        if (pct >= 100) return 'medium';
+        return '';
+      }
+
+      function barClass(pct) {
+        if (pct >= 500) return 'growth-bar-fill high';
+        if (pct >= 100) return 'growth-bar-fill medium';
+        return 'growth-bar-fill';
+      }
+
+      function badge(pct) {
+        if (pct >= 500) return '<span class="badge red">🔥 &gt;500%</span>';
+        if (pct >= 100) return '<span class="badge gold">⚡ &gt;100%</span>';
+        return '<span class="badge">📈 &gt;50%</span>';
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+      }
+
+      function fmtTime(d) {
+        return d.toLocaleTimeString('ru-RU', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+        });
+      }
+
+      function fmtDuration(ms) {
+        const s   = Math.max(0, Math.floor(ms / 1000));
+        const h   = Math.floor(s / 3600);
+        const m   = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+        return String(h).padStart(2, '0') + ':' +
+               String(m).padStart(2, '0') + ':' +
+               String(sec).padStart(2, '0');
+      }
+
+      // ============================================================
+      //  ЖУРНАЛ СОБЫТИЙ
+      // ============================================================
+      function logEvent(type, text) {
+        eventLog.unshift({
+          ts: new Date(),
+          type: type || 'info',
+          text: text,
+        });
+        if (eventLog.length > MAX_LOG_ITEMS) eventLog.length = MAX_LOG_ITEMS;
+        renderEventLog();
+      }
+
+      function renderEventLog() {
+        const list = $('eventLogList');
+        if (!list) return;
+        if (eventLog.length === 0) {
+          list.innerHTML = '';
+          return;
+        }
+        list.innerHTML = eventLog.map((e) => `
+          <div class="event-item ${e.type}">
+            <span class="event-item__time">${fmtTime(e.ts)}</span>
+            <span class="event-item__text">${escapeHtml(e.text)}</span>
+          </div>
+        `).join('');
+      }
+
+      function clearEventLog() {
+        eventLog.length = 0;
+        renderEventLog();
+        logEvent('info', 'Журнал очищен');
+      }
+
+      function updateLogStats() {
+        $('scanCount').textContent   = String(scanCount);
+        $('alertCount').textContent  = String(alertCount);
+        $('lastScanTime').textContent = lastScanTs ? fmtTime(lastScanTs) : '—';
+      }
+
+      // Тикающее время работы
+      setInterval(() => {
+        const el = $('uptimeValue');
+        if (el) el.textContent = fmtDuration(Date.now() - START_TIME);
+      }, 1000);
+
+      // ============================================================
+      //  ОЗВУЧКА (SpeechSynthesis)
+      // ============================================================
+      function speak(text) {
+        if (!voiceEnabled || !speechSupported || !text) return;
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'ru-RU';
+          u.rate = 1.05;
+          u.pitch = 1;
+          u.volume = 1;
+          window.speechSynthesis.speak(u);
+        } catch (err) {
+          console.warn('Speech failed:', err);
+        }
+      }
+
+      function updateVoiceButton() {
+        const b = $('voiceToggle');
+        if (!b) return;
+        if (!speechSupported) {
+          b.textContent = '🔇 Озвучка недоступна';
+          b.disabled = true;
+          b.classList.remove('active-voice');
+          return;
+        }
+        if (voiceEnabled) {
+          b.textContent = '🔊 Озвучка: вкл';
+          b.classList.add('active-voice');
+        } else {
+          b.textContent = '🔇 Озвучка: выкл';
+          b.classList.remove('active-voice');
+        }
+      }
+
+      function toggleVoice() {
+        if (!speechSupported) {
+          showToast('⚠️ Браузер не поддерживает озвучку');
+          return;
+        }
+        voiceEnabled = !voiceEnabled;
+        localStorage.setItem(VOICE_STORAGE_KEY, voiceEnabled ? 'on' : 'off');
+        updateVoiceButton();
+        if (voiceEnabled) {
+          speak('Озвучка включена');
+          showToast('🔊 Голосовые оповещения включены');
+          logEvent('info', 'Озвучка включена');
+        } else {
+          try { window.speechSynthesis.cancel(); } catch (_) {}
+          showToast('🔇 Голосовые оповещения выключены');
+          logEvent('info', 'Озвучка выключена');
+        }
+      }
+
+      // ============================================================
+      //  ТОСТ
+      // ============================================================
+      let toastTimer = null;
+      function showToast(text, ms = 2800) {
+        const el = $('toast');
+        el.innerHTML = text;
+        el.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+      }
+
+      // ============================================================
+      //  PWA
+      // ============================================================
+      function generateIcon(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const radius = size * 0.22;
+        const grad = ctx.createLinearGradient(0, 0, size, size);
+        grad.addColorStop(0,    '#f0b90b');
+        grad.addColorStop(0.55, '#f8d33a');
+        grad.addColorStop(1,    '#e0245e');
+
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(size - radius, 0);
+        ctx.quadraticCurveTo(size, 0, size, radius);
+        ctx.lineTo(size, size - radius);
+        ctx.quadraticCurveTo(size, size, size - radius, size);
+        ctx.lineTo(radius, size);
+        ctx.quadraticCurveTo(0, size, 0, size - radius);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius, 0);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.font = `${size * 0.62}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🚀', size / 2, size / 2 + size * 0.04);
+        return canvas.toDataURL('image/png');
+      }
+
+      function initManifest() {
+        try {
+          const icon192 = generateIcon(192);
+          const icon512 = generateIcon(512);
+          const manifest = {
+            name: 'Binance Tracker',
+            short_name: 'BNB Tracker',
+            description: 'Монеты Binance с ростом 50–1000% за 24 часа. Telegram-уведомления.',
+            lang: 'ru',
+            start_url: location.href.split('#')[0],
+            scope: './',
+            display: 'standalone',
+            orientation: 'portrait',
+            background_color: '#fafbff',
+            theme_color: '#f0b90b',
+            categories: ['finance', 'productivity', 'utilities'],
+            icons: [
+              { src: icon192, sizes: '192x192', type: 'image/png', purpose: 'any' },
+              { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'any' },
+              { src: icon512, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            ],
+          };
+          const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+          $('manifestLink').href = URL.createObjectURL(blob);
+          $('appleTouchIcon').href = generateIcon(180);
+          $('faviconLink').href    = generateIcon(64);
+        } catch (err) {
+          console.warn('Manifest init failed:', err);
+        }
+      }
+
+      let deferredPrompt = null;
+
+      function isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true;
+      }
+
+      function isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      }
+
+      function showIOSInstallHint() {
+        showToast(
+          '📲 <b>Установка на iPhone:</b><br>' +
+          'Нажмите <b>Поделиться</b> ⬆️ в Safari → ' +
+          '<b>«На экран Домой»</b> → <b>Добавить</b>',
+          7000
+        );
+      }
+
+      function initPWA() {
+        initManifest();
+
+        const installBtnDesktop = $('installBtnDesktop');
+        const installBtnMobile  = $('installBtnMobile');
+
+        if (isIOS() && !isStandalone()) {
+          installBtnDesktop.classList.add('visible');
+          installBtnMobile.classList.remove('hidden');
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installBtnDesktop.classList.add('visible');
+          installBtnMobile.classList.remove('hidden');
+        });
+
+        async function handleInstallClick() {
+          if (isIOS()) { showIOSInstallHint(); return; }
+          if (!deferredPrompt) {
+            showToast('📲 Установка недоступна. Откройте сайт через HTTPS в Chrome/Edge.');
+            return;
+          }
+          try {
+            deferredPrompt.prompt();
+            const choice = await deferredPrompt.userChoice;
+            if (choice.outcome === 'accepted') {
+              showToast('✅ Приложение установлено!');
+              logEvent('success', 'Приложение установлено как PWA');
+            }
+            deferredPrompt = null;
+            installBtnDesktop.classList.remove('visible');
+            installBtnMobile.classList.add('hidden');
+          } catch (err) {
+            console.warn('Install prompt failed:', err);
+          }
+        }
+
+        installBtnDesktop.addEventListener('click', handleInstallClick);
+        installBtnMobile.addEventListener('click', handleInstallClick);
+
+        window.addEventListener('appinstalled', () => {
+          installBtnDesktop.classList.remove('visible');
+          installBtnMobile.classList.add('hidden');
+          deferredPrompt = null;
+          showToast('✅ Binance Tracker установлен');
+          logEvent('success', 'PWA установлено');
+        });
+
+        if (isStandalone()) {
+          installBtnDesktop.classList.remove('visible');
+          installBtnMobile.classList.add('hidden');
+        }
+      }
+
+      // ============================================================
+      //  TELEGRAM
+      // ============================================================
+      function loadTgConfig() {
+        try {
+          const raw = localStorage.getItem(TG_STORAGE_KEY);
+          if (!raw) return { token: '', chatId: '' };
+          const obj = JSON.parse(raw);
+          return {
+            token:  typeof obj.token  === 'string' ? obj.token  : '',
+            chatId: typeof obj.chatId === 'string' ? obj.chatId : '',
+          };
+        } catch { return { token: '', chatId: '' }; }
+      }
+
+      function saveTgConfig(token, chatId) {
+        localStorage.setItem(TG_STORAGE_KEY, JSON.stringify({ token, chatId }));
+      }
+
+      function clearTgConfig() {
+        localStorage.removeItem(TG_STORAGE_KEY);
+        $('botToken').value = '';
+        $('chatId').value = '';
+        updateTgStatus();
+      }
+
+      function updateTgStatus(text, cls) {
+        if (text !== undefined) {
+          tgStatus.textContent = text;
+          tgStatus.className = 'status ' + (cls || '');
+          return;
+        }
+        const { token, chatId } = loadTgConfig();
+        if (token && chatId) {
+          tgStatus.textContent = `Настроено · chat ${chatId}`;
+          tgStatus.className = 'status ok';
+        } else {
+          tgStatus.textContent = 'Не настроено';
+          tgStatus.className = 'status';
+        }
+      }
+
+      async function tgSendMessage(text, config) {
+        const { token, chatId } = config || loadTgConfig();
+        if (!token || !chatId) throw new Error('Telegram не настроен');
+        const url = `https://api.telegram.org/bot${encodeURIComponent(token)}/sendMessage`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true,
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.ok) throw new Error(json.description || `HTTP ${res.status}`);
+        return json;
+      }
+
+      function buildAlertMessage(base, pct, price, high, low, vol) {
+        const arrow = pct >= 100 ? '🚀' : '📈';
+        const priceDigits = price < 1 ? 6 : 2;
+        return [
+          `${arrow} <b>${escapeHtml(base)}/USDT</b>`,
+          `Рост за 24ч: <b>+${pct.toFixed(2)}%</b>`,
+          `Цена: <code>${fmt(price, priceDigits)}</code> USDT`,
+          `Объём 24ч: <b>${fmtVolume(vol)}</b> USDT`,
+          `Макс/мин: ${fmt(high, priceDigits)} / ${fmt(low, priceDigits)}`,
+          `📊 <a href="https://www.binance.com/en/trade/${encodeURIComponent(base)}_USDT">Открыть на Binance</a>`,
+        ].join('\n');
+      }
+
+      // ============================================================
+      //  АКТИВНЫЕ СИМВОЛЫ
+      // ============================================================
+      async function getActiveSymbols(force = false) {
+        const now = Date.now();
+        if (!force && activeSymbolsCache && (now - activeSymbolsCacheTime < CACHE_TTL_MS)) {
+          return activeSymbolsCache;
+        }
+        const res = await fetch(EXCHANGE_URL);
+        if (!res.ok) throw new Error(`exchangeInfo HTTP ${res.status}`);
+        const data = await res.json();
+        if (!data || !Array.isArray(data.symbols)) {
+          throw new Error('exchangeInfo: некорректный ответ');
+        }
+        const set = new Set();
+        for (const s of data.symbols) {
+          if (!s || !s.symbol) continue;
+          if (s.status !== 'TRADING') continue;
+          if (s.quoteAsset !== 'USDT') continue;
+          if (s.isSpotTradingAllowed === false) continue;
+          if (Array.isArray(s.permissions) && s.permissions.length > 0
+              && !s.permissions.includes('SPOT')) continue;
+          set.add(s.symbol);
+        }
+        activeSymbolsCache = set;
+        activeSymbolsCacheTime = now;
+        return set;
+      }
+
+      // ============================================================
+      //  СКЕЛЕТОН
+      // ============================================================
+      function renderSkeleton() {
+        coinsList.innerHTML = Array.from({ length: 3 }).map(() => `
+          <div class="skeleton-card">
+            <div class="skeleton" style="width:40%; margin-bottom:10px"></div>
+            <div class="skeleton" style="width:70%; height:24px; margin-bottom:12px"></div>
+            <div class="skeleton" style="width:100%; height:14px"></div>
+          </div>
+        `).join('');
+      }
+
+      // ============================================================
+      //  СТАТИСТИКА
+      // ============================================================
+      function updateStats(filtered, newSymbols) {
+        $('statFound').textContent = filtered.length;
+
+        if (filtered.length > 0) {
+          const top = filtered[0];
+          const topPct = parseFloat(top.priceChangePercent);
+          const topBase = top.symbol.slice(0, -4);
+          $('statTop').textContent = topBase;
+          $('statTopHint').textContent = `+${topPct.toFixed(0)}% за 24ч`;
+
+          const sum = filtered.reduce((acc, t) => acc + parseFloat(t.priceChangePercent), 0);
+          const avg = sum / filtered.length;
+          $('statAvg').textContent = `+${avg.toFixed(0)}%`;
+        } else {
+          $('statTop').textContent = '—';
+          $('statTopHint').textContent = '—';
+          $('statAvg').textContent = '—';
+        }
+
+        $('statNew').textContent = newSymbols.length;
+      }
+
+      // ============================================================
+      //  ОТРИСОВКА КАРТОЧЕК
+      // ============================================================
+      function renderCoins(filtered, newSymbols, minPct, maxPct, minVol) {
+        if (filtered.length === 0) {
+          coinsList.innerHTML = `
+            <div class="empty-state">
+              <span class="emoji">🔍</span>
+              Нет активных монет с ростом от ${minPct}% до ${maxPct}%<br>
+              <span style="font-size:0.78rem;opacity:0.7;display:inline-block;margin-top:8px">
+                Попробуйте снизить минимальный объём (сейчас ≥ ${fmtVolume(minVol)} USDT)
+              </span>
+            </div>`;
+          return;
+        }
+
+        const newSet = new Set(newSymbols.map((s) => s.symbol));
+        coinsList.innerHTML = filtered.map((t, i) => {
+          const pct   = parseFloat(t.priceChangePercent);
+          const price = parseFloat(t.lastPrice);
+          const high  = parseFloat(t.highPrice);
+          const low   = parseFloat(t.lowPrice);
+          const vol   = parseFloat(t.quoteVolume);
+          const base  = t.symbol.slice(0, -4);
+          const isNew = newSet.has(t.symbol);
+
+          const pDigits = price < 1 ? 6 : 2;
+          const hDigits = high  < 1 ? 6 : 2;
+          const lDigits = low   < 1 ? 6 : 2;
+          const barWidth = Math.min(100, (pct / 1000) * 100);
+
+          return `<div class="coin-card ${isNew ? 'is-new' : ''}">
+            <div class="coin-card__top">
+              <div style="display:flex; align-items:center; min-width:0; flex:1">
+                <span class="coin-card__rank">${i + 1}</span>
+                <span class="coin-card__name">
+                  <span class="coin-card__symbol">${escapeHtml(base)}</span>
+                  <span class="coin-card__quote">/USDT</span>
+                  ${isNew ? '<span class="badge new" style="margin-left:6px">NEW</span>' : ''}
+                </span>
+              </div>
+              <span class="coin-card__pct ${pctClass(pct)}">+${pct.toFixed(2)}%</span>
+            </div>
+
+            <div class="coin-card__badges">
+              ${badge(pct)}
+            </div>
+
+            <div class="growth-bar">
+              <div class="${barClass(pct)}" style="width:${barWidth}%"></div>
+            </div>
+
+            <div class="coin-card__metrics" style="margin-top:10px">
+              <div class="metric">
+                <span class="metric__label">Цена</span>
+                <span class="metric__value">${fmt(price, pDigits)}</span>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Объём 24ч</span>
+                <span class="metric__value">${fmtVolume(vol)}</span>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Макс. 24ч</span>
+                <span class="metric__value muted">${fmt(high, hDigits)}</span>
+              </div>
+              <div class="metric">
+                <span class="metric__label">Мин. 24ч</span>
+                <span class="metric__value muted">${fmt(low, lDigits)}</span>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      // ============================================================
+      //  ФОРМИРОВАНИЕ ГОЛОСОВОГО ОПОВЕЩЕНИЯ
+      // ============================================================
+      function buildAnnouncement(added, removed, filtered, isFirstScan) {
+        if (isFirstScan) {
+          if (filtered.length === 0) {
+            return 'Загрузка завершена. Монет по фильтру не найдено.';
+          }
+          const top  = filtered[0];
+          const base = top.symbol.slice(0, -4);
+          const pct  = parseFloat(top.priceChangePercent).toFixed(0);
+          return `Загрузка завершена. Найдено ${filtered.length} монет. ` +
+                 `Лидер ${base}, плюс ${pct} процентов за сутки.`;
+        }
+
+        if (added.length === 0 && removed.length === 0) {
+          return ''; // без изменений — молчим
+        }
+
+        const parts = [];
+        if (added.length > 0)   parts.push(`новых ${added.length}`);
+        if (removed.length > 0) parts.push(`выбыло ${removed.length}`);
+
+        let text = `Обновление. Найдено ${filtered.length}. ${parts.join(', ')}.`;
+
+        if (added.length > 0) {
+          const names = added.slice(0, 3).map((t) => {
+            const b = t.symbol.slice(0, -4);
+            const p = parseFloat(t.priceChangePercent).toFixed(0);
+            return `${b} плюс ${p} процентов`;
+          });
+          text += ' ' + names.join(', ') + '.';
+        }
+
+        return text;
+      }
+
+      // ============================================================
+      //  ЗАГРУЗКА
+      // ============================================================
+      async function loadData(forceSymbolsRefresh = false) {
+        if (loading) return;
+        loading = true;
+        btn.disabled = true;
+        statusEl.textContent = 'Загрузка…';
+        statusEl.className = 'status';
+
+        try {
+          const [tickerRes, activeSymbols] = await Promise.all([
+            fetch(TICKER_URL),
+            getActiveSymbols(forceSymbolsRefresh),
+          ]);
+          if (!tickerRes.ok) throw new Error(`ticker HTTP ${tickerRes.status}`);
+          const data = await tickerRes.json();
+          if (!Array.isArray(data)) throw new Error('ticker/24hr: некорректный ответ');
+
+          const minPct = readNumber('minChange', 50);
+          const maxPct = readNumber('maxChange', 1000);
+          const minVol = readNumber('minVolume', 0);
+
+          const filtered = data
+            .filter((t) => {
+              if (!t || !t.symbol) return false;
+              if (!activeSymbols.has(t.symbol)) return false;
+              if (!t.symbol.endsWith('USDT')) return false;
+              const pct = parseFloat(t.priceChangePercent);
+              if (!Number.isFinite(pct) || pct < minPct || pct > maxPct) return false;
+              const vol = parseFloat(t.quoteVolume);
+              if (!Number.isFinite(vol) || vol < minVol) return false;
+              return true;
+            })
+            .sort((a, b) =>
+              parseFloat(b.priceChangePercent) - parseFloat(a.priceChangePercent)
+            );
+
+          // === Новые монеты (для Telegram-алертов) ===
+          const now = Date.now();
+          const newSymbols = [];
+          for (const t of filtered) {
+            const last = alertedSymbols.get(t.symbol);
+            if (!last || (now - last > ALERT_COOLDOWN_MS)) newSymbols.push(t);
+          }
+
+          for (const [sym, ts] of alertedSymbols) {
+            if (now - ts > ALERT_COOLDOWN_MS * 2) alertedSymbols.delete(sym);
+          }
+
+          // === Telegram рассылка ===
+          if (newSymbols.length > 0) {
+            const cfg = loadTgConfig();
+            if (cfg.token && cfg.chatId) {
+              for (const t of newSymbols) {
+                const pct   = parseFloat(t.priceChangePercent);
+                const price = parseFloat(t.lastPrice);
+                const high  = parseFloat(t.highPrice);
+                const low   = parseFloat(t.lowPrice);
+                const vol   = parseFloat(t.quoteVolume);
+                const base  = t.symbol.slice(0, -4);
+                try {
+                  await tgSendMessage(buildAlertMessage(base, pct, price, high, low, vol), cfg);
+                  alertedSymbols.set(t.symbol, now);
+                } catch (err) {
+                  console.warn('TG send failed for', t.symbol, err);
+                }
+              }
+            } else {
+              for (const t of newSymbols) alertedSymbols.set(t.symbol, now);
+            }
+          }
+
+          // === Сравнение с предыдущим сканом ===
+          const currentSymbols = new Set(filtered.map((t) => t.symbol));
+          const added   = filtered.filter((t) => !previousSymbols.has(t.symbol));
+          const removed = [...previousSymbols].filter((s) => !currentSymbols.has(s));
+
+          // === Отрисовка ===
+          renderCoins(filtered, newSymbols, minPct, maxPct, minVol);
+          updateStats(filtered, newSymbols);
+
+          // === Журнал ===
+          scanCount += 1;
+          lastScanTs = new Date();
+          updateLogStats();
+
+          const timeStr = fmtTime(lastScanTs);
+          statusEl.textContent = `${timeStr} · активных: ${activeSymbols.size}` +
+            (newSymbols.length ? ` · новых: ${newSymbols.length}` : '');
+          statusEl.className = 'status';
+
+          const wasFirst = !firstScanDone;
+
+          if (wasFirst) {
+            logEvent('success',
+              `Первый скан завершён. Найдено ${filtered.length} монет ` +
+              `(активных пар USDT: ${activeSymbols.size}).`);
+          } else if (added.length > 0 || removed.length > 0) {
+            if (added.length > 0) {
+              const names = added.slice(0, 5).map((t) => {
+                const b = t.symbol.slice(0, -4);
+                const p = parseFloat(t.priceChangePercent).toFixed(1);
+                return `${b} (+${p}%)`;
+              }).join(', ');
+              logEvent('success',
+                `Новых монет: ${added.length} — ${names}${added.length > 5 ? '…' : ''}`);
+            }
+            if (removed.length > 0) {
+              const names = removed.slice(0, 5).map((s) => s.slice(0, -4)).join(', ');
+              logEvent('warn',
+                `Выбыло из фильтра: ${removed.length} — ${names}${removed.length > 5 ? '…' : ''}`);
+            }
+            alertCount += 1;
+            updateLogStats();
+          } else {
+            logEvent('info',
+              `Скан #${scanCount}: без изменений. Монет по фильтру: ${filtered.length}.`);
+          }
+
+          // === Голосовое оповещение ===
+          const announcement = buildAnnouncement(added, removed, filtered, wasFirst);
+          if (announcement) {
+            speak(announcement);
+          }
+
+          firstScanDone = true;
+          previousSymbols = currentSymbols;
+
+        } catch (err) {
+          console.error(err);
+          statusEl.textContent = 'Ошибка: ' + err.message;
+          statusEl.className = 'status error';
+          coinsList.innerHTML = `
+            <div class="empty-state">
+              <span class="emoji">⚠️</span>
+              Не удалось получить данные:<br>
+              <span style="font-size:0.78rem;opacity:0.75;display:inline-block;margin-top:6px">${escapeHtml(err.message)}</span>
+            </div>`;
+          logEvent('error', 'Ошибка загрузки: ' + err.message);
+          speak('Ошибка загрузки данных');
+        } finally {
+          loading = false;
+          btn.disabled = false;
+        }
+      }
+
+      // ============================================================
+      //  СТАРТ
+      // ============================================================
+      function start() {
+        renderSkeleton();
+        loadData(true);
+        if (timerId) clearInterval(timerId);
+        timerId = setInterval(() => loadData(false), REFRESH_MS);
+      }
+
+      function triggerRefresh() {
+        logEvent('info', 'Ручное обновление');
+        loadData(true);
+        if (window.innerWidth < 768) {
+          $('filtersPanel').classList.remove('open');
+        }
+      }
+
+      // ============================================================
+      //  ПРИВЯЗКА СОБЫТИЙ
+      // ============================================================
+      btn.addEventListener('click', triggerRefresh);
+      $('navRefresh').addEventListener('click', triggerRefresh);
+
+      $('minChange').addEventListener('change', () => {
+        logEvent('info', 'Изменён фильтр: мин. рост = ' + $('minChange').value + '%');
+        loadData(false);
+      });
+      $('maxChange').addEventListener('change', () => {
+        logEvent('info', 'Изменён фильтр: макс. рост = ' + $('maxChange').value + '%');
+        loadData(false);
+      });
+      $('minVolume').addEventListener('change', () => {
+        logEvent('info', 'Изменён фильтр: мин. объём = ' + $('minVolume').value + ' USDT');
+        loadData(false);
+      });
+
+      // Telegram
+      $('saveTgBtn').addEventListener('click', () => {
+        const token  = $('botToken').value.trim();
+        const chatId = $('chatId').value.trim();
+        if (!token || !chatId) {
+          updateTgStatus('Заполните Token и Chat ID', 'error');
+          logEvent('error', 'Telegram: не заполнены обязательные поля');
+          return;
+        }
+        saveTgConfig(token, chatId);
+        updateTgStatus('Сохранено', 'ok');
+        showToast('✅ Telegram-настройки сохранены');
+        logEvent('success', 'Telegram: настройки сохранены (chat ' + chatId + ')');
+      });
+
+      $('clearTgBtn').addEventListener('click', () => {
+        clearTgConfig();
+        showToast('🗑️ Настройки Telegram удалены');
+        logEvent('warn', 'Telegram: настройки удалены');
+      });
+
+      $('testTgBtn').addEventListener('click', async () => {
+        const token  = $('botToken').value.trim();
+        const chatId = $('chatId').value.trim();
+        if (token && chatId) saveTgConfig(token, chatId);
+        updateTgStatus('Отправка…', '');
+        try {
+          await tgSendMessage('✅ <b>Binance Tracker</b>\nТестовое сообщение. Уведомления работают.');
+          updateTgStatus('Тест отправлен ✓', 'ok');
+          showToast('✅ Тестовое сообщение отправлено');
+          logEvent('success', 'Telegram: тестовое сообщение отправлено');
+        } catch (err) {
+          updateTgStatus('Ошибка: ' + err.message, 'error');
+          showToast('⚠️ ' + err.message);
+          logEvent('error', 'Telegram тест не удался: ' + err.message);
+        }
+      });
+
+      // Журнал: кнопки
+      $('voiceToggle').addEventListener('click', toggleVoice);
+      $('clearLogBtn').addEventListener('click', clearEventLog);
+
+      // Help modal
+      const helpModal = $('helpModal');
+      function openHelp() {
+        helpModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeHelp() {
+        helpModal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+      $('helpBtnMobile').addEventListener('click', openHelp);
+      $('helpBtnDesktop').addEventListener('click', openHelp);
+      $('helpClose').addEventListener('click', closeHelp);
+      helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) closeHelp();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+      });
+
+      // Swipe down чтобы закрыть модальное окно на мобильном
+      let touchStartY = 0;
+      helpModal.querySelector('.modal').addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      }, { passive: true });
+      helpModal.querySelector('.modal').addEventListener('touchend', (e) => {
+        const diff = e.changedTouches[0].clientY - touchStartY;
+        const modalBody = helpModal.querySelector('.modal-body');
+        if (diff > 100 && modalBody.scrollTop <= 0) closeHelp();
+      }, { passive: true });
+
+      // Init Telegram fields
+      (function initTgFields() {
+        const { token, chatId } = loadTgConfig();
+        $('botToken').value = token;
+        $('chatId').value   = chatId;
+        updateTgStatus();
+      })();
+
+      $('year').textContent = new Date().getFullYear();
+
+      // PWA
+      initPWA();
+
+      // Авто-обновление данных когда страница становится активной
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && !loading) loadData(false);
+      });
+
+      // Первый клик — «разбудить» движок синтеза речи (требование некоторых браузеров)
+      document.addEventListener('click', function primeSpeech() {
+        try {
+          if (speechSupported && voiceEnabled) {
+            const u = new SpeechSynthesisUtterance('');
+            u.volume = 0;
+            window.speechSynthesis.speak(u);
+          }
+        } catch (_) {}
+        document.removeEventListener('click', primeSpeech);
+      }, { once: true });
+
+      // ============================================================
+      //  ЗАСТАВКА — 5 секунд
+      // ============================================================
+      (function initSplash() {
+        const splash = $('splash');
+        if (!splash) return;
+
+        // Запускаем анимацию заполнения полосы
+        requestAnimationFrame(() => splash.classList.add('counting'));
+
+        // Обратный отсчёт 5 → 0
+        let remaining = 5;
+        const counterEl = $('splashCounter');
+        if (counterEl) counterEl.textContent = String(remaining);
+
+        const counterTimer = setInterval(() => {
+          remaining -= 1;
+          if (counterEl && remaining > 0) counterEl.textContent = String(remaining);
+        }, 1000);
+
+        // Скрываем заставку через 5 секунд
+        setTimeout(() => {
+          clearInterval(counterTimer);
+          splash.classList.add('hidden');
+          logEvent('info', 'Заставка закрыта — приложение готово');
+          // Удаляем из DOM после завершения анимации
+          setTimeout(() => {
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 700);
+        }, 5000);
+      })();
+
+      // ============================================================
+      //  СТАРТ ПРИЛОЖЕНИЯ
+      // ============================================================
+      updateVoiceButton();
+      updateLogStats();
+
+      logEvent('info', 'Binance Tracker запущен');
+      logEvent('info', 'Время работы отсчитывается с ' + fmtTime(new Date(START_TIME)));
+      if (!speechSupported) {
+        logEvent('warn', 'Браузер не поддерживает синтез речи');
+      }
+
+      start();
+    })();
+  </script>
+</body>
+</html>
