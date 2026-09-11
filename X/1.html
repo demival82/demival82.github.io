@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ежедневный голосовой календарь</title>
+
+    <!-- ===== PWA ===== -->
+    <meta name="theme-color" content="#0b1120" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Голосовой календарь" />
+
+    <style>
+        /* ----- Сброс и база ----- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b1120 0%, #19233c 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ----- Карточка ----- */
+        .card {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 48px;
+            padding: 40px 44px 48px;
+            max-width: 580px;
+            width: 100%;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* ----- Заголовок ----- */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .header .icon {
+            font-size: 36px;
+            line-height: 1;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            color: #f0f3fa;
+            letter-spacing: -0.3px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header .badge {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.3px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* ----- День недели (крупно) ----- */
+        .day-display {
+            text-align: center;
+            padding: 24px 0 18px;
+            margin-bottom: 22px;
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .day-display .day-name {
+            font-size: 52px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1px;
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            transition: color 0.4s ease;
+        }
+
+        .day-display .day-name.speaking {
+            color: #b7d0ff;
+        }
+
+        .day-display .day-sub {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.35);
+            margin-top: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ----- Настройка времени ----- */
+        .time-section {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 24px;
+            padding: 22px 26px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 20px;
+        }
+
+        .time-section label {
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-section label .label-icon {
+            font-size: 20px;
+        }
+
+        .time-section input[type="time"] {
+            flex: 1;
+            min-width: 140px;
+            padding: 12px 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.35);
+            color: #f0f3fa;
+            font-size: 22px;
+            font-weight: 500;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            letter-spacing: 1px;
+            cursor: pointer;
+        }
+
+        .time-section input[type="time"]:focus {
+            border-color: rgba(120, 170, 255, 0.5);
+            box-shadow: 0 0 0 4px rgba(120, 170, 255, 0.12);
+        }
+
+        .time-section input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8) sepia(1) saturate(3) hue-rotate(190deg);
+            cursor: pointer;
+        }
+
+        /* ----- Кнопки ----- */
+        .actions {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .actions button {
+            flex: 1;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 17px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.25s ease, background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: 0.2px;
+        }
+
+        .actions button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #4a7cf7, #6a4cf7);
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(74, 124, 247, 0.35);
+        }
+
+        .btn-start:hover {
+            box-shadow: 0 12px 32px rgba(74, 124, 247, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-start:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 4px 12px rgba(74, 124, 247, 0.15);
+        }
+
+        .btn-stop {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-stop:hover {
+            background: rgba(255, 70, 70, 0.2);
+            border-color: rgba(255, 70, 70, 0.25);
+            color: #ff7a7a;
+        }
+
+        .btn-stop:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-speak-now {
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            flex: 0.5;
+        }
+
+        .btn-speak-now:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* ----- Кнопка установки ----- */
+        .install-section {
+            margin-bottom: 20px;
+        }
+
+        .btn-install {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1px dashed rgba(120, 170, 255, 0.4);
+            border-radius: 18px;
+            background: rgba(120, 170, 255, 0.06);
+            color: #8ab4ff;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-install:hover {
+            background: rgba(120, 170, 255, 0.14);
+            border-color: rgba(120, 170, 255, 0.7);
+        }
+
+        .btn-install:active {
+            transform: scale(0.98);
+        }
+
+        .btn-install[hidden] {
+            display: none;
+        }
+
+        .installed-note {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.3);
+            margin-bottom: 18px;
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(74, 222, 128, 0.06);
+            border: 1px solid rgba(74, 222, 128, 0.15);
+        }
+
+        .installed-note[hidden] {
+            display: none;
+        }
+
+        /* ----- Статус ----- */
+        .status {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 18px;
+            padding: 16px 22px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 4px;
+        }
+
+        .status .label {
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.35);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .status .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #e8ecf5;
+        }
+
+        .status .value .highlight {
+            color: #8ab4ff;
+            font-weight: 600;
+        }
+
+        .status .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .dot.inactive {
+            background: #4a4f5e;
+            box-shadow: none;
+        }
+
+        .dot.active {
+            background: #4ade80;
+            box-shadow: 0 0 16px rgba(74, 222, 128, 0.5);
+            animation: pulse-dot 1.6s ease-in-out infinite;
+        }
+
+        .dot.waiting {
+            background: #facc15;
+            box-shadow: 0 0 16px rgba(250, 204, 21, 0.35);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.85);
+            }
+        }
+
+        /* ----- Инфо-строка ----- */
+        .footer-info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.2);
+            letter-spacing: 0.3px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 18px;
+        }
+
+        .footer-info span {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ----- Адаптив ----- */
+        @media (max-width: 500px) {
+            .card {
+                padding: 28px 20px 32px;
+                border-radius: 32px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .header .badge {
+                font-size: 11px;
+                padding: 4px 12px;
+            }
+            .day-display .day-name {
+                font-size: 38px;
+            }
+            .time-section {
+                padding: 16px 18px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .time-section label {
+                font-size: 14px;
+            }
+            .time-section input[type="time"] {
+                font-size: 20px;
+                padding: 10px 14px;
+            }
+            .actions {
+                flex-direction: column;
+            }
+            .btn-speak-now {
+                flex: 1;
+            }
+            .status {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .day-display .day-name {
+                font-size: 30px;
+            }
+            .card {
+                padding: 20px 14px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Шапка -->
+        <div class="header">
+            <span class="icon">🗓️</span>
+            <h1>Голосовой календарь</h1>
+            <span class="badge">v1.2</span>
+        </div>
+
+        <!-- Установка PWA -->
+        <div class="install-section">
+            <button class="btn-install" id="btnInstall" hidden>
+                📲 &nbsp;Установить приложение
+            </button>
+            <div class="installed-note" id="installedNote" hidden>
+                ✅ Приложение установлено
+            </div>
+        </div>
+
+        <!-- Крупный день недели -->
+        <div class="day-display">
+            <div class="day-name" id="dayName">—</div>
+            <div class="day-sub" id="daySub">сегодня</div>
+        </div>
+
+        <!-- Выбор времени -->
+        <div class="time-section">
+            <label>
+                <span class="label-icon">⏰</span>
+                Время оповещения
+            </label>
+            <input type="time" id="timePicker" value="09:00" />
+        </div>
+
+        <!-- Кнопки -->
+        <div class="actions">
+            <button class="btn-start" id="btnStart">▶ &nbsp;Запустить</button>
+            <button class="btn-stop" id="btnStop" disabled>⏹ &nbsp;Остановить</button>
+            <button class="btn-speak-now" id="btnSpeakNow" title="Проговорить прямо сейчас">🔊</button>
+        </div>
+
+        <!-- Статус -->
+        <div class="status">
+            <span class="label">Статус</span>
+            <span class="value" id="statusText">
+                <span class="dot inactive" id="statusDot"></span>
+                <span id="statusMessage">Ожидание запуска</span>
+            </span>
+            <span class="label">Следующее</span>
+            <span class="value" id="nextTimeDisplay">—</span>
+        </div>
+
+        <div class="footer-info">
+            <span>Каждый день в заданное время будет произнесён день недели</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            //  ГЕНЕРАЦИЯ PNG-ИКОНОК ЧЕРЕЗ CANVAS
+            // ============================================================
+            //
+            //  Рисуем иконку на <canvas> и получаем настоящий PNG
+            //  в виде data:image/png;base64 — используется и для
+            //  apple-touch-icon, и для манифеста PWA.
+
+            /**
+             * Сгенерировать PNG-иконку заданного размера.
+             * @param {number} size — сторона квадрата в пикселях
+             * @returns {string} data:image/png;base64,...
+             */
+            function generatePngIcon(size) {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                // --- Фон: градиент от синего к фиолетовому (как кнопка «Старт») ---
+                const grad = ctx.createLinearGradient(0, 0, size, size);
+                grad.addColorStop(0, '#4a7cf7');
+                grad.addColorStop(1, '#6a4cf7');
+
+                // Скруглённый квадрат
+                const radius = size * 0.22;
+                ctx.beginPath();
+                roundRect(ctx, 0, 0, size, size, radius);
+                ctx.fillStyle = grad;
+                ctx.fill();
+
+                // --- Лёгкий внутренний блик сверху ---
+                const shine = ctx.createLinearGradient(0, 0, 0, size * 0.5);
+                shine.addColorStop(0, 'rgba(255,255,255,0.22)');
+                shine.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.beginPath();
+                roundRect(ctx, 0, 0, size, size, radius);
+                ctx.fillStyle = shine;
+                ctx.fill();
+
+                // --- Эмодзи календаря 🗓️ ---
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `${Math.round(size * 0.52)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+                ctx.fillText('🗓️', size / 2, size / 2 + size * 0.02);
+
+                return canvas.toDataURL('image/png');
+            }
+
+            /** Вспомогательная функция: путь скруглённого прямоугольника */
+            function roundRect(ctx, x, y, w, h, r) {
+                ctx.moveTo(x + r, y);
+                ctx.lineTo(x + w - r, y);
+                ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+                ctx.lineTo(x + w, y + h - r);
+                ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+                ctx.lineTo(x + r, y + h);
+                ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+                ctx.lineTo(x, y + r);
+                ctx.quadraticCurveTo(x, y, x + r, y);
+                ctx.closePath();
+            }
+
+            // Генерируем PNG-иконки нужных размеров
+            const PNG_192 = generatePngIcon(192);
+            const PNG_512 = generatePngIcon(512);
+
+            // Подставляем apple-touch-icon (iOS) и favicon
+            try {
+                const appleIcon = document.createElement('link');
+                appleIcon.rel = 'apple-touch-icon';
+                appleIcon.href = PNG_192;
+                document.head.appendChild(appleIcon);
+
+                const favicon = document.createElement('link');
+                favicon.rel = 'icon';
+                favicon.type = 'image/png';
+                favicon.href = PNG_192;
+                document.head.appendChild(favicon);
+            } catch (e) {
+                console.warn('Не удалось установить PNG-иконки:', e);
+            }
+
+            // ============================================================
+            //  PWA: МАНИФЕСТ С PNG-ИКОНКАМИ И SERVICE WORKER
+            // ============================================================
+
+            const manifest = {
+                name: "Ежедневный голосовой календарь",
+                short_name: "Календарь",
+                description: "Ежедневное голосовое оповещение о дне недели",
+                start_url: ".",
+                scope: ".",
+                display: "standalone",
+                orientation: "portrait",
+                background_color: "#0b1120",
+                theme_color: "#0b1120",
+                lang: "ru",
+                icons: [
+                    {
+                        src: PNG_192,
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "any"
+                    },
+                    {
+                        src: PNG_192,
+                        sizes: "192x192",
+                        type: "image/png",
+                        purpose: "maskable"
+                    },
+                    {
+                        src: PNG_512,
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "any"
+                    },
+                    {
+                        src: PNG_512,
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "maskable"
+                    }
+                ]
+            };
+
+            try {
+                const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+                const manifestURL = URL.createObjectURL(manifestBlob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+            } catch (e) {
+                console.warn('Не удалось создать манифест:', e);
+            }
+
+            // Service Worker через Blob (для критерия устанавливаемости)
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (event) => {
+                        self.skipWaiting();
+                    });
+                    self.addEventListener('activate', (event) => {
+                        event.waitUntil(self.clients.claim());
+                    });
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            fetch(event.request).catch(() => caches.match(event.request))
+                        );
+                    });
+                `;
+                try {
+                    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                    const swURL = URL.createObjectURL(swBlob);
+                    navigator.serviceWorker.register(swURL, { scope: './' })
+                        .then(() => console.log('✅ Service Worker зарегистрирован'))
+                        .catch(err => console.warn('SW не зарегистрирован:', err));
+                } catch (e) {
+                    console.warn('Ошибка регистрации SW:', e);
+                }
+            }
+
+            // ============================================================
+            //  ОСНОВНАЯ ЛОГИКА КАЛЕНДАРЯ
+            // ============================================================
+
+            // ----- DOM-ссылки -----
+            const dayNameEl = document.getElementById('dayName');
+            const daySubEl = document.getElementById('daySub');
+            const timePicker = document.getElementById('timePicker');
+            const btnStart = document.getElementById('btnStart');
+            const btnStop = document.getElementById('btnStop');
+            const btnSpeakNow = document.getElementById('btnSpeakNow');
+            const statusDot = document.getElementById('statusDot');
+            const statusMessage = document.getElementById('statusMessage');
+            const nextTimeDisplay = document.getElementById('nextTimeDisplay');
+            const btnInstall = document.getElementById('btnInstall');
+            const installedNote = document.getElementById('installedNote');
+
+            // ----- Константы -----
+            const DAYS_RU = [
+                'Воскресенье',
+                'Понедельник',
+                'Вторник',
+                'Среда',
+                'Четверг',
+                'Пятница',
+                'Суббота'
+            ];
+
+            // ----- Состояние -----
+            let isActive = false;
+            let timerId = null;
+            let lastSpokenDate = null;
+            let deferredPrompt = null;
+
+            // ----- Вспомогательные функции -----
+
+            function getTodayStr() {
+                const d = new Date();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            }
+
+            function getWeekdayIndex() {
+                return new Date().getDay();
+            }
+
+            function updateDayDisplay() {
+                const idx = getWeekdayIndex();
+                dayNameEl.textContent = DAYS_RU[idx];
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                daySubEl.textContent = `сегодня, ${h}:${m}`;
+            }
+
+            function speakDayOfWeek() {
+                const idx = getWeekdayIndex();
+                const dayName = DAYS_RU[idx];
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const phrase = `Сегодня ${dayName}`;
+
+                if (!('speechSynthesis' in window)) {
+                    console.warn('SpeechSynthesis не поддерживается в этом браузере.');
+                    statusMessage.textContent = '⚠️ Синтез речи недоступен';
+                    return false;
+                }
+
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1;
+
+                dayNameEl.classList.add('speaking');
+                utterance.onend = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+                utterance.onerror = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+
+                window.speechSynthesis.speak(utterance);
+
+                lastSpokenDate = getTodayStr();
+                statusMessage.textContent = `🔊 Сказано: «${phrase}»`;
+                statusDot.className = 'dot active';
+
+                console.log(`[${hours}:${minutes}] Проговорено: ${phrase}`);
+                return true;
+            }
+
+            function checkAndSpeak() {
+                if (!isActive) return false;
+
+                const now = new Date();
+                const pickerVal = timePicker.value;
+                if (!pickerVal) return false;
+
+                const [targetHours, targetMinutes] = pickerVal.split(':').map(Number);
+                const currentHours = now.getHours();
+                const currentMinutes = now.getMinutes();
+
+                const timeMatches = (currentHours === targetHours && currentMinutes === targetMinutes);
+
+                if (!timeMatches) {
+                    if (isActive) {
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                        statusDot.className = 'dot waiting';
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    }
+                    return false;
+                }
+
+                const today = getTodayStr();
+                if (lastSpokenDate === today) {
+                    statusDot.className = 'dot waiting';
+                    statusMessage.textContent = `✅ Уже сказано сегодня`;
+                    return false;
+                }
+
+                speakDayOfWeek();
+                return true;
+            }
+
+            function getNextOccurrenceTime() {
+                const val = timePicker.value;
+                if (!val) return '—';
+                const now = new Date();
+                const [h, m] = val.split(':').map(Number);
+                const target = new Date(now);
+                target.setHours(h, m, 0, 0);
+
+                if (target <= now) {
+                    target.setDate(target.getDate() + 1);
+                }
+                const hh = String(target.getHours()).padStart(2, '0');
+                const mm = String(target.getMinutes()).padStart(2, '0');
+                return `сегодня ${hh}:${mm}`;
+            }
+
+            function refreshUI() {
+                updateDayDisplay();
+
+                if (isActive) {
+                    const next = getNextOccurrenceTime();
+                    nextTimeDisplay.textContent = next;
+                    if (statusDot.className !== 'dot active') {
+                        statusDot.className = 'dot waiting';
+                    }
+                    if (!statusMessage.textContent.includes('Сказано') &&
+                        !statusMessage.textContent.includes('Уже')) {
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    }
+                } else {
+                    nextTimeDisplay.textContent = '—';
+                    statusDot.className = 'dot inactive';
+                    if (!statusMessage.textContent.includes('⚠️') &&
+                        !statusMessage.textContent.includes('🔊')) {
+                        statusMessage.textContent = 'Ожидание запуска';
+                    }
+                }
+            }
+
+            // ----- Управление таймером -----
+
+            function startService() {
+                if (isActive) return;
+
+                const pickerVal = timePicker.value;
+                if (!pickerVal) {
+                    statusMessage.textContent = '⚠️ Укажите время';
+                    return;
+                }
+
+                const now = new Date();
+                const [h, m] = pickerVal.split(':').map(Number);
+                const target = new Date(now);
+                target.setHours(h, m, 0, 0);
+                if (target > now) {
+                    lastSpokenDate = null;
+                } else {
+                    lastSpokenDate = getTodayStr();
+                }
+
+                isActive = true;
+                btnStart.disabled = true;
+                btnStop.disabled = false;
+                timePicker.disabled = true;
+
+                const spoke = checkAndSpeak();
+
+                if (timerId) clearInterval(timerId);
+                timerId = setInterval(() => {
+                    checkAndSpeak();
+                    const nowSec = new Date().getSeconds();
+                    if (nowSec === 0) {
+                        updateDayDisplay();
+                    }
+                }, 1000);
+
+                if (!spoke) {
+                    const next = getNextOccurrenceTime();
+                    statusMessage.textContent = `⏳ Ожидание ${next}`;
+                    statusDot.className = 'dot waiting';
+                    nextTimeDisplay.textContent = next;
+                }
+                refreshUI();
+            }
+
+            function stopService() {
+                if (!isActive) return;
+
+                isActive = false;
+                if (timerId) {
+                    clearInterval(timerId);
+                    timerId = null;
+                }
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                timePicker.disabled = false;
+
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                dayNameEl.classList.remove('speaking');
+
+                statusDot.className = 'dot inactive';
+                statusMessage.textContent = 'Остановлен';
+                nextTimeDisplay.textContent = '—';
+                refreshUI();
+            }
+
+            // ----- Ручное озвучивание -----
+
+            function speakNow() {
+                const idx = getWeekdayIndex();
+                const dayName = DAYS_RU[idx];
+                const phrase = `Сегодня ${dayName}`;
+
+                if (!('speechSynthesis' in window)) {
+                    statusMessage.textContent = '⚠️ Синтез речи недоступен';
+                    return;
+                }
+
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                utterance.lang = 'ru-RU';
+                utterance.rate = 0.95;
+                utterance.pitch = 1.0;
+                utterance.volume = 1;
+
+                dayNameEl.classList.add('speaking');
+                utterance.onend = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+                utterance.onerror = () => {
+                    dayNameEl.classList.remove('speaking');
+                };
+
+                window.speechSynthesis.speak(utterance);
+
+                if (!isActive) {
+                    statusMessage.textContent = `🔊 Сказано: «${phrase}» (вручную)`;
+                    statusDot.className = 'dot active';
+                    setTimeout(() => {
+                        if (!isActive) {
+                            statusDot.className = 'dot inactive';
+                            statusMessage.textContent = 'Ожидание запуска';
+                        }
+                    }, 4000);
+                } else {
+                    statusMessage.textContent = `🔊 Сказано: «${phrase}»`;
+                    statusDot.className = 'dot active';
+                }
+
+                updateDayDisplay();
+            }
+
+            // ============================================================
+            //  PWA: ОБРАБОТКА УСТАНОВКИ
+            // ============================================================
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                btnInstall.hidden = false;
+                installedNote.hidden = true;
+                console.log('📲 Приложение можно установить');
+            });
+
+            btnInstall.addEventListener('click', async () => {
+                if (!deferredPrompt) {
+                    alert('Установка недоступна. Возможно, приложение уже установлено, или браузер не поддерживает установку.\n\nПопробуйте вручную: меню браузера → «Установить приложение» или «Добавить на главный экран».');
+                    return;
+                }
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`Выбор пользователя: ${outcome}`);
+                deferredPrompt = null;
+                btnInstall.hidden = true;
+            });
+
+            window.addEventListener('appinstalled', () => {
+                console.log('✅ Приложение установлено');
+                deferredPrompt = null;
+                btnInstall.hidden = true;
+                installedNote.hidden = false;
+            });
+
+            function checkStandalone() {
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                    window.navigator.standalone === true;
+                if (isStandalone) {
+                    installedNote.hidden = false;
+                    btnInstall.hidden = true;
+                }
+            }
+
+            // ============================================================
+            //  ИНИЦИАЛИЗАЦИЯ
+            // ============================================================
+
+            function init() {
+                if (!timePicker.value) {
+                    timePicker.value = '09:00';
+                }
+
+                updateDayDisplay();
+
+                statusDot.className = 'dot inactive';
+                statusMessage.textContent = 'Ожидание запуска';
+                nextTimeDisplay.textContent = '—';
+                btnStop.disabled = true;
+
+                btnStart.addEventListener('click', startService);
+                btnStop.addEventListener('click', stopService);
+                btnSpeakNow.addEventListener('click', speakNow);
+
+                timePicker.addEventListener('change', function() {
+                    if (isActive) {
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                        statusMessage.textContent = `⏳ Ожидание ${next}`;
+                        lastSpokenDate = null;
+                    } else {
+                        nextTimeDisplay.textContent = '—';
+                    }
+                });
+
+                setInterval(() => {
+                    updateDayDisplay();
+                    if (isActive) {
+                        const next = getNextOccurrenceTime();
+                        nextTimeDisplay.textContent = next;
+                    }
+                }, 10000);
+
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden && isActive) {
+                        // Состояние сохраняется
+                    }
+                });
+
+                checkStandalone();
+                window.matchMedia('(display-mode: standalone)').addEventListener('change', checkStandalone);
+
+                console.log('🗓️ Голосовой календарь v1.2 инициализирован (PNG-иконки)');
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
