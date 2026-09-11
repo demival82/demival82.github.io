@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="CryptoCraft — студия разработки крипто-трекеров, ботов и торговых приложений. Закажите приложение для мониторинга Binance, Telegram-уведомлений и аналитики.">
+  <title>CryptoCraft — разработка крипто-трекеров и торговых приложений</title>
+  <!-- Font Awesome 6 (бесплатные иконки) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0b0f19;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #eef2ff;
+      line-height: 1.5;
+      scroll-behavior: smooth;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* градиентные акценты */
+    .gradient-text {
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 40%, #e0245e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-bg {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19;
+    }
+
+    /* ===== ШАПКА ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 0;
+      flex-wrap: wrap;
+      gap: 18px;
+      border-bottom: 1px solid rgba(240, 185, 11, 0.15);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo i {
+      background: linear-gradient(135deg, #f0b90b, #e0245e);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: 2rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      font-weight: 500;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-links a:hover {
+      color: #f0b90b;
+    }
+
+    .nav-cta {
+      background: rgba(240, 185, 11, 0.12);
+      padding: 8px 20px;
+      border-radius: 40px;
+      border: 1px solid rgba(240, 185, 11, 0.3);
+      color: #f0b90b !important;
+      font-weight: 700;
+    }
+
+    .nav-cta:hover {
+      background: rgba(240, 185, 11, 0.2);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+      padding: 60px 0 80px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #a0aec0;
+      max-width: 600px;
+      margin-bottom: 32px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item h3 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f0b90b;
+    }
+
+    .stat-item p {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 0;
+    }
+
+    .hero-visual {
+      background: linear-gradient(145deg, #131a2c, #0d1220);
+      border-radius: 40px;
+      padding: 24px;
+      border: 1px solid rgba(240, 185, 11, 0.2);
+      box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8);
+    }
+
+    .mockup {
+      background: #0e1422;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #1e2a3e;
+      font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    .mockup-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e2a3e;
+    }
+
+    .mockup-row:last-child {
+      border-bottom: none;
+    }
+
+    .mockup-symbol {
+      font-weight: 700;
+      color: #eef2ff;
+    }
+
+    .mockup-change {
+      color: #14a06b;
+      font-weight: 700;
+    }
+
+    .mockup-badge {
+      background: #f0b90b20;
+      color: #f0b90b;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* ===== СЕКЦИИ ===== */
+    section {
+      padding: 80px 0;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: #94a3b8;
+      max-width: 700px;
+      margin: 0 auto 56px;
+      font-size: 1.1rem;
+    }
+
+    /* ===== УСЛУГИ ===== */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
+
+    .service-card {
+      background: linear-gradient(145deg, #101827, #0b0f19);
+      border-radius: 28px;
+      padding: 32px 28px;
+      border: 1px solid #1e2a3e;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .service-card:hover {
+      border-color: rgba(240, 185, 11, 0.5);
+      transform: translateY(-6px);
+      box-shadow: 0 30px 40px -20px rgba(240, 185, 11, 0.3);
+    }
+
+    .service-icon {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #f0b90b;
+    }
+
+    .service-card h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .service-card p {
+      color: #94a3b8;
+      font-size: 0.98rem;
+    }
+
+    /* ===== ПОРТФОЛИО ===== */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+      margin-top: 20px;
+    }
+
+    .portfolio-item {
+      background: #0d1422;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid #1e2a3e;
+      transition: transform 0.2s;
+    }
+
+    .portfolio-item:hover {
+      transform: scale(1.01);
+    }
+
+    .portfolio-thumb {
+      height: 180px;
+      background: linear-gradient(135deg, #1a2332, #0e1422);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      color: #f0b90b;
+      border-bottom: 1px solid #1e2a3e;
+    }
+
+    .portfolio-info {
+      padding: 24px;
+    }
+
+    .portfolio-info h4 {
+      font-size: 1.25rem;
+      margin-bottom: 8px;
+    }
+
+    .portfolio-info p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+    }
+
+    .tech-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .tech-tags span {
+      background: #1e2a3e;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      color: #cbd5e1;
+    }
+
+    /* ===== КОНТАКТЫ / WHATSAPP ===== */
+    .contact-section {
+      background: linear-gradient(145deg, #0d1422, #0a0f18);
+      border-radius: 48px;
+      padding: 48px 40px;
+      border: 1px solid #1e2a3e;
+      margin: 40px 0;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .contact-grid h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .contact-grid p {
+      color: #94a3b8;
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .whatsapp-card {
+      background: #25d36610;
+      border-radius: 28px;
+      padding: 32px;
+      border: 1px solid #25d36640;
+      text-align: center;
+    }
+
+    .whatsapp-icon {
+      font-size: 3.5rem;
+      color: #25d366;
+      margin-bottom: 16px;
+    }
+
+    .whatsapp-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .whatsapp-label {
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #25d366;
+      color: #0b0f19;
+      font-weight: 800;
+      padding: 14px 32px;
+      border-radius: 60px;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 8px 20px -6px #25d36680;
+    }
+
+    .btn-whatsapp:hover {
+      background: #22c55e;
+    }
+
+    .btn-whatsapp:active {
+      transform: scale(0.97);
+    }
+
+    /* ===== ПОДВАЛ ===== */
+    .footer {
+      border-top: 1px solid #1a2332;
+      padding: 40px 0 32px;
+      color: #6b7a8f;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 24px;
+    }
+
+    .footer a:hover {
+      color: #f0b90b;
+    }
+
+    /* ===== АДАПТИВ ===== */
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .hero p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .hero-stats {
+        justify-content: center;
+      }
+      .contact-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .nav-links {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 0 18px;
+      }
+      .nav-links {
+        gap: 16px;
+        font-size: 0.85rem;
+      }
+      .nav-links a {
+        font-size: 0.85rem;
+      }
+      .nav-cta {
+        padding: 6px 14px;
+      }
+      .hero h1 {
+        font-size: 2rem;
+      }
+      .section-title {
+        font-size: 1.8rem;
+      }
+      .contact-section {
+        padding: 32px 20px;
+      }
+      .whatsapp-number {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== НАВИГАЦИЯ ===== -->
+  <nav class="navbar">
+    <a href="#" class="logo">
+      <i class="fas fa-cube"></i>
+      <span>CryptoCraft</span>
+    </a>
+    <div class="nav-links">
+      <a href="#services"><i class="fas fa-code"></i> Услуги</a>
+      <a href="#portfolio"><i class="fas fa-briefcase"></i> Портфолио</a>
+      <a href="#contacts"><i class="fas fa-phone-alt"></i> Контакты</a>
+      <a href="https://wa.me/375447841340" target="_blank" class="nav-cta">
+        <i class="fab fa-whatsapp"></i> WhatsApp
+      </a>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div>
+      <h1>
+        Разрабатываем <span class="gradient-text">крипто-трекеры</span><br>
+        и торговые приложения
+      </h1>
+      <p>
+        Создаём инструменты для мониторинга Binance, уведомлений в Telegram,
+        визуализации роста монет и автоматизации торговли. От идеи до запуска — 14 дней.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <h3>50+</h3>
+          <p>реализованных проектов</p>
+        </div>
+        <div class="stat-item">
+          <h3>24/7</h3>
+          <p>поддержка и мониторинг</p>
+        </div>
+        <div class="stat-item">
+          <h3>14 дней</h3>
+          <p>средний срок MVP</p>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="mockup">
+        <div class="mockup-row">
+          <span class="mockup-symbol">PEPE/USDT</span>
+          <span class="mockup-change">+342.5%</span>
+          <span class="mockup-badge">NEW</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">WIF/USDT</span>
+          <span class="mockup-change">+187.2%</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">BONK/USDT</span>
+          <span class="mockup-change">+95.8%</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">FLOKI/USDT</span>
+          <span class="mockup-change">+67.3%</span>
+        </div>
+        <div class="mockup-row" style="border-bottom: none;">
+          <span class="mockup-symbol">SHIB/USDT</span>
+          <span class="mockup-change">+54.1%</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== УСЛУГИ ===== -->
+  <section id="services">
+    <h2 class="section-title">Что мы <span class="gradient-text">делаем</span></h2>
+    <p class="section-sub">
+      Полный цикл разработки: от прототипа до публикации в App Store и Google Play.
+    </p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon"><i class="fas fa-chart-line"></i></div>
+        <h3>Крипто-трекеры</h3>
+        <p>Мониторинг монет Binance, фильтры по росту и объёму, live-обновления, PWA-приложения.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon"><i class="fab fa-telegram-plane"></i></div>
+        <h3>Telegram-боты</h3>
+        <p>Уведомления о памп-сигналах, автоматическая рассылка, интеграция с API бирж.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon"><i class="fas fa-robot"></i></div>
+        <h3>Торговые боты</h3>
+        <p>Автоматизация стратегий, grid-боты, арбитраж, риск-менеджмент и бэктестинг.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon"><i class="fas fa-mobile-alt"></i></div>
+        <h3>Мобильные приложения</h3>
+        <p>React Native / Flutter приложения для iOS и Android с push-уведомлениями.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ПОРТФОЛИО ===== -->
+  <section id="portfolio">
+    <h2 class="section-title">Наши <span class="gradient-text">проекты</span></h2>
+    <p class="section-sub">
+      Примеры приложений, которые мы разработали для клиентов из крипто-индустрии.
+    </p>
+    <div class="portfolio-grid">
+      <div class="portfolio-item">
+        <div class="portfolio-thumb"><i class="fas fa-rocket"></i></div>
+        <div class="portfolio-info">
+          <h4>Binance Pump Tracker</h4>
+          <p>Отслеживание монет с ростом 50–1000% за 24 часа. Голосовые и Telegram-уведомления.</p>
+          <div class="tech-tags">
+            <span>JavaScript</span><span>Binance API</span><span>Telegram API</span>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-item">
+        <div class="portfolio-thumb"><i class="fas fa-chart-pie"></i></div>
+        <div class="portfolio-info">
+          <h4>Crypto Portfolio</h4>
+          <p>Трекер портфеля с P&L, графиками и синхронизацией с биржами.</p>
+          <div class="tech-tags">
+            <span>React</span><span>Node.js</span><span>WebSocket</span>
+          </div>
+        </div>
+      </div>
+      <div class="portfolio-item">
+        <div class="portfolio-thumb"><i class="fas fa-bell"></i></div>
+        <div class="portfolio-info">
+          <h4>Signal Bot</h4>
+          <p>Telegram-бот для автоматической отправки сигналов по 20+ индикаторам.</p>
+          <div class="tech-tags">
+            <span>Python</span><span>AIogram</span><span>TA-Lib</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== КОНТАКТЫ / WHATSAPP ===== -->
+  <section id="contacts">
+    <div class="contact-section">
+      <div class="contact-grid">
+        <div>
+          <h2>Готовы обсудить <span class="gradient-text">ваш проект?</span></h2>
+          <p>
+            Напишите нам в WhatsApp — ответим в течение 15 минут.
+            Бесплатная консультация и оценка сроков.
+          </p>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <a href="https://wa.me/375447841340" target="_blank" class="btn-whatsapp" style="background: #25d366;">
+              <i class="fab fa-whatsapp"></i> Написать в WhatsApp
+            </a>
+            <a href="mailto:Demival82@gmail.com" style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px; border-radius: 60px; background: #1e2a3e; color: white; text-decoration: none; font-weight: 600;">
+              <i class="fas fa-envelope"></i> Email
+            </a>
+          </div>
+        </div>
+        <div class="whatsapp-card">
+          <div class="whatsapp-icon"><i class="fab fa-whatsapp"></i></div>
+          <div class="whatsapp-number">+375 44 784-13-40</div>
+          <div class="whatsapp-label">По всем вопросам обращайтесь</div>
+          <a href="https://wa.me/375447841340" target="_blank" class="btn-whatsapp">
+            <i class="fab fa-whatsapp"></i> Открыть чат
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ПОДВАЛ ===== -->
+  <footer class="footer">
+    <div>
+      <i class="fas fa-cube" style="color: #f0b90b; margin-right: 8px;"></i>
+      <strong style="color: #eef2ff;">CryptoCraft</strong> — разработка крипто-приложений
+      <br><span style="font-size: 0.8rem;">© 2025 Все права защищены.</span>
+    </div>
+    <div>
+      <a href="#services">Услуги</a>
+      <a href="#portfolio">Портфолио</a>
+      <a href="https://wa.me/375447841340" target="_blank">WhatsApp</a>
+    </div>
+  </footer>
+
+</div>
+
+
+
+
+</body>
+
+
+
+
+
+
+
+
+
+
+</html>
