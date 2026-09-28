@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Binance Терминал — график, свечи, голос, алерты</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      overscroll-behavior-y: none;
+    }
+
+    body {
+      background: #0b0f19;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #eef2ff;
+      line-height: 1.5;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+    }
+
+    .app {
+      width: 100%;
+      max-width: 820px;
+      background: linear-gradient(145deg, #131a2c, #0d1220);
+      border: 1px solid rgba(240, 185, 11, 0.25);
+      border-radius: 32px;
+      padding: 28px 26px;
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.9);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .coin-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #f7931a, #ffb84d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #0b0f19;
+      font-weight: 900;
+      box-shadow: 0 8px 22px -6px rgba(247, 147, 26, 0.6);
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .header-text p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    .header-spacer { flex: 1; }
+
+    .sound-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #1e2a3e;
+      color: #94a3b8;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .sound-indicator.active {
+      background: rgba(20, 160, 107, 0.18);
+      color: #14a06b;
+    }
+
+    .sound-indicator.alerts-only {
+      background: rgba(34, 158, 217, 0.18);
+      color: #229ed9;
+    }
+
+    .help-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #1e2a3e;
+      color: #f0b90b;
+      font-size: 1rem;
+      font-weight: 800;
+      border: 1px solid rgba(240, 185, 11, 0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .help-btn:hover { background: rgba(240, 185, 11, 0.15); transform: scale(1.05); }
+    .help-btn:active { transform: scale(0.95); }
+
+    /* ===== ВЫБОР МОНЕТЫ ===== */
+    .coin-selector {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .coin-selector-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .coin-selector-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #f0b90b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .coin-count { font-size: 0.72rem; color: #6b7a8f; font-weight: 600; }
+
+    .coin-search-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .coin-search {
+      flex: 1;
+      min-width: 160px;
+      padding: 10px 14px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .coin-search::placeholder { color: #4b5a6e; }
+    .coin-search:focus { border-color: #f0b90b; }
+
+    .coin-quick-filter {
+      padding: 10px 14px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 12px;
+      color: #cbd5e1;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 700;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .coin-quick-filter:focus { border-color: #f0b90b; }
+
+    .coin-dropdown {
+      width: 100%;
+      max-height: 260px;
+      overflow-y: auto;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 14px;
+      margin-top: 6px;
+      display: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .coin-dropdown.open { display: block; }
+
+    .coin-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #1a2332;
+      transition: background 0.15s;
+      gap: 10px;
+    }
+
+    .coin-option:last-child { border-bottom: none; }
+    .coin-option:hover { background: #131a2c; }
+    .coin-option:active { background: #131a2c; }
+
+    .coin-option.selected {
+      background: rgba(240, 185, 11, 0.12);
+      border-left: 3px solid #f0b90b;
+      padding-left: 11px;
+    }
+
+    .coin-option-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .coin-option-symbol {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: #eef2ff;
+      white-space: nowrap;
+    }
+
+    .coin-option-base { font-size: 0.72rem; color: #6b7a8f; white-space: nowrap; }
+
+    .coin-option-right { text-align: right; flex-shrink: 0; }
+
+    .coin-option-price {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #f0b90b;
+    }
+
+    .coin-option-change {
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    .coin-option-change.up { color: #14a06b; }
+    .coin-option-change.down { color: #e0245e; }
+
+    .coin-empty { padding: 20px; text-align: center; color: #4b5a6e; font-size: 0.85rem; }
+
+    /* ===== ЦЕНА ===== */
+    .price-box {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 24px;
+      padding: 22px 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .price-box.up {
+      border-color: rgba(20, 160, 107, 0.6);
+      box-shadow: 0 0 30px -8px rgba(20, 160, 107, 0.5);
+    }
+
+    .price-box.down {
+      border-color: rgba(224, 36, 94, 0.6);
+      box-shadow: 0 0 30px -8px rgba(224, 36, 94, 0.5);
+    }
+
+    .price-label {
+      font-size: 0.72rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .price-value {
+      font-size: 2.3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      color: #fff;
+      line-height: 1.1;
+      word-break: break-all;
+    }
+
+    .price-change {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 14px;
+      border-radius: 40px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      background: #1e2a3e;
+      color: #cbd5e1;
+    }
+
+    .price-change.up { background: rgba(20, 160, 107, 0.15); color: #14a06b; }
+    .price-change.down { background: rgba(224, 36, 94, 0.15); color: #e0245e; }
+
+    .price-time { font-size: 0.7rem; color: #4b5a6e; margin-top: 8px; }
+
+    /* ===== ТАЙМФРЕЙМЫ ===== */
+    .timeframes {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      justify-content: center;
+    }
+
+    .tf-btn {
+      padding: 8px 16px;
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 12px;
+      color: #94a3b8;
+      font-size: 0.82rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tf-btn:hover { color: #f0b90b; border-color: rgba(240, 185, 11, 0.4); }
+
+    .tf-btn.active {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19;
+      border-color: #f0b90b;
+      box-shadow: 0 6px 14px -6px rgba(240, 185, 11, 0.7);
+    }
+
+    /* ===== ГРАФИК ===== */
+    .chart-box {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 20px;
+      padding: 14px 14px 10px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chart-title {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .chart-mode {
+      display: flex;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .chart-mode button {
+      padding: 5px 12px;
+      background: transparent;
+      border: none;
+      color: #6b7a8f;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chart-mode button.active { background: #1e2a3e; color: #f0b90b; }
+
+    .chart-zoom { display: flex; gap: 4px; }
+
+    .chart-zoom button {
+      width: 28px;
+      height: 28px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 8px;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .chart-zoom button:hover { color: #f0b90b; border-color: rgba(240, 185, 11, 0.5); }
+    .chart-zoom button:active { transform: scale(0.92); }
+
+    .chart-save {
+      padding: 5px 12px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 10px;
+      color: #94a3b8;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chart-save:hover { color: #f0b90b; border-color: rgba(240, 185, 11, 0.5); }
+
+    .chart-legend {
+      display: flex;
+      gap: 10px;
+      font-size: 0.68rem;
+      color: #94a3b8;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .chart-legend span { display: inline-flex; align-items: center; gap: 4px; }
+
+    .legend-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .legend-dot.low { background: #e0245e; }
+    .legend-dot.high { background: #14a06b; }
+    .legend-dot.last { background: #f0b90b; }
+
+    .chart-canvas-wrap {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      cursor: crosshair;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: pan-y;
+    }
+
+    #chartCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 12px;
+    }
+
+    .chart-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4b5a6e;
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 20px;
+      pointer-events: none;
+    }
+
+    .chart-empty.hidden { display: none; }
+
+    .chart-tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.97);
+      border: 1px solid rgba(240, 185, 11, 0.5);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      color: #eef2ff;
+      pointer-events: none;
+      white-space: nowrap;
+      box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.9);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .chart-tooltip.show { opacity: 1; }
+    .chart-tooltip .tt-price { color: #f0b90b; font-weight: 800; font-size: 0.82rem; }
+    .chart-tooltip .tt-time { color: #94a3b8; font-size: 0.68rem; }
+
+    .chart-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #6b7a8f;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #1a2332;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chart-stats strong { color: #cbd5e1; }
+
+    /* ===== СТАТИСТИКА ===== */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
+    }
+
+    .stat-value {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: #f0b90b;
+      font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    /* ===== НАСТРОЙКИ ===== */
+    .settings {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .settings-title {
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #f0b90b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .settings-title::after {
+      content: '▾';
+      margin-left: auto;
+      transition: transform 0.2s;
+    }
+
+    .settings.collapsed .settings-title::after { transform: rotate(-90deg); }
+    .settings-body { display: block; }
+    .settings.collapsed .settings-body { display: none; }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid #1a2332;
+      gap: 12px;
+    }
+
+    .setting-row:last-child { border-bottom: none; }
+
+    .setting-row label {
+      font-size: 0.86rem;
+      color: #cbd5e1;
+      flex: 1;
+    }
+
+    .setting-row input[type="number"],
+    .setting-row select {
+      padding: 8px 11px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 700;
+      outline: none;
+      transition: border-color 0.2s;
+      text-align: center;
+    }
+
+    .setting-row input[type="number"] { width: 88px; }
+    .setting-row input[type="number"]:focus { border-color: #f0b90b; }
+
+    /* ===== ПЕРЕКЛЮЧАТЕЛЬ ===== */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #1e2a3e;
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #94a3b8;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+    }
+
+    input:checked + .slider::before {
+      transform: translateX(20px);
+      background: #0b0f19;
+    }
+
+    /* ===== КНОПКИ ===== */
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 18px;
+      border-radius: 14px;
+      border: none;
+      font-size: 0.92rem;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-start {
+      background: linear-gradient(135deg, #14a06b, #22c55e);
+      color: #fff;
+      box-shadow: 0 8px 20px -8px rgba(20, 160, 107, 0.7);
+    }
+
+    .btn-start.running {
+      background: linear-gradient(135deg, #e0245e, #f43f5e);
+      box-shadow: 0 8px 20px -8px rgba(224, 36, 94, 0.7);
+    }
+
+    .btn-voice {
+      background: linear-gradient(135deg, #6b21a8, #4c1d95);
+      color: #fff;
+      box-shadow: 0 8px 20px -8px rgba(107, 33, 168, 0.7);
+    }
+
+    .btn-small { padding: 8px 14px; font-size: 0.78rem; border-radius: 10px; }
+
+    /* ===== АЛЕРТЫ ===== */
+    .alerts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #0b0f19;
+      border: 1px solid #1e2a3e;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .alert-item .alert-dir { font-size: 1rem; flex-shrink: 0; }
+
+    .alert-item .alert-price {
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-weight: 800;
+      color: #f0b90b;
+      flex: 1;
+    }
+
+    .alert-item .alert-state {
+      font-size: 0.7rem;
+      color: #6b7a8f;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #1e2a3e;
+      white-space: nowrap;
+    }
+
+    .alert-item .alert-state.triggered {
+      background: rgba(20, 160, 107, 0.2);
+      color: #14a06b;
+    }
+
+    .alert-item .alert-remove {
+      background: none;
+      border: none;
+      color: #6b7a8f;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .alert-item .alert-remove:hover {
+      color: #e0245e;
+      background: rgba(224, 36, 94, 0.1);
+    }
+
+    /* ===== ЛОГ ===== */
+    .log-box {
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 20px;
+      padding: 14px;
+      max-height: 200px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .log-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .log-clear {
+      background: none;
+      border: none;
+      color: #6b7a8f;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-family: inherit;
+      padding: 3px 8px;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .log-clear:hover { color: #f0b90b; background: #1e2a3e; }
+
+    .log-entry {
+      font-size: 0.76rem;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      padding: 7px 10px;
+      border-radius: 10px;
+      margin-bottom: 5px;
+      background: #0b0f19;
+      border-left: 3px solid #1e2a3e;
+      color: #94a3b8;
+      word-break: break-word;
+    }
+
+    .log-entry.up { border-left-color: #14a06b; color: #86efac; }
+    .log-entry.down { border-left-color: #e0245e; color: #fda4af; }
+    .log-entry.info { border-left-color: #f0b90b; color: #fde68a; }
+    .log-entry.voice { border-left-color: #a855f7; color: #d8b4fe; }
+    .log-entry.alert { border-left-color: #229ed9; color: #7dd3fc; }
+
+    .log-time { color: #4b5a6e; font-size: 0.68rem; margin-right: 6px; }
+
+    .loading { display: inline-block; animation: spin 1s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes flashGreen {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(20, 160, 107, 0); }
+      50% { box-shadow: 0 0 0 12px rgba(20, 160, 107, 0.4); }
+    }
+
+    @keyframes flashRed {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(224, 36, 94, 0); }
+      50% { box-shadow: 0 0 0 12px rgba(224, 36, 94, 0.4); }
+    }
+
+    .flash-up { animation: flashGreen 1s ease; }
+    .flash-down { animation: flashRed 1s ease; }
+
+    /* ===== МОДАЛЬНОЕ ОКНО СПРАВКИ ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: linear-gradient(145deg, #131a2c, #0d1220);
+      border: 1px solid rgba(240, 185, 11, 0.4);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.95);
+      animation: slideUp 0.25s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #1e2a3e;
+      flex-shrink: 0;
+    }
+
+    .modal-header h2 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #f0b90b;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #1e2a3e;
+      color: #94a3b8;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .modal-close:hover { background: rgba(224, 36, 94, 0.2); color: #fda4af; }
+
+    .modal-body {
+      padding: 20px 22px;
+      overflow-y: auto;
+      flex: 1;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .help-section { margin-bottom: 20px; }
+    .help-section:last-child { margin-bottom: 0; }
+
+    .help-section h3 {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #f0b90b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #1a2332;
+    }
+
+    .help-section p {
+      font-size: 0.84rem;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    .help-list { list-style: none; padding: 0; }
+
+    .help-list li {
+      font-size: 0.83rem;
+      color: #cbd5e1;
+      padding: 6px 0 6px 22px;
+      position: relative;
+      line-height: 1.5;
+      border-bottom: 1px solid #1a2332;
+    }
+
+    .help-list li:last-child { border-bottom: none; }
+
+    .help-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 4px;
+      color: #f0b90b;
+      font-weight: 800;
+    }
+
+    .help-list li strong { color: #f0b90b; font-weight: 700; }
+
+    .help-list li code {
+      background: #0b0f19;
+      color: #f0b90b;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: 'SF Mono', 'Consolas', monospace;
+      font-size: 0.78rem;
+      border: 1px solid #1e2a3e;
+    }
+
+    .help-note {
+      background: rgba(240, 185, 11, 0.08);
+      border: 1px solid rgba(240, 185, 11, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      color: #fde68a;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .help-note strong { color: #f0b90b; }
+
+    /* ===== ПОДСКАЗКА ПРО АЛЕРТЫ В НАСТРОЙКАХ ===== */
+    .alerts-mode-hint {
+      font-size: 0.7rem;
+      color: #6b7a8f;
+      margin-top: 4px;
+      padding: 6px 10px;
+      background: #0b0f19;
+      border-radius: 8px;
+      border-left: 3px solid #229ed9;
+      display: none;
+    }
+
+    .alerts-mode-hint.visible { display: block; }
+
+    /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
+    @media (max-width: 600px) {
+      body {
+        padding: 12px;
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+      }
+
+      .app {
+        padding: 18px 14px;
+        border-radius: 24px;
+      }
+
+      .header { gap: 10px; margin-bottom: 14px; }
+
+      .coin-logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        font-size: 1.25rem;
+      }
+
+      .header-text h1 { font-size: 1.05rem; line-height: 1.25; }
+      .header-text p { font-size: 0.72rem; }
+
+      .sound-indicator {
+        font-size: 0.68rem;
+        padding: 5px 10px;
+      }
+
+      .help-btn { width: 32px; height: 32px; font-size: 0.9rem; }
+
+      .coin-selector { padding: 12px; border-radius: 16px; }
+      .coin-selector-title { font-size: 0.72rem; }
+      .coin-count { font-size: 0.68rem; }
+
+      .coin-search-row { gap: 6px; }
+
+      .coin-search {
+        min-width: 0;
+        width: 100%;
+        flex: 1 1 100%;
+      }
+
+      .coin-quick-filter {
+        flex: 1 1 100%;
+        width: 100%;
+        text-align: center;
+      }
+
+      .coin-dropdown { max-height: 220px; }
+
+      .coin-option { padding: 10px 12px; }
+      .coin-option-symbol { font-size: 0.82rem; }
+      .coin-option-base { display: none; }
+      .coin-option-price { font-size: 0.76rem; }
+      .coin-option-change { font-size: 0.66rem; }
+
+      .price-box {
+        padding: 18px 14px;
+        border-radius: 20px;
+      }
+
+      .price-label { font-size: 0.68rem; }
+      .price-value { font-size: 1.75rem; }
+      .price-change { font-size: 0.76rem; padding: 4px 12px; }
+      .price-time { font-size: 0.66rem; }
+
+      .timeframes { gap: 5px; margin-bottom: 12px; }
+
+      .tf-btn {
+        padding: 7px 12px;
+        font-size: 0.74rem;
+        border-radius: 10px;
+        flex: 1 0 auto;
+        min-width: 52px;
+        text-align: center;
+      }
+
+      .chart-box { padding: 12px 10px 8px; border-radius: 16px; }
+      .chart-title { font-size: 0.7rem; }
+      .chart-controls { gap: 5px; }
+      .chart-mode button { padding: 4px 9px; font-size: 0.68rem; }
+      .chart-zoom button { width: 26px; height: 26px; font-size: 0.8rem; }
+      .chart-save { padding: 4px 9px; font-size: 0.68rem; }
+      .chart-legend { font-size: 0.64rem; gap: 8px; }
+
+      .chart-canvas-wrap { height: 190px; }
+
+      .chart-stats {
+        font-size: 0.64rem;
+        gap: 6px;
+        justify-content: flex-start;
+      }
+
+      .stats { gap: 8px; margin-bottom: 14px; }
+      .stat { padding: 10px 6px; border-radius: 12px; }
+      .stat-label { font-size: 0.6rem; }
+      .stat-value { font-size: 0.82rem; }
+
+      .settings { padding: 14px; border-radius: 16px; }
+      .settings-title { font-size: 0.74rem; margin-bottom: 10px; }
+
+      .setting-row { padding: 8px 0; gap: 8px; }
+      .setting-row label { font-size: 0.8rem; }
+      .setting-row input[type="number"] { width: 72px; padding: 7px 9px; font-size: 15px; }
+      .setting-row select { padding: 7px 9px; font-size: 15px; }
+
+      .btn { padding: 12px 14px; font-size: 0.88rem; border-radius: 12px; }
+      .btn-small { padding: 7px 12px; font-size: 0.74rem; }
+
+      .buttons {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .alerts-list { gap: 5px; }
+      .alert-item { padding: 7px 8px; font-size: 0.76rem; gap: 6px; }
+      .alert-item .alert-state { font-size: 0.64rem; padding: 2px 6px; }
+      .alert-item .alert-remove { padding: 3px 6px; }
+
+      .log-box { padding: 12px; border-radius: 16px; max-height: 180px; }
+      .log-entry { font-size: 0.72rem; padding: 6px 8px; }
+
+      .modal-overlay { padding: 10px; }
+      .modal { max-height: 92vh; max-height: 92dvh; border-radius: 20px; }
+      .modal-header { padding: 14px 16px; }
+      .modal-header h2 { font-size: 1rem; }
+      .modal-close { width: 32px; height: 32px; }
+      .modal-body { padding: 16px; }
+      .help-section h3 { font-size: 0.82rem; }
+      .help-list li { font-size: 0.78rem; padding-left: 20px; }
+      .help-list li code { font-size: 0.72rem; }
+      .help-note { font-size: 0.76rem; padding: 10px 12px; }
+    }
+
+    @media (max-width: 380px) {
+      .app { padding: 14px 10px; border-radius: 20px; }
+      .price-value { font-size: 1.5rem; }
+      .header-text h1 { font-size: 0.95rem; }
+      .tf-btn { padding: 6px 9px; font-size: 0.7rem; min-width: 44px; }
+      .chart-canvas-wrap { height: 160px; }
+      .stat-value { font-size: 0.76rem; }
+    }
+
+    /* Планшетная адаптация */
+    @media (min-width: 601px) and (max-width: 900px) {
+      .app { max-width: 720px; }
+      .chart-canvas-wrap { height: 220px; }
+    }
+
+    /* Landscape на мобильных */
+    @media (max-height: 500px) and (orientation: landscape) {
+      body { padding: 10px; }
+      .app { padding: 14px 16px; }
+      .chart-canvas-wrap { height: 160px; }
+      .price-value { font-size: 1.6rem; }
+      .header { margin-bottom: 12px; }
+      .coin-logo { width: 40px; height: 40px; }
+      .stats { margin-bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div class="coin-logo" id="coinLogo">₿</div>
+    <div class="header-text">
+      <h1 id="coinName">❤️‍🔥Алерты для монет❤️‍🔥</h1>
+      <p>Все монеты Binance · свечи · голос · алерты</p>
+    </div>
+    <div class="header-spacer"></div>
+    <button class="help-btn" id="helpBtn" title="Справка">?</button>
+    <div class="sound-indicator" id="soundIndicator">🔔 Звук вкл</div>
+  </div>
+
+  <!-- ===== ВЫБОР МОНЕТЫ ===== -->
+  <div class="coin-selector">
+    <div class="coin-selector-header">
+      <div class="coin-selector-title">🪙 Выбор монеты</div>
+      <div class="coin-count" id="coinCount">Загрузка списка...</div>
+    </div>
+
+    <div class="coin-search-row">
+      <input type="text" class="coin-search" id="coinSearch" placeholder="Поиск монеты (BTC, ETH, SOL...)" autocomplete="off">
+      <select class="coin-quick-filter" id="coinFilter">
+        <option value="USDT">USDT пары</option>
+        <option value="USDC">USDC пары</option>
+        <option value="BTC">BTC пары</option>
+        <option value="FDUSD">FDUSD пары</option>
+        <option value="ALL">Все пары</option>
+      </select>
+    </div>
+
+    <div class="coin-dropdown" id="coinDropdown"></div>
+  </div>
+
+  <!-- ЦЕНА -->
+  <div class="price-box" id="priceBox">
+    <div class="price-label" id="priceLabel">BTC / USDT</div>
+    <div class="price-value" id="priceValue"><span class="loading">⏳</span></div>
+    <div class="price-change" id="priceChange">—</div>
+    <div class="price-time" id="priceTime">Загрузка...</div>
+  </div>
+
+  <!-- ТАЙМФРЕЙМЫ -->
+  <div class="timeframes" id="timeframes">
+    <button class="tf-btn" data-tf="1m">1м</button>
+    <button class="tf-btn" data-tf="5m">5м</button>
+    <button class="tf-btn active" data-tf="15m">15м</button>
+    <button class="tf-btn" data-tf="1h">1ч</button>
+    <button class="tf-btn" data-tf="4h">4ч</button>
+    <button class="tf-btn" data-tf="1d">1д</button>
+    <button class="tf-btn" data-tf="live">Live</button>
+  </div>
+
+  <!-- ГРАФИК -->
+  <div class="chart-box">
+    <div class="chart-header">
+      <div class="chart-title">📊 <span id="chartTitleLabel">График</span></div>
+      <div class="chart-controls">
+        <div class="chart-mode">
+          <button data-mode="line" class="active">Линия</button>
+          <button data-mode="candle">Свечи</button>
+        </div>
+        <div class="chart-zoom">
+          <button id="zoomIn" title="Приблизить">+</button>
+          <button id="zoomOut" title="Отдалить">−</button>
+          <button id="zoomReset" title="Сбросить">⟳</button>
+        </div>
+        <button class="chart-save" id="savePNG" title="Скачать PNG">💾 PNG</button>
+      </div>
+    </div>
+
+    <div class="chart-legend">
+      <span><span class="legend-dot low"></span>Мин</span>
+      <span><span class="legend-dot high"></span>Макс</span>
+      <span><span class="legend-dot last"></span>Текущая</span>
+    </div>
+
+    <div class="chart-canvas-wrap" id="chartWrap">
+      <canvas id="chartCanvas"></canvas>
+      <div class="chart-empty" id="chartEmpty">
+        Выберите монету и нажмите «▶️ Запустить»
+      </div>
+      <div class="chart-tooltip" id="chartTooltip"></div>
+    </div>
+
+    <div class="chart-stats">
+      <span>📉 Мин: <strong id="chartMin">—</strong></span>
+      <span>📈 Макс: <strong id="chartMax">—</strong></span>
+      <span>📊 Точек: <strong id="chartCount">0</strong></span>
+      <span>🔍 Зум: <strong id="zoomLabel">1.0×</strong></span>
+    </div>
+  </div>
+
+  <!-- СТАТИСТИКА -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Мин (24ч)</div>
+      <div class="stat-value" id="statLow">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Макс (24ч)</div>
+      <div class="stat-value" id="statHigh">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Объём</div>
+      <div class="stat-value" id="statVol">—</div>
+    </div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div class="settings" id="settingsBox">
+    <div class="settings-title" id="settingsToggle">⚙️ Настройки</div>
+    <div class="settings-body">
+
+      <div class="setting-row">
+        <label for="intervalInput">⏱️ Интервал озвучки (мин)</label>
+        <input type="number" id="intervalInput" min="1" max="60" value="1" step="1" inputmode="numeric">
+      </div>
+
+      <div class="setting-row">
+        <label for="langSelect">🗣️ Язык голоса</label>
+        <select id="langSelect">
+          <option value="ru-RU" selected>Русский</option>
+          <option value="en-US">English (US)</option>
+          <option value="en-GB">English (UK)</option>
+          <option value="de-DE">Deutsch</option>
+          <option value="uk-UA">Українська</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label for="voiceToggle">🔊 Голосовые уведомления</label>
+        <div class="switch">
+          <input type="checkbox" id="voiceToggle" checked>
+          <label for="voiceToggle" class="slider"></label>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <label for="alertsOnlyVoiceToggle">🎯 Озвучивать только ценовые алерты</label>
+        <div class="switch">
+          <input type="checkbox" id="alertsOnlyVoiceToggle">
+          <label for="alertsOnlyVoiceToggle" class="slider"></label>
+        </div>
+      </div>
+      <div class="alerts-mode-hint" id="alertsModeHint">
+        🔇 Периодическая озвучка цены отключена. Голос сработает <strong>только</strong> при достижении ценовых алертов.
+      </div>
+
+      <div class="setting-row">
+        <label for="soundToggle">🔔 Звуковой сигнал при резком скачке</label>
+        <div class="switch">
+          <input type="checkbox" id="soundToggle" checked>
+          <label for="soundToggle" class="slider"></label>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <label for="soundThreshold">📊 Порог скачка (%)</label>
+        <input type="number" id="soundThreshold" min="0.05" max="10" value="0.3" step="0.05" inputmode="decimal">
+      </div>
+
+      <div class="setting-row">
+        <label for="voiceTest">🎧 Проверить голос</label>
+        <button class="btn btn-voice btn-small" id="voiceTest">Тест</button>
+      </div>
+
+      <div class="setting-row">
+        <label for="soundTest">🔔 Проверить звук</label>
+        <button class="btn btn-voice btn-small" id="soundTest">Бип</button>
+      </div>
+
+      <!-- АЛЕРТЫ -->
+      <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #1a2332;">
+        <div style="font-size: 0.78rem; font-weight: 800; color: #f0b90b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">
+          🔔 Ценовые алерты
+        </div>
+        <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+          <input type="number" id="alertPrice" placeholder="Цена, $" style="flex: 1; min-width: 110px; padding: 9px 11px; background: #0b0f19; border: 1px solid #1e2a3e; border-radius: 10px; color: #fff; font-size: 16px; font-family: inherit; font-weight: 700; outline: none;" inputmode="decimal">
+          <select id="alertDir" style="padding: 9px 11px; background: #0b0f19; border: 1px solid #1e2a3e; border-radius: 10px; color: #fff; font-size: 16px; font-family: inherit; font-weight: 700; outline: none; cursor: pointer;">
+            <option value="above">↑ Выше</option>
+            <option value="below">↓ Ниже</option>
+          </select>
+          <button class="btn btn-voice btn-small" id="addAlert" style="padding: 9px 16px;">+ Добавить</button>
+        </div>
+        <div class="alerts-list" id="alertsList">
+          <div style="color: #4b5a6e; font-size: 0.78rem; text-align: center; padding: 8px;">Нет активных алертов</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- КНОПКИ -->
+  <div class="buttons">
+    <button class="btn btn-start" id="startBtn">▶️ Запустить</button>
+    <button class="btn btn-voice" id="speakNowBtn">🔊 Озвучить сейчас</button>
+  </div>
+
+  <!-- ЛОГ -->
+  <div class="log-box">
+    <div class="log-title">
+      <span>📋 Журнал событий</span>
+      <button class="log-clear" id="clearLog">Очистить</button>
+    </div>
+    <div id="logList"></div>
+  </div>
+
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО СПРАВКИ ===== -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📖 Справка по приложению</h2>
+      <button class="modal-close" id="helpClose" title="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="help-section">
+        <h3>🚀 Быстрый старт</h3>
+        <ol class="help-list">
+          <li>Выберите монету в разделе <strong>«🪙 Выбор монеты»</strong> — можно искать по тикеру (BTC, ETH) или по названию.</li>
+          <li>Нажмите большую зелёную кнопку <strong>«▶️ Запустить»</strong> внизу.</li>
+          <li>Приложение начнёт следить за ценой: озвучивать изменения голосом, пищать при резких скачках и показывать график.</li>
+        </ol>
+        <div class="help-note">
+          💡 <strong>Совет:</strong> для корректной работы звука и голоса сначала нажмите <strong>«🔊 Озвучить сейчас»</strong> или «Тест» — браузер требует взаимодействия пользователя перед воспроизведением.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>🪙 Выбор монеты</h3>
+        <ul class="help-list">
+          <li>В строке поиска введите тикер или название монеты — список отфильтруется автоматически.</li>
+          <li>Справа от поиска — <strong>быстрый фильтр</strong> по котируемой валюте (USDT, USDC, BTC, FDUSD или все пары).</li>
+          <li>В выпадающем списке показываются текущая цена и изменение за 24 часа.</li>
+          <li>Нажмите на монету — она станет активной, и приложение сразу загрузит её данные.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>📊 График</h3>
+        <ul class="help-list">
+          <li><strong>Таймфреймы:</strong> 1м, 5м, 15м, 1ч, 4ч, 1д и режим <strong>Live</strong> (онлайн-линия обновляется каждые 10 секунд).</li>
+          <li><strong>Режимы отображения:</strong> «Линия» — плавная кривая, «Свечи» — классические японские свечи.</li>
+          <li><strong>Зум:</strong> кнопки <code>+</code>, <code>−</code> и <code>⟳</code> (сброс).</li>
+          <li><strong>Перетаскивание:</strong> зажмите график и тяните влево-вправо для прокрутки истории (drag & drop, свайп на телефоне).</li>
+          <li><strong>Наведение:</strong> при наведении на точку появляется подсказка с ценой и временем (для свечей — OHLC).</li>
+          <li><strong>Скачать PNG:</strong> кнопка <code>💾 PNG</code> сохранит график как изображение.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔊 Голос и звук</h3>
+        <ul class="help-list">
+          <li><strong>Голосовые уведомления:</strong> каждые N минут приложение произносит текущую цену и направление («BTC растёт. Цена 98 500 долларов»).</li>
+          <li><strong>🎯 Озвучивать только ценовые алерты:</strong> если включить этот переключатель, периодическая озвучка цены полностью отключается — голос сработает <strong>только</strong> при достижении заданных ценовых алертов.</li>
+          <li><strong>Интервал озвучки:</strong> настраивается в минутах (от 1 до 60). Работает только когда выключен режим «только алерты».</li>
+          <li><strong>Язык голоса:</strong> русский, английский, немецкий, украинский.</li>
+          <li><strong>Звуковой сигнал:</strong> при резком скачке цены выше заданного порога (%) воспроизводится двойной бип (выше — высокий, ниже — низкий).</li>
+          <li><strong>Порог скачка:</strong> минимальное изменение в процентах между двумя обновлениями цены (по умолчанию 0.3%).</li>
+          <li><strong>Тест голоса</strong> и <strong>Тест звука</strong> — кнопки проверки в настройках.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔔 Ценовые алерты</h3>
+        <ul class="help-list">
+          <li>Введите <strong>цену</strong> в поле и выберите направление: <strong>↑ Выше</strong> или <strong>↓ Ниже</strong>.</li>
+          <li>Нажмите <strong>«+ Добавить»</strong> — алерт появится в списке ниже.</li>
+          <li>Когда цена достигнет указанного значения, сработает голосовое уведомление, звуковой сигнал и запись в журнале.</li>
+          <li>Сработавший алерт помечается галочкой <strong>«✓ сработал»</strong>, а сработавшие алерты можно удалить крестиком ✕.</li>
+          <li>При включённом режиме <strong>«Озвучивать только ценовые алерты»</strong> — это единственный источник голосовых уведомлений.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>📋 Журнал событий</h3>
+        <ul class="help-list">
+          <li>Внизу отображаются все события: запуск, остановка, изменения цены, сработавшие алерты, голосовые фразы и ошибки.</li>
+          <li>Цвет слева от записи указывает на тип: зелёный — рост, красный — падение, жёлтый — информация, фиолетовый — голос, синий — алерт.</li>
+          <li>Кнопка <strong>«Очистить»</strong> удаляет все записи из журнала.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>⌨️ Горячие клавиши</h3>
+        <ul class="help-list">
+          <li><code>+</code> или <code>=</code> — приблизить график.</li>
+          <li><code>−</code> или <code>_</code> — отдалить график.</li>
+          <li><code>0</code> — сбросить зум и прокрутку.</li>
+          <li><code>Пробел</code> — запустить или остановить трекинг (когда фокус не в поле ввода).</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>⚠️ Важно знать</h3>
+        <ul class="help-list">
+          <li>Приложение использует публичные API Binance — данные приходят с задержкой 1–3 секунды.</li>
+          <li>Если браузер блокирует звук — кликните в любом месте страницы, чтобы разрешить воспроизведение.</li>
+          <li>Голосовые фразы работают через встроенный Web Speech API — в некоторых браузерах могут отсутствовать нужные голоса.</li>
+          <li>Приложение не является торговым советником — это только инструмент информирования.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== ЭЛЕМЕНТЫ =====
+  const $ = function(id) { return document.getElementById(id); };
+
+  const coinLogo = $('coinLogo');
+  const coinName = $('coinName');
+  const priceBox = $('priceBox');
+  const priceLabel = $('priceLabel');
+  const priceValue = $('priceValue');
+  const priceChange = $('priceChange');
+  const priceTime = $('priceTime');
+  const statLow = $('statLow');
+  const statHigh = $('statHigh');
+  const statVol = $('statVol');
+  const startBtn = $('startBtn');
+  const speakNowBtn = $('speakNowBtn');
+  const voiceTest = $('voiceTest');
+  const soundTest = $('soundTest');
+  const voiceToggle = $('voiceToggle');
+  const alertsOnlyVoiceToggle = $('alertsOnlyVoiceToggle');
+  const alertsModeHint = $('alertsModeHint');
+  const soundToggle = $('soundToggle');
+  const soundThreshold = $('soundThreshold');
+  const intervalInput = $('intervalInput');
+  const langSelect = $('langSelect');
+  const logList = $('logList');
+  const clearLog = $('clearLog');
+  const chartCanvas = $('chartCanvas');
+  const chartWrap = $('chartWrap');
+  const chartEmpty = $('chartEmpty');
+  const chartMin = $('chartMin');
+  const chartMax = $('chartMax');
+  const chartCount = $('chartCount');
+  const chartTooltip = $('chartTooltip');
+  const chartTitleLabel = $('chartTitleLabel');
+  const zoomLabel = $('zoomLabel');
+  const zoomIn = $('zoomIn');
+  const zoomOut = $('zoomOut');
+  const zoomReset = $('zoomReset');
+  const savePNG = $('savePNG');
+  const settingsBox = $('settingsBox');
+  const settingsToggle = $('settingsToggle');
+  const soundIndicator = $('soundIndicator');
+  const alertsList = $('alertsList');
+  const alertPrice = $('alertPrice');
+  const alertDir = $('alertDir');
+  const addAlert = $('addAlert');
+  const timeframes = $('timeframes');
+
+  const coinSearch = $('coinSearch');
+  const coinFilter = $('coinFilter');
+  const coinDropdown = $('coinDropdown');
+  const coinCount = $('coinCount');
+
+  const helpBtn = $('helpBtn');
+  const helpModal = $('helpModal');
+  const helpClose = $('helpClose');
+
+  const ctx = chartCanvas.getContext('2d');
+
+  // ===== СПРАВКА =====
+  function openHelp() {
+    helpModal.classList.add('open');
+    addLog('📖 Открыта справка', 'info');
+  }
+
+  function closeHelp() {
+    helpModal.classList.remove('open');
+  }
+
+  helpBtn.addEventListener('click', openHelp);
+  helpClose.addEventListener('click', closeHelp);
+  helpModal.addEventListener('click', function(e) {
+    if (e.target === helpModal) closeHelp();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+  });
+
+  // ===== СОСТОЯНИЕ =====
+  const state = {
+    running: false,
+    intervalTimer: null,
+    fetchTimer: null,
+    candleFetchTimer: null,
+    lastPrice: null,
+    prevTickPrice: null,
+    priceHistory: [],
+    candles: [],
+    maxPoints: 200,
+    chartMode: 'line',
+    timeframe: '15m',
+    zoom: 1.0,
+    panOffset: 0,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartPan: 0,
+    hoverIndex: -1,
+    voiceEnabled: true,
+    alertsOnlyVoice: false,      // НОВОЕ: озвучивать только алерты
+    soundEnabled: true,
+    soundThresholdPct: 0.3,
+    lang: 'ru-RU',
+    checkInterval: 1,
+    fetchInterval: 10000,
+    candleRefreshInterval: 30000,
+    alerts: [],
+    audioCtx: null,
+    lastSoundAt: 0,
+
+    allSymbols: [],
+    filteredSymbols: [],
+    currentSymbol: 'BTCUSDT',
+    currentBase: 'BTC',
+    currentQuote: 'USDT',
+    coinListLoaded: false,
+    tickerMap: {}
+  };
+
+  // ===== УТИЛИТЫ =====
+  function fmt(n, digits) {
+    digits = digits === undefined ? 2 : digits;
+    return Number(n).toLocaleString('ru-RU', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
+  }
+
+  function fmtShort(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toFixed(0);
+  }
+
+  function nowTime() {
+    return new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function addLog(message, type) {
+    type = type || 'info';
+    const entry = document.createElement('div');
+    entry.className = 'log-entry ' + type;
+    entry.innerHTML = '<span class="log-time">' + nowTime() + '</span>' + message;
+    logList.insertBefore(entry, logList.firstChild);
+    while (logList.children.length > 60) {
+      logList.removeChild(logList.lastChild);
+    }
+  }
+
+  // ===== ЗАГРУЗКА ВСЕХ СИМВОЛОВ =====
+  async function loadAllSymbols() {
+    try {
+      addLog('📥 Загрузка списка монет Binance...', 'info');
+      const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      state.allSymbols = data.symbols
+        .filter(function(s) { return s.status === 'TRADING'; })
+        .map(function(s) {
+          return { symbol: s.symbol, base: s.baseAsset, quote: s.quoteAsset };
+        })
+        .sort(function(a, b) {
+          if (a.quote === 'USDT' && b.quote !== 'USDT') return -1;
+          if (a.quote !== 'USDT' && b.quote === 'USDT') return 1;
+          return a.base.localeCompare(b.base);
+        });
+
+      state.coinListLoaded = true;
+      coinCount.textContent = state.allSymbols.length + ' пар доступно';
+      addLog('✅ Загружено ' + state.allSymbols.length + ' торговых пар', 'info');
+
+      await loadTickerMap();
+      applyFilter();
+      renderCoinDropdown();
+    } catch (err) {
+      addLog('❌ Ошибка загрузки списка монет: ' + err.message, 'down');
+      coinCount.textContent = 'Ошибка загрузки';
+    }
+  }
+
+  async function loadTickerMap() {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      state.tickerMap = {};
+      data.forEach(function(t) {
+        state.tickerMap[t.symbol] = {
+          price: parseFloat(t.lastPrice),
+          change: parseFloat(t.priceChangePercent)
+        };
+      });
+    } catch (err) {
+      addLog('⚠️ Не удалось загрузить тикеры: ' + err.message, 'down');
+    }
+  }
+
+  function applyFilter() {
+    const query = coinSearch.value.trim().toUpperCase();
+    const quoteFilter = coinFilter.value;
+
+    state.filteredSymbols = state.allSymbols.filter(function(s) {
+      if (quoteFilter !== 'ALL' && s.quote !== quoteFilter) return false;
+      if (query) {
+        return s.symbol.indexOf(query) !== -1 || s.base.indexOf(query) !== -1;
+      }
+      return true;
+    });
+
+    state.filteredSymbols = state.filteredSymbols.slice(0, 200);
+  }
+
+  function renderCoinDropdown() {
+    if (state.filteredSymbols.length === 0) {
+      coinDropdown.innerHTML = '<div class="coin-empty">Ничего не найдено</div>';
+      return;
+    }
+
+    const withVolume = state.filteredSymbols.map(function(s) {
+      const t = state.tickerMap[s.symbol];
+      return {
+        symbol: s.symbol,
+        base: s.base,
+        quote: s.quote,
+        price: t ? t.price : 0,
+        change: t ? t.change : 0,
+        hasTicker: !!t
+      };
+    });
+
+    withVolume.sort(function(a, b) {
+      if (a.symbol === state.currentSymbol) return -1;
+      if (b.symbol === state.currentSymbol) return 1;
+      return b.price - a.price;
+    });
+
+    coinDropdown.innerHTML = '';
+    withVolume.forEach(function(item) {
+      const div = document.createElement('div');
+      div.className = 'coin-option' + (item.symbol === state.currentSymbol ? ' selected' : '');
+      div.setAttribute('data-symbol', item.symbol);
+      div.setAttribute('data-base', item.base);
+      div.setAttribute('data-quote', item.quote);
+
+      const changeClass = item.change >= 0 ? 'up' : 'down';
+      const changeArrow = item.change >= 0 ? '▲' : '▼';
+      const priceStr = item.price ? '$' + fmt(item.price, item.price < 1 ? 6 : 2) : '—';
+      const changeStr = item.hasTicker ? changeArrow + ' ' + Math.abs(item.change).toFixed(2) + '%' : '';
+
+      div.innerHTML =
+        '<div class="coin-option-left">' +
+          '<div class="coin-option-symbol">' + item.base + '/' + item.quote + '</div>' +
+          '<div class="coin-option-base">' + item.symbol + '</div>' +
+        '</div>' +
+        '<div class="coin-option-right">' +
+          '<div class="coin-option-price">' + priceStr + '</div>' +
+          (changeStr ? '<div class="coin-option-change ' + changeClass + '">' + changeStr + '</div>' : '') +
+        '</div>';
+
+      div.addEventListener('click', function() {
+        selectCoin(item.symbol, item.base, item.quote);
+      });
+
+      coinDropdown.appendChild(div);
+    });
+  }
+
+  function selectCoin(symbol, base, quote) {
+    if (state.running) stop();
+
+    state.currentSymbol = symbol;
+    state.currentBase = base;
+    state.currentQuote = quote;
+
+    state.priceHistory = [];
+    state.candles = [];
+    state.lastPrice = null;
+    state.prevTickPrice = null;
+    state.panOffset = 0;
+    state.hoverIndex = -1;
+
+    priceLabel.textContent = base + ' / ' + quote;
+    coinLogo.textContent = base.substring(0, 3);
+    coinName.textContent = base + ' Терминал';
+    priceValue.innerHTML = '<span class="loading">⏳</span>';
+    priceChange.textContent = '—';
+    priceChange.className = 'price-change';
+    priceTime.textContent = 'Загрузка...';
+
+    coinDropdown.querySelectorAll('.coin-option').forEach(function(el) {
+      el.classList.remove('selected');
+      if (el.getAttribute('data-symbol') === symbol) el.classList.add('selected');
+    });
+
+    coinDropdown.classList.remove('open');
+    coinSearch.value = '';
+
+    addLog('🪙 Выбрана монета: ' + symbol, 'info');
+
+    tickFetch();
+    if (state.chartMode === 'candle' && state.timeframe !== 'live') {
+      fetchCandles();
+    }
+  }
+
+  let searchTimeout = null;
+  coinSearch.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(function() {
+      applyFilter();
+      renderCoinDropdown();
+      coinDropdown.classList.add('open');
+    }, 150);
+  });
+
+  coinSearch.addEventListener('focus', function() {
+    applyFilter();
+    renderCoinDropdown();
+    coinDropdown.classList.add('open');
+  });
+
+  coinFilter.addEventListener('change', function() {
+    applyFilter();
+    renderCoinDropdown();
+    coinDropdown.classList.add('open');
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!coinDropdown.contains(e.target) && !coinSearch.contains(e.target) && !coinFilter.contains(e.target)) {
+      coinDropdown.classList.remove('open');
+    }
+  });
+
+  // ===== ГОЛОС =====
+  let voices = [];
+
+  function loadVoices() {
+    voices = window.speechSynthesis.getVoices();
+  }
+
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function pickVoice(lang) {
+    if (!voices.length) loadVoices();
+    let v = voices.find(function(voice) { return voice.lang === lang; });
+    if (!v) {
+      const prefix = lang.split('-')[0];
+      v = voices.find(function(voice) {
+        return voice.lang.toLowerCase().startsWith(prefix);
+      });
+    }
+    return v || null;
+  }
+
+  function speak(text) {
+    if (!state.voiceEnabled) return;
+    if (!('speechSynthesis' in window)) {
+      addLog('❌ Голосовые уведомления не поддерживаются', 'down');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = state.lang;
+    utter.rate = 1.0;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+
+    const voice = pickVoice(state.lang);
+    if (voice) utter.voice = voice;
+
+    utter.onerror = function(e) {
+      addLog('⚠️ Ошибка озвучки: ' + e.error, 'down');
+    };
+
+    window.speechSynthesis.speak(utter);
+    addLog('🔊 ' + text, 'voice');
+  }
+
+  // ===== ЗВУК =====
+  function ensureAudio() {
+    if (!state.audioCtx) {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        state.audioCtx = new Ctx();
+      } catch (e) {
+        addLog('⚠️ Web Audio API не поддерживается', 'down');
+        return null;
+      }
+    }
+    if (state.audioCtx.state === 'suspended') state.audioCtx.resume();
+    return state.audioCtx;
+  }
+
+  function beep(direction) {
+    const ac = ensureAudio();
+    if (!ac) return;
+
+    const now = ac.currentTime;
+    const freq = direction === 'up' ? 880 : 440;
+    const freq2 = direction === 'up' ? 1320 : 330;
+
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.2);
+
+    const osc2 = ac.createOscillator();
+    const gain2 = ac.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq2;
+    gain2.gain.setValueAtTime(0.0001, now + 0.18);
+    gain2.gain.exponentialRampToValueAtTime(0.3, now + 0.2);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    osc2.connect(gain2).connect(ac.destination);
+    osc2.start(now + 0.18);
+    osc2.stop(now + 0.45);
+  }
+
+  function playBeepTest() {
+    beep('up');
+    setTimeout(function() { beep('down'); }, 500);
+  }
+
+  function flashPriceBox(direction) {
+    priceBox.classList.remove('flash-up', 'flash-down');
+    void priceBox.offsetWidth;
+    priceBox.classList.add(direction === 'up' ? 'flash-up' : 'flash-down');
+    setTimeout(function() {
+      priceBox.classList.remove('flash-up', 'flash-down');
+    }, 1100);
+  }
+
+  // ===== ЗАПРОС ЦЕНЫ =====
+  async function fetchPrice() {
+    try {
+      const url = 'https://api.binance.com/api/v3/ticker/24hr?symbol=' + state.currentSymbol;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const price = parseFloat(data.lastPrice);
+      const change = parseFloat(data.priceChangePercent);
+      const high = parseFloat(data.highPrice);
+      const low = parseFloat(data.lowPrice);
+      const vol = parseFloat(data.quoteVolume);
+
+      updateUI(price, change, high, low, vol);
+      checkAlerts(price);
+      checkSuddenMove(price);
+      state.prevTickPrice = price;
+      return price;
+    } catch (err) {
+      addLog('❌ Ошибка загрузки: ' + err.message, 'down');
+      priceTime.textContent = 'Ошибка загрузки';
+      return null;
+    }
+  }
+
+  // ===== ЗАПРОС СВЕЧЕЙ =====
+  async function fetchCandles() {
+    if (state.timeframe === 'live') return;
+    try {
+      const url = 'https://api.binance.com/api/v3/klines?symbol=' + state.currentSymbol +
+                  '&interval=' + state.timeframe + '&limit=200';
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      state.candles = data.map(function(k) {
+        return {
+          t: k[0],
+          o: parseFloat(k[1]),
+          h: parseFloat(k[2]),
+          l: parseFloat(k[3]),
+          c: parseFloat(k[4])
+        };
+      });
+
+      if (state.chartMode === 'candle') drawChart();
+    } catch (err) {
+      addLog('❌ Ошибка свечей: ' + err.message, 'down');
+    }
+  }
+
+  // ===== ОБНОВЛЕНИЕ UI =====
+  function updateUI(price, change, high, low, vol) {
+    priceValue.textContent = '$' + fmt(price, price < 1 ? 6 : 2);
+    priceTime.textContent = 'Обновлено: ' + nowTime();
+
+    const changeClass = change >= 0 ? 'up' : 'down';
+    const arrow = change >= 0 ? '▲' : '▼';
+    priceChange.className = 'price-change ' + changeClass;
+    priceChange.innerHTML = arrow + ' ' + (change >= 0 ? '+' : '') + change.toFixed(2) + '% за 24ч';
+
+    priceBox.classList.remove('up', 'down');
+    if (state.lastPrice !== null) {
+      if (price > state.lastPrice) priceBox.classList.add('up');
+      else if (price < state.lastPrice) priceBox.classList.add('down');
+    }
+
+    statLow.textContent = '$' + fmt(low, low < 1 ? 6 : 0);
+    statHigh.textContent = '$' + fmt(high, high < 1 ? 6 : 0);
+    statVol.textContent = '$' + fmtShort(vol);
+  }
+
+  // ===== РЕЗКИЙ СКАЧОК =====
+  function checkSuddenMove(price) {
+    if (!state.soundEnabled) return;
+    if (state.prevTickPrice === null) return;
+
+    const diff = price - state.prevTickPrice;
+    const diffPct = Math.abs(diff / state.prevTickPrice) * 100;
+
+    if (diffPct >= state.soundThresholdPct) {
+      const now = Date.now();
+      if (now - state.lastSoundAt < 3000) return;
+      state.lastSoundAt = now;
+
+      const dir = diff > 0 ? 'up' : 'down';
+      beep(dir);
+      flashPriceBox(dir);
+      addLog(
+        (dir === 'up' ? '🔔⬆️ Резкий рост: +' : '🔔⬇️ Резкое падение: ') +
+        fmt(Math.abs(diff), 4) + ' $ (' + diffPct.toFixed(3) + '%)',
+        dir
+      );
+    }
+  }
+
+  // ===== АЛЕРТЫ =====
+  function checkAlerts(price) {
+    let changed = false;
+    state.alerts.forEach(function(a) {
+      if (a.triggered) return;
+      const hit = a.dir === 'above' ? price >= a.price : price <= a.price;
+      if (hit) {
+        a.triggered = true;
+        changed = true;
+        const dirText = a.dir === 'above' ? 'выше' : 'ниже';
+        const msg = 'Алерт: ' + state.currentBase + ' ' + dirText + ' ' + fmt(a.price, 0) + ' долларов. Текущая цена ' + Math.round(price).toLocaleString('ru-RU') + ' долларов.';
+        speak(msg);
+        beep(a.dir === 'above' ? 'up' : 'down');
+        addLog('🚨 Алерт: ' + state.currentSymbol + ' ' + fmt(price, 2) + ' $ (порог ' + fmt(a.price, 2) + ' $)', 'alert');
+        renderAlerts();
+      }
+    });
+    if (changed) renderAlerts();
+  }
+
+  function renderAlerts() {
+    if (state.alerts.length === 0) {
+      alertsList.innerHTML = '<div style="color: #4b5a6e; font-size: 0.78rem; text-align: center; padding: 8px;">Нет активных алертов</div>';
+      return;
+    }
+    alertsList.innerHTML = '';
+    state.alerts.forEach(function(a) {
+      const div = document.createElement('div');
+      div.className = 'alert-item';
+      const dirIcon = a.dir === 'above' ? '⬆️' : '⬇️';
+      const dirText = a.dir === 'above' ? 'выше' : 'ниже';
+      div.innerHTML =
+        '<span class="alert-dir">' + dirIcon + '</span>' +
+        '<span class="alert-price">$' + fmt(a.price, 2) + '</span>' +
+        '<span style="color: #94a3b8; font-size: 0.72rem;">' + dirText + '</span>' +
+        '<span class="alert-state' + (a.triggered ? ' triggered' : '') + '">' +
+          (a.triggered ? '✓ сработал' : 'активен') +
+        '</span>' +
+        '<button class="alert-remove" data-id="' + a.id + '">✕</button>';
+      alertsList.appendChild(div);
+    });
+
+    alertsList.querySelectorAll('.alert-remove').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const id = parseInt(btn.getAttribute('data-id'), 10);
+        state.alerts = state.alerts.filter(function(a) { return a.id !== id; });
+        renderAlerts();
+      });
+    });
+  }
+
+  addAlert.addEventListener('click', function() {
+    const p = parseFloat(alertPrice.value);
+    if (isNaN(p) || p <= 0) {
+      addLog('⚠️ Введите корректную цену', 'down');
+      return;
+    }
+    state.alerts.push({
+      id: Date.now() + Math.random(),
+      price: p,
+      dir: alertDir.value,
+      triggered: false
+    });
+    alertPrice.value = '';
+    renderAlerts();
+    addLog('➕ Алерт: ' + state.currentSymbol + ' ' + (alertDir.value === 'above' ? 'выше' : 'ниже') + ' $' + fmt(p, 2), 'info');
+  });
+
+  // ===== ОЗВУЧКА =====
+  function analyzeAndSpeak() {
+    // Если включён режим "только алерты" — не озвучиваем периодически
+    if (state.alertsOnlyVoice) {
+      addLog('🎯 Режим «только алерты»: периодическая озвучка отключена', 'info');
+      return;
+    }
+
+    const price = state.lastPrice;
+    if (price === null) {
+      speak('Не удалось получить цену');
+      return;
+    }
+
+    const prev = state.priceHistory.length >= 2
+      ? state.priceHistory[state.priceHistory.length - 2].p
+      : null;
+
+    let direction = 'stable';
+    let diff = 0;
+    let diffPercent = 0;
+
+    if (prev !== null) {
+      diff = price - prev;
+      diffPercent = (diff / prev) * 100;
+      if (diff > 0) direction = 'up';
+      else if (diff < 0) direction = 'down';
+    }
+
+    const priceStr = price < 1 ? price.toFixed(6) : Math.round(price).toLocaleString('ru-RU');
+    const coin = state.currentBase;
+
+    let text = '';
+    if (direction === 'up') {
+      text = coin + ' растёт. Цена ' + priceStr + ' долларов.';
+      if (Math.abs(diffPercent) >= 0.1) {
+        text += ' Рост на ' + Math.abs(diffPercent).toFixed(2) + ' процента.';
+      }
+      addLog('📈 Рост: +' + fmt(diff, 4) + ' $ (' + diffPercent.toFixed(3) + '%)', 'up');
+    } else if (direction === 'down') {
+      text = coin + ' падает. Цена ' + priceStr + ' долларов.';
+      if (Math.abs(diffPercent) >= 0.1) {
+        text += ' Падение на ' + Math.abs(diffPercent).toFixed(2) + ' процента.';
+      }
+      addLog('📉 Падение: ' + fmt(diff, 4) + ' $ (' + diffPercent.toFixed(3) + '%)', 'down');
+    } else {
+      text = coin + ' без изменений. Цена ' + priceStr + ' долларов.';
+      addLog('➖ Без изменений: ' + priceStr + ' $', 'info');
+    }
+
+    speak(text);
+  }
+
+  // ===== ГРАФИК =====
+  function getChartData() {
+    if (state.chartMode === 'candle' && state.timeframe !== 'live') {
+      return state.candles;
+    }
+    return state.priceHistory;
+  }
+
+  function getVisibleData() {
+    const data = getChartData();
+    if (data.length === 0) return { data: [], startIdx: 0 };
+
+    const maxVisible = Math.max(10, Math.floor(state.maxPoints / state.zoom));
+    let endIdx = data.length - state.panOffset;
+    if (endIdx > data.length) endIdx = data.length;
+    let startIdx = Math.max(0, endIdx - maxVisible);
+    if (endIdx < 0) endIdx = 0;
+
+    return {
+      data: data.slice(startIdx, endIdx),
+      startIdx: startIdx,
+      endIdx: endIdx,
+      total: data.length
+    };
+  }
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = chartCanvas.getBoundingClientRect();
+    chartCanvas.width = rect.width * dpr;
+    chartCanvas.height = rect.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawChart();
+  }
+
+  function drawChart() {
+    const rect = chartCanvas.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    const visible = getVisibleData();
+    const points = visible.data;
+
+    if (points.length === 0) {
+      chartEmpty.classList.remove('hidden');
+      chartMin.textContent = '—';
+      chartMax.textContent = '—';
+      chartCount.textContent = '0';
+      return;
+    }
+
+    chartEmpty.classList.add('hidden');
+    chartCount.textContent = points.length;
+    zoomLabel.textContent = state.zoom.toFixed(1) + '×';
+
+    const isCandle = state.chartMode === 'candle' && state.timeframe !== 'live';
+
+    let minP, maxP, lastP;
+    if (isCandle) {
+      const lows = points.map(function(c) { return c.l; });
+      const highs = points.map(function(c) { return c.h; });
+      minP = Math.min.apply(null, lows);
+      maxP = Math.max.apply(null, highs);
+      lastP = points[points.length - 1].c;
+    } else {
+      const prices = points.map(function(p) { return p.p; });
+      minP = Math.min.apply(null, prices);
+      maxP = Math.max.apply(null, prices);
+      lastP = prices[prices.length - 1];
+    }
+
+    chartMin.textContent = '$' + fmt(minP, minP < 1 ? 6 : 2);
+    chartMax.textContent = '$' + fmt(maxP, maxP < 1 ? 6 : 2);
+
+    const isMobile = W < 500;
+    const padL = 8;
+    const padR = isMobile ? 52 : 70;
+    const padT = 14;
+    const padB = 22;
+
+    const innerW = W - padL - padR;
+    const innerH = H - padT - padB;
+
+    let range = maxP - minP;
+    if (range === 0) range = maxP * 0.001 || 1;
+    const padRange = range * 0.1;
+    const yMin = minP - padRange;
+    const yMax = maxP + padRange;
+    const yRange = yMax - yMin;
+
+    function xAt(i) {
+      if (points.length === 1) return padL + innerW / 2;
+      return padL + (i / (points.length - 1)) * innerW;
+    }
+
+    function yAt(p) {
+      return padT + (1 - (p - yMin) / yRange) * innerH;
+    }
+
+    ctx.strokeStyle = 'rgba(30, 42, 62, 0.6)';
+    ctx.lineWidth = 1;
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const y = padT + (i / gridLines) * innerH;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(W - padR, y);
+      ctx.stroke();
+
+      const priceAtLine = yMax - (i / gridLines) * yRange;
+      ctx.fillStyle = '#4b5a6e';
+      ctx.font = (isMobile ? '9px' : '10px') + ' "SF Mono", Consolas, monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('$' + fmt(priceAtLine, priceAtLine < 1 ? 4 : 0), W - padR + 5, y);
+    }
+
+    if (isCandle) {
+      drawCandles(points, xAt, yAt, padL, innerW, H, padB);
+    } else {
+      drawLine(points, xAt, yAt, padL, innerW, H, padB);
+    }
+
+    if (!isCandle) {
+      const lastX = xAt(points.length - 1);
+      const lastY = yAt(lastP);
+
+      const pulseT = (Date.now() % 1500) / 1500;
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 4 + pulseT * 8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(240, 185, 11, ' + (0.3 * (1 - pulseT)) + ')';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#f0b90b';
+      ctx.fill();
+      ctx.strokeStyle = '#0e1422';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    const lastYLine = yAt(lastP);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(240, 185, 11, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padL, lastYLine);
+    ctx.lineTo(W - padR, lastYLine);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const labelText = '$' + fmt(lastP, lastP < 1 ? 6 : 0);
+    ctx.font = 'bold ' + (isMobile ? '10px' : '11px') + ' "SF Mono", Consolas, monospace';
+    const textW = ctx.measureText(labelText).width;
+    const labelW = textW + 10;
+    const labelH = 18;
+    ctx.fillStyle = '#f0b90b';
+    ctx.fillRect(W - padR + 2, lastYLine - labelH / 2, labelW, labelH);
+    ctx.fillStyle = '#0b0f19';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(labelText, W - padR + 2 + labelW / 2, lastYLine);
+
+    if (state.hoverIndex >= 0 && state.hoverIndex < points.length) {
+      const hi = state.hoverIndex;
+      const hx = xAt(hi);
+      ctx.setLineDash([3, 3]);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hx, padT);
+      ctx.lineTo(hx, H - padB);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  function drawLine(points, xAt, yAt, padL, innerW, H, padB) {
+    const grad = ctx.createLinearGradient(0, 14, 0, H - padB);
+    grad.addColorStop(0, 'rgba(240, 185, 11, 0.35)');
+    grad.addColorStop(0.6, 'rgba(240, 185, 11, 0.08)');
+    grad.addColorStop(1, 'rgba(240, 185, 11, 0)');
+
+    ctx.beginPath();
+    ctx.moveTo(xAt(0), H - padB);
+    for (let i = 0; i < points.length; i++) {
+      ctx.lineTo(xAt(i), yAt(points[i].p));
+    }
+    ctx.lineTo(xAt(points.length - 1), H - padB);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      const x = xAt(i);
+      const y = yAt(points[i].p);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#f0b90b';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(240, 185, 11, 0.8)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      const x = xAt(i);
+      const y = yAt(points[i].p);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = 'rgba(248, 211, 58, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawCandles(candles, xAt, yAt, padL, innerW, H, padB) {
+    const n = candles.length;
+    if (n === 0) return;
+
+    const spacing = innerW / n;
+    const bodyW = Math.max(2, Math.min(spacing * 0.7, 18));
+
+    for (let i = 0; i < n; i++) {
+      const c = candles[i];
+      const x = xAt(i);
+      const isUp = c.c >= c.o;
+      const color = isUp ? '#14a06b' : '#e0245e';
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, yAt(c.h));
+      ctx.lineTo(x, yAt(c.l));
+      ctx.stroke();
+
+      const yO = yAt(c.o);
+      const yC = yAt(c.c);
+      const top = Math.min(yO, yC);
+      const h = Math.max(1.5, Math.abs(yC - yO));
+
+      ctx.fillStyle = color;
+      ctx.fillRect(x - bodyW / 2, top, bodyW, h);
+
+      ctx.strokeStyle = isUp ? 'rgba(20, 160, 107, 0.6)' : 'rgba(224, 36, 94, 0.6)';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x - bodyW / 2, top, bodyW, h);
+    }
+  }
+
+  // ===== ZOOM / PAN =====
+  function updateZoomLabel() {
+    zoomLabel.textContent = state.zoom.toFixed(1) + '×';
+  }
+
+  zoomIn.addEventListener('click', function() {
+    state.zoom = Math.min(10, state.zoom * 1.5);
+    updateZoomLabel();
+    drawChart();
+  });
+
+  zoomOut.addEventListener('click', function() {
+    state.zoom = Math.max(0.5, state.zoom / 1.5);
+    updateZoomLabel();
+    drawChart();
+  });
+
+  zoomReset.addEventListener('click', function() {
+    state.zoom = 1.0;
+    state.panOffset = 0;
+    updateZoomLabel();
+    drawChart();
+  });
+
+  chartWrap.addEventListener('mousedown', function(e) {
+    state.isDragging = true;
+    state.dragStartX = e.clientX;
+    state.dragStartPan = state.panOffset;
+    chartWrap.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', function(e) {
+    if (state.isDragging) {
+      const dx = e.clientX - state.dragStartX;
+      const data = getChartData();
+      const maxVisible = Math.max(10, Math.floor(state.maxPoints / state.zoom));
+      const pxPerPoint = chartWrap.clientWidth / maxVisible;
+      const dPoints = Math.round(dx / pxPerPoint);
+      let newPan = state.dragStartPan + dPoints;
+      const maxPan = Math.max(0, data.length - maxVisible);
+      newPan = Math.max(0, Math.min(maxPan, newPan));
+      state.panOffset = newPan;
+      drawChart();
+    }
+  });
+
+  window.addEventListener('mouseup', function() {
+    if (state.isDragging) {
+      state.isDragging = false;
+      chartWrap.style.cursor = 'crosshair';
+    }
+  });
+
+  chartWrap.addEventListener('mousemove', function(e) {
+    if (state.isDragging) return;
+
+    const rect = chartCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const W = rect.width;
+    const padL = 8;
+    const isMobile = W < 500;
+    const padR = isMobile ? 52 : 70;
+    const innerW = W - padL - padR;
+
+    if (x < padL || x > W - padR) {
+      chartTooltip.classList.remove('show');
+      state.hoverIndex = -1;
+      drawChart();
+      return;
+    }
+
+    const visible = getVisibleData();
+    const points = visible.data;
+    if (points.length === 0) return;
+
+    const ratio = (x - padL) / innerW;
+    let idx = Math.round(ratio * (points.length - 1));
+    idx = Math.max(0, Math.min(points.length - 1, idx));
+
+    state.hoverIndex = idx;
+    drawChart();
+
+    const isCandle = state.chartMode === 'candle' && state.timeframe !== 'live';
+    const item = points[idx];
+
+    let priceText, timeText;
+    if (isCandle) {
+      const t = new Date(item.t);
+      timeText = t.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      priceText = 'O: $' + fmt(item.o, 6) + ' · H: $' + fmt(item.h, 6) + '<br>L: $' + fmt(item.l, 6) + ' · C: $' + fmt(item.c, 6);
+    } else {
+      const t = new Date(item.t);
+      timeText = t.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      priceText = '$' + fmt(item.p, 6);
+    }
+
+    chartTooltip.innerHTML = '<div class="tt-time">' + timeText + '</div><div class="tt-price">' + priceText + '</div>';
+    chartTooltip.classList.add('show');
+
+    const tipRect = chartTooltip.getBoundingClientRect();
+    let tipX = e.clientX - rect.left + 12;
+    let tipY = e.clientY - rect.top - tipRect.height - 8;
+    if (tipX + tipRect.width > W) tipX = e.clientX - rect.left - tipRect.width - 12;
+    if (tipY < 0) tipY = e.clientY - rect.top + 14;
+    chartTooltip.style.left = tipX + 'px';
+    chartTooltip.style.top = tipY + 'px';
+  });
+
+  chartWrap.addEventListener('mouseleave', function() {
+    chartTooltip.classList.remove('show');
+    state.hoverIndex = -1;
+    drawChart();
+  });
+
+  let touchStartX = 0;
+  let touchStartPan = 0;
+
+  chartWrap.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartPan = state.panOffset;
+    }
+  }, { passive: true });
+
+  chartWrap.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 1) {
+      const dx = e.touches[0].clientX - touchStartX;
+      const data = getChartData();
+      const maxVisible = Math.max(10, Math.floor(state.maxPoints / state.zoom));
+      const pxPerPoint = chartWrap.clientWidth / maxVisible;
+      const dPoints = Math.round(dx / pxPerPoint);
+      let newPan = touchStartPan + dPoints;
+      const maxPan = Math.max(0, data.length - maxVisible);
+      newPan = Math.max(0, Math.min(maxPan, newPan));
+      state.panOffset = newPan;
+      drawChart();
+    }
+  }, { passive: true });
+
+  // ===== ЭКСПОРТ PNG =====
+  savePNG.addEventListener('click', function() {
+    const link = document.createElement('a');
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    link.download = 'chart-' + state.currentSymbol + '-' + ts + '.png';
+    link.href = chartCanvas.toDataURL('image/png');
+    link.click();
+    addLog('💾 График сохранён в PNG', 'info');
+  });
+
+  // ===== РЕЖИМ ГРАФИКА =====
+  document.querySelectorAll('.chart-mode button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.chart-mode button').forEach(function(b) {
+        b.classList.remove('active');
+      });
+      btn.classList.add('active');
+      state.chartMode = btn.getAttribute('data-mode');
+      state.panOffset = 0;
+      state.hoverIndex = -1;
+      chartTitleLabel.textContent = state.chartMode === 'candle' ? 'Свечи' : 'Линия';
+
+      if (state.chartMode === 'candle' && state.candles.length === 0) {
+        fetchCandles();
+      }
+      drawChart();
+      addLog('📊 Режим: ' + (state.chartMode === 'candle' ? 'свечи' : 'линия'), 'info');
+    });
+  });
+
+  // ===== ТАЙМФРЕЙМЫ =====
+  timeframes.querySelectorAll('.tf-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      timeframes.querySelectorAll('.tf-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      state.timeframe = btn.getAttribute('data-tf');
+      state.panOffset = 0;
+      state.hoverIndex = -1;
+
+      if (state.timeframe === 'live') {
+        chartTitleLabel.textContent = 'Live (линия)';
+        state.chartMode = 'line';
+        document.querySelectorAll('.chart-mode button').forEach(function(b) {
+          b.classList.toggle('active', b.getAttribute('data-mode') === 'line');
+        });
+        addLog('⏱️ Таймфрейм: Live', 'info');
+        drawChart();
+      } else {
+        chartTitleLabel.textContent = 'Свечи ' + state.timeframe;
+        state.chartMode = 'candle';
+        document.querySelectorAll('.chart-mode button').forEach(function(b) {
+          b.classList.toggle('active', b.getAttribute('data-mode') === 'candle');
+        });
+        addLog('⏱️ Таймфрейм: ' + state.timeframe, 'info');
+        fetchCandles();
+      }
+    });
+  });
+
+  // ===== ЦИКЛ ОБНОВЛЕНИЯ =====
+  async function tickFetch() {
+    const price = await fetchPrice();
+    if (price !== null) {
+      state.lastPrice = price;
+      state.priceHistory.push({ t: Date.now(), p: price });
+      if (state.priceHistory.length > state.maxPoints) {
+        state.priceHistory.shift();
+      }
+      if (state.chartMode === 'line') drawChart();
+    }
+  }
+
+  function tickSpeak() {
+    // Если включён режим "только алерты" — не вызываем периодическую озвучку
+    if (state.alertsOnlyVoice) return;
+    analyzeAndSpeak();
+  }
+
+  let pulseRAF = null;
+  function startPulse() {
+    function loop() {
+      if (state.priceHistory.length > 0 || state.candles.length > 0) drawChart();
+      pulseRAF = requestAnimationFrame(loop);
+    }
+    if (!pulseRAF) loop();
+  }
+
+  function stopPulse() {
+    if (pulseRAF) {
+      cancelAnimationFrame(pulseRAF);
+      pulseRAF = null;
+    }
+  }
+
+  // ===== СТАРТ / СТОП =====
+  function start() {
+    if (state.running) return;
+
+    state.running = true;
+    state.priceHistory = [];
+    state.lastPrice = null;
+    state.prevTickPrice = null;
+
+    startBtn.textContent = '⏹️ Остановить';
+    startBtn.classList.add('running');
+    soundIndicator.classList.add('active');
+
+    if (state.alertsOnlyVoice) {
+      soundIndicator.classList.remove('active');
+      soundIndicator.classList.add('alerts-only');
+      soundIndicator.textContent = '🎯 Только алерты';
+    } else {
+      soundIndicator.classList.remove('alerts-only');
+      soundIndicator.classList.add('active');
+      soundIndicator.textContent = '🔔 Звук активен';
+    }
+
+    addLog('▶️ Запуск ' + state.currentSymbol, 'info');
+    addLog('⏱️ Интервал озвучки: ' + state.checkInterval + ' мин', 'info');
+    if (state.alertsOnlyVoice) {
+      addLog('🎯 Режим «только алерты»: периодическая озвучка отключена', 'info');
+    }
+
+    chartEmpty.textContent = 'Загрузка данных...';
+
+    tickFetch().then(function() {
+      setTimeout(function() {
+        if (state.running && !state.alertsOnlyVoice) analyzeAndSpeak();
+      }, 2000);
+    });
+
+    state.fetchTimer = setInterval(tickFetch, state.fetchInterval);
+    state.intervalTimer = setInterval(function() {
+      if (state.running) tickSpeak();
+    }, state.checkInterval * 60 * 1000);
+
+    if (state.chartMode === 'candle' && state.timeframe !== 'live') {
+      fetchCandles();
+      state.candleFetchTimer = setInterval(fetchCandles, state.candleRefreshInterval);
+    }
+
+    startPulse();
+  }
+
+  function stop() {
+    if (!state.running) return;
+
+    state.running = false;
+    startBtn.textContent = '▶️ Запустить';
+    startBtn.classList.remove('running');
+    soundIndicator.classList.remove('active', 'alerts-only');
+    soundIndicator.textContent = '🔔 Звук вкл';
+
+    if (state.intervalTimer) clearInterval(state.intervalTimer);
+    if (state.fetchTimer) clearInterval(state.fetchTimer);
+    if (state.candleFetchTimer) clearInterval(state.candleFetchTimer);
+    state.intervalTimer = null;
+    state.fetchTimer = null;
+    state.candleFetchTimer = null;
+
+    stopPulse();
+
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    addLog('⏹️ Трекинг остановлен', 'info');
+  }
+
+  // ===== ОБРАБОТЧИКИ =====
+  startBtn.addEventListener('click', function() {
+    if (state.running) stop();
+    else start();
+  });
+
+  speakNowBtn.addEventListener('click', analyzeAndSpeak);
+
+  voiceTest.addEventListener('click', function() {
+    speak('Голосовые уведомления работают. Это тестовое сообщение.');
+  });
+
+  soundTest.addEventListener('click', playBeepTest);
+
+  voiceToggle.addEventListener('change', function() {
+    state.voiceEnabled = voiceToggle.checked;
+    addLog(state.voiceEnabled ? '🔊 Голос включён' : '🔇 Голос выключен', 'info');
+    if (!state.voiceEnabled && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  });
+
+  // НОВЫЙ ОБРАБОТЧИК: "Озвучивать только ценовые алерты"
+  alertsOnlyVoiceToggle.addEventListener('change', function() {
+    state.alertsOnlyVoice = alertsOnlyVoiceToggle.checked;
+
+    if (state.alertsOnlyVoice) {
+      alertsModeHint.classList.add('visible');
+      addLog('🎯 Режим «только алерты» ВКЛЮЧЁН: периодическая озвучка отключена', 'info');
+
+      // Обновляем индикатор, если трекинг запущен
+      if (state.running) {
+        soundIndicator.classList.remove('active');
+        soundIndicator.classList.add('alerts-only');
+        soundIndicator.textContent = '🎯 Только алерты';
+      }
+
+      // Отменяем текущую озвучку (если была)
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    } else {
+      alertsModeHint.classList.remove('visible');
+      addLog('🎯 Режим «только алерты» ВЫКЛЮЧЕН: периодическая озвучка включена', 'info');
+
+      if (state.running) {
+        soundIndicator.classList.remove('alerts-only');
+        soundIndicator.classList.add('active');
+        soundIndicator.textContent = '🔔 Звук активен';
+      }
+    }
+  });
+
+  soundToggle.addEventListener('change', function() {
+    state.soundEnabled = soundToggle.checked;
+    addLog(state.soundEnabled ? '🔔 Звук включён' : '🔕 Звук выключен', 'info');
+  });
+
+  soundThreshold.addEventListener('change', function() {
+    let v = parseFloat(soundThreshold.value);
+    if (isNaN(v) || v < 0.05) v = 0.05;
+    if (v > 10) v = 10;
+    soundThreshold.value = v;
+    state.soundThresholdPct = v;
+    addLog('🔔 Порог звука: ' + v + '%', 'info');
+  });
+
+  intervalInput.addEventListener('change', function() {
+    let val = parseInt(intervalInput.value, 10);
+    if (isNaN(val) || val < 1) val = 1;
+    if (val > 60) val = 60;
+    intervalInput.value = val;
+    state.checkInterval = val;
+
+    if (state.running) {
+      if (state.intervalTimer) clearInterval(state.intervalTimer);
+      state.intervalTimer = setInterval(function() {
+        if (state.running) tickSpeak();
+      }, state.checkInterval * 60 * 1000);
+      addLog('⏱️ Новый интервал: ' + val + ' мин', 'info');
+    }
+  });
+
+  langSelect.addEventListener('change', function() {
+    state.lang = langSelect.value;
+    addLog('🗣️ Язык: ' + langSelect.options[langSelect.selectedIndex].text, 'info');
+  });
+
+  clearLog.addEventListener('click', function() {
+    logList.innerHTML = '';
+  });
+
+  settingsToggle.addEventListener('click', function() {
+    settingsBox.classList.toggle('collapsed');
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+    if (e.key === '+' || e.key === '=') { zoomIn.click(); }
+    if (e.key === '-' || e.key === '_') { zoomOut.click(); }
+    if (e.key === '0') { zoomReset.click(); }
+    if (e.key === ' ' && e.target === document.body) {
+      e.preventDefault();
+      startBtn.click();
+    }
+  });
+
+  // ===== ПЕРВИЧНАЯ ИНИЦИАЛИЗАЦИЯ =====
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', function() {
+    setTimeout(resizeCanvas, 200);
+  });
+
+  setTimeout(function() {
+    resizeCanvas();
+  }, 50);
+
+  addLog('👋 Загрузка списка монет Binance...', 'info');
+  addLog('💡 Горячие клавиши: + / − / 0 / Пробел', 'info');
+  addLog('📖 Нажмите «?» в шапке для справки', 'info');
+
+  loadAllSymbols().then(function() {
+    tickFetch();
+    if (state.chartMode === 'candle' && state.timeframe !== 'live') {
+      fetchCandles().then(function() {
+        drawChart();
+      });
+    } else {
+      drawChart();
+    }
+  });
+
+  window.addEventListener('beforeunload', function() {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    stopPulse();
+  });
+
+  renderAlerts();
+
+})();
+</script>
+
+</body>
+</html>
