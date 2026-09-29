@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            line-height: 1.7;
+            color: #2c2c2c;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 50px 55px;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+            border-bottom: 3px solid #0066cc;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #0066cc;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #888;
+            margin-top: 8px;
+        }
+
+        h2 {
+            font-size: 19px;
+            font-weight: 600;
+            color: #0066cc;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            padding-left: 12px;
+            border-left: 4px solid #0066cc;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            position: relative;
+            padding: 12px 15px 12px 40px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 3px solid #a8c8e8;
+            font-size: 15px;
+            transition: background 0.2s ease;
+        }
+
+        ul li:hover {
+            background: #eef4fa;
+        }
+
+        ul li::before {
+            content: "";
+            position: absolute;
+            left: 15px;
+            top: 20px;
+            width: 8px;
+            height: 8px;
+            background: #0066cc;
+            border-radius: 50%;
+        }
+
+        code {
+            display: inline-block;
+            background: #eef2f7;
+            color: #d63384;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: "Consolas", "Monaco", monospace;
+            font-size: 12.5px;
+            word-break: break-all;
+            margin-top: 4px;
+            border: 1px solid #dde5ee;
+        }
+
+        p {
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: #444;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #004d99;
+            text-decoration: underline;
+        }
+
+        .download-block {
+            background: linear-gradient(135deg, #0066cc 0%, #004d99 100%);
+            border-radius: 12px;
+            padding: 28px 30px;
+            text-align: center;
+            margin: 35px 0;
+            box-shadow: 0 6px 20px rgba(0, 102, 204, 0.25);
+        }
+
+        .download-block h2 {
+            color: #ffffff;
+            border: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #ffffff;
+            color: #0066cc;
+            padding: 14px 36px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            text-decoration: none;
+            color: #004d99;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .info-card {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 18px 20px;
+            border: 1px solid #e5ecf3;
+        }
+
+        .info-card h3 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #8899aa;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-card p {
+            font-size: 15px;
+            color: #2c2c2c;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .highlight-text {
+            background: #fff8e6;
+            border-left: 4px solid #f0b400;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 15px;
+            color: #554400;
+            margin-top: 10px;
+        }
+
+        .contact-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        .contact-list li {
+            background: #f8fafc;
+            border-left: 3px solid #0066cc;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+
+        .contact-list li::before {
+            display: none;
+        }
+
+        .contact-icon {
+            display: inline-block;
+            margin-right: 8px;
+            font-weight: 700;
+        }
+
+        .support-block {
+            background: linear-gradient(135deg, #f0b90b 0%, #d9a300 100%);
+            border-radius: 12px;
+            padding: 25px 30px;
+            text-align: center;
+            margin-top: 15px;
+            box-shadow: 0 6px 20px rgba(240, 185, 11, 0.25);
+        }
+
+        .support-block p {
+            color: #3d2e00;
+            font-size: 15px;
+            margin-bottom: 15px;
+        }
+
+        .support-btn {
+            display: inline-block;
+            background: #ffffff;
+            color: #b38600;
+            padding: 13px 32px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .support-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            text-decoration: none;
+            color: #8a6800;
+        }
+
+        .footer {
+            margin-top: 45px;
+            padding-top: 25px;
+            border-top: 2px solid #eef2f7;
+            text-align: center;
+            font-size: 13px;
+            color: #99a3ae;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px 22px;
+                border-radius: 12px;
+            }
+            .header h1 {
+                font-size: 28px;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 15px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <div class="header">
+            <h1>Battery</h1>
+            <p>Приложение для мониторинга аккумулятора</p>
+        </div>
+
+        <h2>Основные возможности</h2>
+        <ul>
+            <li>Осуществляет постоянный мониторинг уровня заряда аккумуляторной батареи в фоновом режиме с голосовым оповещением.</li>
+            <li>Ведёт постоянный журнал учёта изменений уровня заряда аккумулятора.<br>
+                Журнал сохраняется в памяти устройства:<br>
+                <code>/storage/emulated/0/ Журнал учёта мониторинга заряда.txt</code>
+            </li>
+            <li>Отображает полное описание аккумулятора и вносит данные в журнал.<br>
+                Журнал сохраняется в памяти устройства:<br>
+                <code>/storage/emulated/0/ Журнал описания аккумулятора.txt</code>
+            </li>
+        </ul>
+
+        <div class="download-block">
+            <h2>Скачать приложение</h2>
+            <a class="download-btn" href="https://demival82.github.io/APK/battery.apk" target="_blank" rel="noopener">
+                ⬇ Скачать Battery (APK)
+            </a>
+        </div>
+
+        <h2>Системные требования</h2>
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>ROOT-права</h3>
+                <p>Не требуются</p>
+            </div>
+            <div class="info-card">
+                <h3>Версия</h3>
+                <p>23.16.78</p>
+            </div>
+            <div class="info-card">
+                <h3>Лицензия</h3>
+                <p>Действует до 2028 года</p>
+            </div>
+            <div class="info-card">
+                <h3>Платформа</h3>
+                <p>Android</p>
+            </div>
+        </div>
+
+        <h2>Производство</h2>
+        <p>
+            Республика Беларусь<br>
+            Лаборатория Демидова<br>
+            Январь 2025 года
+        </p>
+
+        <h2>Аналогов не имеет</h2>
+        <p>
+            Наша компания занимается разработкой приложений повышенной сложности для ОС Android.
+            В нашей компании работают 5000 ведущих специалистов страны в сфере IT-технологий.
+        </p>
+
+        <h2>Получить лицензионный ключ</h2>
+        <div class="highlight-text">
+            Получить новый лицензионный ключ вы можете в Telegram:<br>
+            <a href="https://t.me/android_usd_eur" target="_blank" rel="noopener">https://t.me/android_usd_eur</a>
+        </div>
+
+        <h2>Поддержать проект</h2>
+        <div class="support-block">
+            <p>Поддержите развитие проекта — ваш вклад помогает нам делать приложение ещё лучше.</p>
+            <a class="support-btn" href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=457062914572402688&billType=request_a_payment" target="_blank" rel="noopener">
+                💛 Поддержать проект
+            </a>
+        </div>
+
+        <h2>Контактная информация</h2>
+        <ul class="contact-list">
+            <li>
+                <span class="contact-icon">📧</span>
+                Email: <a href="mailto:demival82@gmail.com">demival82@gmail.com</a>
+            </li>
+            <li>
+                <span class="contact-icon">💬</span>
+                WhatsApp: <a href="https://wa.me/375447841340" target="_blank" rel="noopener">+375 44 784-13-40</a>
+            </li>
+            <li>
+                <span class="contact-icon">✈</span>
+                Telegram: <a href="https://t.me/android_usd_eur" target="_blank" rel="noopener">t.me/android_usd_eur</a>
+            </li>
+        </ul>
+
+        <div class="footer">
+            Все права защищены ©®
+        </div>
+
+    </div>
+
+</body>
+</html>
