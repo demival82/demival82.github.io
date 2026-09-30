@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a" id="themeColorMeta">
+<title>Binance Терминал</title>
+<style>
+  :root {
+    --bg: #0b0f19;
+    --app: #131a2c;
+    --panel: #0e1422;
+    --panel2: #0b0f19;
+    --border: #1e2a3e;
+    --border2: #1a2332;
+    --text: #eef2ff;
+    --text2: #94a3b8;
+    --text3: #6b7a8f;
+    --accent: #f0b90b;
+    --green: #14a06b;
+    --red: #e0245e;
+    --shadow: rgba(0, 0, 0, 0.9);
+  }
+
+  html[data-theme="light"] {
+    --bg: #eef1f6;
+    --app: #ffffff;
+    --panel: #ffffff;
+    --panel2: #f7f9fc;
+    --border: #d4dbe6;
+    --border2: #e4e9f1;
+    --text: #0f172a;
+    --text2: #475569;
+    --text3: #94a3b8;
+    --accent: #d99e00;
+    --green: #0e8a5a;
+    --red: #c81e4f;
+    --shadow: rgba(15, 23, 42, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 820px;
+    background: var(--app);
+    border: 1px solid rgba(240, 185, 11, 0.25);
+    border-radius: 28px;
+    padding: 22px 20px;
+    box-shadow: 0 20px 50px -20px var(--shadow);
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f7931a, #ffb84d);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; font-weight: 900; color: #0b0f19;
+    flex-shrink: 0;
+  }
+
+  .header h1 { font-size: 1.1rem; font-weight: 800; }
+  .header p { font-size: 0.75rem; color: var(--text2); }
+  .spacer { flex: 1; }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--accent);
+    border: 1px solid rgba(240, 185, 11, 0.4);
+    font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { transform: scale(1.05); }
+
+  .sound-badge {
+    font-size: 0.7rem; font-weight: 700;
+    padding: 5px 10px; border-radius: 20px;
+    background: var(--border); color: var(--text2);
+    white-space: nowrap;
+  }
+  .sound-badge.active { background: rgba(20, 160, 107, 0.18); color: var(--green); }
+
+  /* ВЫБОР МОНЕТЫ */
+  .selector {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .search-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  input, select {
+    padding: 10px 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: 600;
+    outline: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--text3); }
+
+  .search-row input { flex: 1; min-width: 150px; }
+
+  .dropdown {
+    max-height: 220px; overflow-y: auto;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-top: 6px; display: none;
+  }
+  .dropdown.open { display: block; }
+
+  .coin-opt {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; cursor: pointer;
+    border-bottom: 1px solid var(--border2);
+    gap: 8px;
+  }
+  .coin-opt:last-child { border-bottom: none; }
+  .coin-opt:hover { background: var(--border2); }
+  .coin-opt.selected { background: rgba(240, 185, 11, 0.12); border-left: 3px solid var(--accent); }
+  .coin-opt .sym { font-family: monospace; font-weight: 800; font-size: 0.85rem; }
+  .coin-opt .price { font-family: monospace; font-size: 0.8rem; color: var(--accent); }
+  .coin-opt .chg { font-size: 0.7rem; font-family: monospace; }
+  .chg.up { color: var(--green); }
+  .chg.down { color: var(--red); }
+
+  /* ЦЕНА */
+  .price-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 18px 16px;
+    text-align: center;
+    margin-bottom: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .price-box.up { border-color: rgba(20, 160, 107, 0.6); box-shadow: 0 0 24px -8px rgba(20, 160, 107, 0.5); }
+  .price-box.down { border-color: rgba(224, 36, 94, 0.6); box-shadow: 0 0 24px -8px rgba(224, 36, 94, 0.5); }
+
+  .price-label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .price-value { font-size: 2rem; font-weight: 800; font-family: monospace; line-height: 1.1; margin: 4px 0; word-break: break-all; }
+  .price-change {
+    display: inline-block; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 700;
+    background: var(--border); color: var(--text2);
+  }
+  .price-change.up { background: rgba(20, 160, 107, 0.15); color: var(--green); }
+  .price-change.down { background: rgba(224, 36, 94, 0.15); color: var(--red); }
+  .price-time { font-size: 0.68rem; color: var(--text3); margin-top: 6px; }
+
+  /* СТАТИСТИКА */
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 14px;
+  }
+  .stat {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 10px 6px; text-align: center;
+  }
+  .stat-label { font-size: 0.62rem; color: var(--text2); text-transform: uppercase; }
+  .stat-value { font-size: 0.85rem; font-weight: 800; color: var(--accent); font-family: monospace; }
+
+  /* НАСТРОЙКИ */
+  .settings {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 18px; padding: 14px; margin-bottom: 14px;
+  }
+  .settings-title {
+    font-size: 0.78rem; font-weight: 800; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 10px;
+    cursor: pointer; user-select: none;
+  }
+  .settings-title::after { content: ' ▾'; float: right; transition: transform 0.2s; }
+  .settings.collapsed .settings-title::after { transform: rotate(-90deg); }
+  .settings.collapsed .settings-body { display: none; }
+
+  .row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border2); gap: 10px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row label { font-size: 0.82rem; color: var(--text2); flex: 1; }
+  .row input[type="number"] { width: 80px; text-align: center; }
+  .row select { min-width: 130px; }
+
+  .switch { position: relative; width: 42px; height: 22px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0; background: var(--border);
+    border-radius: 22px; cursor: pointer; transition: 0.3s;
+  }
+  .slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; left: 3px; bottom: 3px;
+    background: var(--text2); border-radius: 50%; transition: 0.3s;
+  }
+  input:checked + .slider { background: linear-gradient(135deg, var(--accent), #f8d33a); }
+  input:checked + .slider::before { transform: translateX(20px); background: #0b0f19; }
+
+  /* АЛЕРТЫ */
+  .alerts-block { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border2); }
+  .alerts-block h3 {
+    font-size: 0.78rem; font-weight: 800; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .alert-add { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .alert-add input { flex: 1; min-width: 100px; }
+
+  .alert-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-size: 0.78rem; margin-bottom: 5px;
+  }
+  .alert-item .price { font-family: monospace; font-weight: 800; color: var(--accent); flex: 1; }
+  .alert-item .state {
+    font-size: 0.68rem; color: var(--text3);
+    padding: 2px 8px; border-radius: 10px; background: var(--border);
+    white-space: nowrap;
+  }
+  .alert-item .state.triggered { background: rgba(20, 160, 107, 0.2); color: var(--green); }
+  .alert-item .state.repeat { background: rgba(240, 185, 11, 0.15); color: var(--accent); }
+  .alert-item .remove {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 0.9rem; padding: 2px 6px;
+  }
+  .alert-item .remove:hover { color: var(--red); }
+
+  /* КНОПКИ */
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 16px; border-radius: 12px; border: none;
+    font-size: 0.88rem; font-weight: 800; font-family: inherit;
+    cursor: pointer; transition: transform 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-start { background: linear-gradient(135deg, var(--green), #22c55e); color: #fff; }
+  .btn-start.running { background: linear-gradient(135deg, var(--red), #f43f5e); }
+  .btn-voice { background: linear-gradient(135deg, #6b21a8, #4c1d95); color: #fff; }
+  .btn-small { padding: 7px 12px; font-size: 0.75rem; border-radius: 9px; }
+
+  /* ЛОГ */
+  .log-box {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 18px; padding: 12px;
+    max-height: 180px; overflow-y: auto;
+  }
+  .log-title {
+    font-size: 0.7rem; font-weight: 800; color: var(--text2);
+    text-transform: uppercase; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-clear { background: none; border: none; color: var(--text3); font-size: 0.7rem; cursor: pointer; }
+  .log-entry {
+    font-size: 0.72rem; font-family: monospace;
+    padding: 6px 8px; border-radius: 8px; margin-bottom: 4px;
+    background: var(--panel2); border-left: 3px solid var(--border);
+    color: var(--text2); word-break: break-word;
+  }
+  .log-entry.up { border-left-color: var(--green); color: var(--green); }
+  .log-entry.down { border-left-color: var(--red); color: var(--red); }
+  .log-entry.info { border-left-color: var(--accent); color: var(--accent); }
+  .log-entry.voice { border-left-color: #a855f7; color: #a855f7; }
+  .log-entry.alert { border-left-color: #229ed9; color: #229ed9; }
+  .log-time { color: var(--text3); margin-right: 6px; }
+
+  .loading { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @keyframes flashGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(20, 160, 107, 0); }
+    50% { box-shadow: 0 0 0 10px rgba(20, 160, 107, 0.4); }
+  }
+  @keyframes flashRed {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(224, 36, 94, 0); }
+    50% { box-shadow: 0 0 0 10px rgba(224, 36, 94, 0.4); }
+  }
+  .flash-up { animation: flashGreen 1s ease; }
+  .flash-down { animation: flashRed 1s ease; }
+
+  /* МОДАЛЬНОЕ ОКНО СПРАВКИ */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--app);
+    border: 1px solid rgba(240, 185, 11, 0.4);
+    border-radius: 22px;
+    width: 100%;
+    max-width: 620px;
+    max-height: 85vh;
+    max-height: 85dvh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 30px 80px -20px var(--shadow);
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-header h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .modal-close {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--border);
+    color: var(--text2);
+    border: none;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: rgba(224, 36, 94, 0.2); color: var(--red); }
+
+  .modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .help-section { margin-bottom: 18px; }
+  .help-section:last-child { margin-bottom: 0; }
+
+  .help-section h3 {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border2);
+  }
+
+  .help-list { list-style: none; padding: 0; }
+  .help-list li {
+    font-size: 0.82rem;
+    color: var(--text2);
+    padding: 6px 0 6px 20px;
+    position: relative;
+    line-height: 1.5;
+    border-bottom: 1px solid var(--border2);
+  }
+  .help-list li:last-child { border-bottom: none; }
+  .help-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 2px;
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .help-list li strong { color: var(--accent); font-weight: 700; }
+  .help-list li code {
+    background: var(--panel2);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.76rem;
+    border: 1px solid var(--border);
+  }
+
+  .help-note {
+    background: rgba(240, 185, 11, 0.08);
+    border: 1px solid rgba(240, 185, 11, 0.3);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--text2);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .help-note strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .app { padding: 16px 14px; border-radius: 20px; }
+    .price-value { font-size: 1.6rem; }
+    .actions { grid-template-columns: 1fr; }
+    .modal { border-radius: 18px; }
+    .modal-body { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="header">
+    <div class="logo" id="logo">₿</div>
+    <div>
+      <h1 id="title">Binance Терминал</h1>
+      <p>Монеты · голос · алерты</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="themeBtn" title="Сменить тему">🌙</button>
+    <button class="icon-btn" id="helpBtn" title="Справка">?</button>
+    <div class="sound-badge" id="soundBadge">🔔 Звук вкл</div>
+  </div>
+
+  <!-- ВЫБОР МОНЕТЫ -->
+  <div class="selector">
+    <div class="search-row">
+      <input type="text" id="search" placeholder="Поиск монеты (BTC, ETH...)" autocomplete="off">
+      <select id="quoteFilter">
+        <option value="USDT">USDT</option>
+        <option value="USDC">USDC</option>
+        <option value="BTC">BTC</option>
+        <option value="FDUSD">FDUSD</option>
+        <option value="ALL">Все</option>
+      </select>
+    </div>
+    <div class="dropdown" id="dropdown"></div>
+  </div>
+
+  <!-- ЦЕНА -->
+  <div class="price-box" id="priceBox">
+    <div class="price-label" id="priceLabel">BTC / USDT</div>
+    <div class="price-value" id="priceValue"><span class="loading">⏳</span></div>
+    <div class="price-change" id="priceChange">—</div>
+    <div class="price-time" id="priceTime">Загрузка...</div>
+  </div>
+
+  <!-- СТАТИСТИКА -->
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Мин 24ч</div><div class="stat-value" id="statLow">—</div></div>
+    <div class="stat"><div class="stat-label">Макс 24ч</div><div class="stat-value" id="statHigh">—</div></div>
+    <div class="stat"><div class="stat-label">Объём</div><div class="stat-value" id="statVol">—</div></div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div class="settings" id="settingsBox">
+    <div class="settings-title" id="settingsTitle">⚙️ Настройки</div>
+    <div class="settings-body">
+      <div class="row">
+        <label>⏱️ Интервал озвучки (мин)</label>
+        <input type="number" id="intervalInput" min="1" max="60" value="1">
+      </div>
+      <div class="row">
+        <label>🗣️ Язык</label>
+        <select id="langSelect">
+          <option value="ru-RU" selected>Русский</option>
+          <option value="en-US">English</option>
+          <option value="de-DE">Deutsch</option>
+          <option value="uk-UA">Українська</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>🔊 Голос</label>
+        <div class="switch"><input type="checkbox" id="voiceToggle" checked><label class="slider" for="voiceToggle"></label></div>
+      </div>
+      <div class="row">
+        <label>🎯 Только алерты</label>
+        <div class="switch"><input type="checkbox" id="alertsOnlyToggle"><label class="slider" for="alertsOnlyToggle"></label></div>
+      </div>
+      <div class="row">
+        <label>🔔 Звук при скачке</label>
+        <div class="switch"><input type="checkbox" id="soundToggle" checked><label class="slider" for="soundToggle"></label></div>
+      </div>
+      <div class="row">
+        <label>📊 Порог скачка (%)</label>
+        <input type="number" id="soundThreshold" min="0.05" max="10" value="0.3" step="0.05">
+      </div>
+      <div class="row">
+        <label>🎧 Проверка</label>
+        <button class="btn btn-voice btn-small" id="voiceTest">Голос</button>
+      </div>
+      <div class="row">
+        <label>🔔 Бип</label>
+        <button class="btn btn-voice btn-small" id="soundTest">Звук</button>
+      </div>
+
+      <!-- АЛЕРТЫ -->
+      <div class="alerts-block">
+        <h3>🔔 Ценовые алерты</h3>
+        <div class="alert-add">
+          <input type="number" id="alertPrice" placeholder="Цена, $" inputmode="decimal">
+          <select id="alertDir">
+            <option value="above">↑ Выше</option>
+            <option value="below">↓ Ниже</option>
+            <option value="equal">= Равно (0.01%)</option>
+          </select>
+          <select id="alertRepeat">
+            <option value="once">Один раз</option>
+            <option value="repeat">С повтором</option>
+          </select>
+          <button class="btn btn-voice btn-small" id="addAlert">+ Добавить</button>
+        </div>
+        <div id="alertsList">
+          <div style="color: var(--text3); font-size: 0.75rem; text-align: center; padding: 6px;">Нет активных алертов</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- КНОПКИ -->
+  <div class="actions">
+    <button class="btn btn-start" id="startBtn">▶️ Запустить</button>
+    <button class="btn btn-voice" id="speakNowBtn">🔊 Озвучить сейчас</button>
+  </div>
+
+  <!-- ЛОГ -->
+  <div class="log-box">
+    <div class="log-title">
+      <span>📋 Журнал</span>
+      <button class="log-clear" id="clearLog">Очистить</button>
+    </div>
+    <div id="logList"></div>
+  </div>
+
+</div>
+
+<!-- СПРАВКА -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📖 Справка</h2>
+      <button class="modal-close" id="helpClose">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="help-section">
+        <h3>🚀 Быстрый старт</h3>
+        <ul class="help-list">
+          <li>Выберите монету в разделе <strong>«Поиск монеты»</strong> — введите тикер (BTC, ETH) или выберите из списка.</li>
+          <li>Нажмите <strong>«▶️ Запустить»</strong> — приложение начнёт следить за ценой.</li>
+          <li>Голос будет периодически озвучивать цену, а при резких скачках сработает звуковой сигнал.</li>
+        </ul>
+        <div class="help-note">
+          💡 <strong>Совет:</strong> для работы звука и голоса сначала нажмите <strong>«🔊 Озвучить сейчас»</strong> или кнопку «Голос» в настройках — браузер требует действия пользователя.
+        </div>
+      </div>
+
+      <div class="help-section">
+        <h3>🪙 Выбор монеты</h3>
+        <ul class="help-list">
+          <li>Введите тикер или название в поиск — список отфильтруется автоматически.</li>
+          <li>Фильтр справа ограничивает пары по котируемой валюте (USDT, USDC, BTC, FDUSD).</li>
+          <li>В списке отображаются цена и изменение за 24 часа.</li>
+          <li>Нажмите на монету — она станет активной, данные подгрузятся сразу.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔊 Голос и звук</h3>
+        <ul class="help-list">
+          <li><strong>Голосовые уведомления:</strong> каждые N минут приложение произносит цену и направление.</li>
+          <li><strong>🎯 Только алерты:</strong> при включении периодическая озвучка отключается — голос сработает только при достижении алерта.</li>
+          <li><strong>Интервал озвучки:</strong> от 1 до 60 минут.</li>
+          <li><strong>Язык:</strong> русский, английский, немецкий, украинский.</li>
+          <li><strong>Звук при скачке:</strong> при изменении цены выше порога (%) звучит двойной бип.</li>
+          <li><strong>Порог скачка:</strong> минимальное изменение между двумя обновлениями (по умолчанию 0.3%).</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🔔 Ценовые алерты</h3>
+        <ul class="help-list">
+          <li>Введите <strong>цену</strong> и выберите направление: <strong>↑ Выше</strong>, <strong>↓ Ниже</strong> или <strong>= Равно (0.01%)</strong>.</li>
+          <li>Выберите режим срабатывания: <strong>«Один раз»</strong> или <strong>«С повтором»</strong>.</li>
+          <li><strong>Один раз</strong> — алерт сработает один раз и помечается галочкой.</li>
+          <li><strong>С повтором</strong> — алерт срабатывает каждый раз, когда цена пересекает порог. Минимальный интервал между повторами — <strong>30 секунд</strong>, чтобы не было спама.</li>
+          <li>Режим <strong>«= Равно»</strong> срабатывает, когда цена отличается от заданной не более чем на <strong>0.01%</strong>.</li>
+          <li>Любой алерт можно удалить крестиком.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>📋 Журнал</h3>
+        <ul class="help-list">
+          <li>Внизу отображаются все события: запуск, изменения цены, алерты, ошибки.</li>
+          <li>Цвет слева означает тип: зелёный — рост, красный — падение, жёлтый — инфо, фиолетовый — голос, синий — алерт.</li>
+          <li>Кнопка <strong>«Очистить»</strong> удаляет все записи.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>🌗 Смена темы</h3>
+        <ul class="help-list">
+          <li>Кнопка <strong>с луной/солнцем</strong> в шапке переключает светлую и тёмную тему.</li>
+          <li>Выбор <strong>сохраняется</strong> и восстанавливается при следующем открытии.</li>
+          <li>При первом запуске тема определяется <strong>по системным настройкам</strong> устройства.</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>⌨️ Горячие клавиши</h3>
+        <ul class="help-list">
+          <li><code>Пробел</code> — запустить или остановить трекинг (если фокус не в поле ввода).</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>⚠️ Важно знать</h3>
+        <ul class="help-list">
+          <li>Данные приходят с публичных API Binance с задержкой 1–3 секунды.</li>
+          <li>Если браузер блокирует звук — кликните в любом месте страницы.</li>
+          <li>Голос работает через Web Speech API — в некоторых браузерах могут отсутствовать нужные голоса.</li>
+          <li>Приложение не является торговым советником — только инструмент информирования.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== ТЕМА =====
+  const themeBtn = document.getElementById('themeBtn');
+  const html = document.documentElement;
+  const themeColorMeta = document.getElementById('themeColorMeta');
+
+  function applyTheme(t) {
+    if (t === 'light') {
+      html.setAttribute('data-theme', 'light');
+      themeBtn.textContent = '☀️';
+      themeColorMeta.setAttribute('content', '#eef1f6');
+    } else {
+      html.removeAttribute('data-theme');
+      themeBtn.textContent = '🌙';
+      themeColorMeta.setAttribute('content', '#0f172a');
+    }
+  }
+
+  function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem('binance-theme'); } catch (e) {}
+    if (saved === 'light' || saved === 'dark') applyTheme(saved);
+    else {
+      const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(dark ? 'dark' : 'light');
+    }
+  }
+
+  themeBtn.addEventListener('click', function() {
+    const next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+    try { localStorage.setItem('binance-theme', next); } catch (e) {}
+  });
+
+  initTheme();
+
+  // ===== ЭЛЕМЕНТЫ =====
+  const $ = id => document.getElementById(id);
+
+  const logo = $('logo');
+  const title = $('title');
+  const priceBox = $('priceBox');
+  const priceLabel = $('priceLabel');
+  const priceValue = $('priceValue');
+  const priceChange = $('priceChange');
+  const priceTime = $('priceTime');
+  const statLow = $('statLow');
+  const statHigh = $('statHigh');
+  const statVol = $('statVol');
+  const startBtn = $('startBtn');
+  const speakNowBtn = $('speakNowBtn');
+  const voiceTest = $('voiceTest');
+  const soundTest = $('soundTest');
+  const voiceToggle = $('voiceToggle');
+  const alertsOnlyToggle = $('alertsOnlyToggle');
+  const soundToggle = $('soundToggle');
+  const soundThreshold = $('soundThreshold');
+  const intervalInput = $('intervalInput');
+  const langSelect = $('langSelect');
+  const logList = $('logList');
+  const clearLog = $('clearLog');
+  const settingsBox = $('settingsBox');
+  const settingsTitle = $('settingsTitle');
+  const soundBadge = $('soundBadge');
+  const alertsList = $('alertsList');
+  const alertPrice = $('alertPrice');
+  const alertDir = $('alertDir');
+  const alertRepeat = $('alertRepeat');
+  const addAlert = $('addAlert');
+  const search = $('search');
+  const quoteFilter = $('quoteFilter');
+  const dropdown = $('dropdown');
+
+  const helpBtn = $('helpBtn');
+  const helpModal = $('helpModal');
+  const helpClose = $('helpClose');
+
+  // ===== СПРАВКА =====
+  function openHelp() {
+    helpModal.classList.add('open');
+    addLog('📖 Открыта справка', 'info');
+  }
+  function closeHelp() { helpModal.classList.remove('open'); }
+
+  helpBtn.addEventListener('click', openHelp);
+  helpClose.addEventListener('click', closeHelp);
+  helpModal.addEventListener('click', e => { if (e.target === helpModal) closeHelp(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && helpModal.classList.contains('open')) closeHelp();
+  });
+
+  // ===== СОСТОЯНИЕ =====
+  const S = {
+    running: false,
+    fetchTimer: null,
+    intervalTimer: null,
+    lastPrice: null,
+    prevPrice: null,
+    history: [],
+    voiceEnabled: true,
+    alertsOnly: false,
+    soundEnabled: true,
+    threshold: 0.3,
+    lang: 'ru-RU',
+    interval: 1,
+    alerts: [],
+    audioCtx: null,
+    lastBeep: 0,
+    allSymbols: [],
+    filtered: [],
+    currentSymbol: 'BTCUSDT',
+    currentBase: 'BTC',
+    currentQuote: 'USDT',
+    tickerMap: {}
+  };
+
+  // ===== УТИЛИТЫ =====
+  const fmt = (n, d = 2) => Number(n).toLocaleString('ru-RU', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  const fmtShort = n => {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toFixed(0);
+  };
+
+  const nowTime = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  function addLog(msg, type = 'info') {
+    const el = document.createElement('div');
+    el.className = 'log-entry ' + type;
+    el.innerHTML = '<span class="log-time">' + nowTime() + '</span>' + msg;
+    logList.insertBefore(el, logList.firstChild);
+    while (logList.children.length > 50) logList.removeChild(logList.lastChild);
+  }
+
+  // ===== ЗАГРУЗКА МОНЕТ =====
+  async function loadSymbols() {
+    try {
+      addLog('📥 Загрузка списка монет...', 'info');
+      const res = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+      const data = await res.json();
+
+      S.allSymbols = data.symbols
+        .filter(s => s.status === 'TRADING')
+        .map(s => ({ symbol: s.symbol, base: s.baseAsset, quote: s.quoteAsset }))
+        .sort((a, b) => {
+          if (a.quote === 'USDT' && b.quote !== 'USDT') return -1;
+          if (a.quote !== 'USDT' && b.quote === 'USDT') return 1;
+          return a.base.localeCompare(b.base);
+        });
+
+      addLog('✅ ' + S.allSymbols.length + ' пар загружено', 'info');
+      await loadTickers();
+      applyFilter();
+      renderDropdown();
+    } catch (e) {
+      addLog('❌ Ошибка загрузки: ' + e.message, 'down');
+    }
+  }
+
+  async function loadTickers() {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+      const data = await res.json();
+      S.tickerMap = {};
+      data.forEach(t => {
+        S.tickerMap[t.symbol] = {
+          price: parseFloat(t.lastPrice),
+          change: parseFloat(t.priceChangePercent)
+        };
+      });
+    } catch (e) {
+      addLog('⚠️ Тикеры не загружены', 'down');
+    }
+  }
+
+  function applyFilter() {
+    const q = search.value.trim().toUpperCase();
+    const quote = quoteFilter.value;
+    S.filtered = S.allSymbols.filter(s => {
+      if (quote !== 'ALL' && s.quote !== quote) return false;
+      if (q) return s.symbol.includes(q) || s.base.includes(q);
+      return true;
+    }).slice(0, 200);
+  }
+
+  function renderDropdown() {
+    if (S.filtered.length === 0) {
+      dropdown.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);">Ничего не найдено</div>';
+      return;
+    }
+
+    const items = S.filtered.map(s => {
+      const t = S.tickerMap[s.symbol];
+      return { ...s, price: t ? t.price : 0, change: t ? t.change : 0, has: !!t };
+    });
+
+    items.sort((a, b) => {
+      if (a.symbol === S.currentSymbol) return -1;
+      if (b.symbol === S.currentSymbol) return 1;
+      return b.price - a.price;
+    });
+
+    dropdown.innerHTML = '';
+    items.forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'coin-opt' + (it.symbol === S.currentSymbol ? ' selected' : '');
+      const cls = it.change >= 0 ? 'up' : 'down';
+      const arrow = it.change >= 0 ? '▲' : '▼';
+      const priceStr = it.price ? '$' + fmt(it.price, it.price < 1 ? 6 : 2) : '—';
+      div.innerHTML =
+        '<div><div class="sym">' + it.base + '/' + it.quote + '</div></div>' +
+        '<div style="text-align:right;"><div class="price">' + priceStr + '</div>' +
+        (it.has ? '<div class="chg ' + cls + '">' + arrow + ' ' + Math.abs(it.change).toFixed(2) + '%</div>' : '') +
+        '</div>';
+      div.addEventListener('click', () => selectCoin(it.symbol, it.base, it.quote));
+      dropdown.appendChild(div);
+    });
+  }
+
+  function selectCoin(symbol, base, quote) {
+    if (S.running) stop();
+    S.currentSymbol = symbol;
+    S.currentBase = base;
+    S.currentQuote = quote;
+    S.lastPrice = null;
+    S.prevPrice = null;
+    S.history = [];
+
+    priceLabel.textContent = base + ' / ' + quote;
+    logo.textContent = base.substring(0, 3);
+    title.textContent = base + ' Терминал';
+    priceValue.innerHTML = '<span class="loading">⏳</span>';
+    priceChange.textContent = '—';
+    priceChange.className = 'price-change';
+    priceTime.textContent = 'Загрузка...';
+
+    dropdown.classList.remove('open');
+    search.value = '';
+    addLog('🪙 Выбрана: ' + symbol, 'info');
+    tick();
+  }
+
+  let searchTimer = null;
+  search.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      applyFilter();
+      renderDropdown();
+      dropdown.classList.add('open');
+    }, 150);
+  });
+  search.addEventListener('focus', () => {
+    applyFilter();
+    renderDropdown();
+    dropdown.classList.add('open');
+  });
+  quoteFilter.addEventListener('change', () => {
+    applyFilter();
+    renderDropdown();
+    dropdown.classList.add('open');
+  });
+  document.addEventListener('click', e => {
+    if (!dropdown.contains(e.target) && e.target !== search && e.target !== quoteFilter) {
+      dropdown.classList.remove('open');
+    }
+  });
+
+  // ===== ГОЛОС =====
+  let voices = [];
+  const loadVoices = () => { voices = window.speechSynthesis.getVoices(); };
+  if ('speechSynthesis' in window) {
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  function pickVoice(lang) {
+    if (!voices.length) loadVoices();
+    let v = voices.find(x => x.lang === lang);
+    if (!v) v = voices.find(x => x.lang.toLowerCase().startsWith(lang.split('-')[0]));
+    return v || null;
+  }
+
+  function speak(text) {
+    if (!S.voiceEnabled) return;
+    if (!('speechSynthesis' in window)) { addLog('❌ Голос не поддерживается', 'down'); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = S.lang;
+    u.rate = 1; u.pitch = 1; u.volume = 1;
+    const v = pickVoice(S.lang);
+    if (v) u.voice = v;
+    window.speechSynthesis.speak(u);
+    addLog('🔊 ' + text, 'voice');
+  }
+
+  // ===== ЗВУК =====
+  function ensureAudio() {
+    if (!S.audioCtx) {
+      try {
+        const C = window.AudioContext || window.webkitAudioContext;
+        S.audioCtx = new C();
+      } catch (e) { return null; }
+    }
+    if (S.audioCtx.state === 'suspended') S.audioCtx.resume();
+    return S.audioCtx;
+  }
+
+  function beep(dir) {
+    const ac = ensureAudio();
+    if (!ac) return;
+    const t = ac.currentTime;
+    const f1 = dir === 'up' ? 880 : 440;
+    const f2 = dir === 'up' ? 1320 : 330;
+
+    const o1 = ac.createOscillator(), g1 = ac.createGain();
+    o1.frequency.value = f1; o1.type = 'sine';
+    g1.gain.setValueAtTime(0.0001, t);
+    g1.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    o1.connect(g1).connect(ac.destination);
+    o1.start(t); o1.stop(t + 0.2);
+
+    const o2 = ac.createOscillator(), g2 = ac.createGain();
+    o2.frequency.value = f2; o2.type = 'sine';
+    g2.gain.setValueAtTime(0.0001, t + 0.18);
+    g2.gain.exponentialRampToValueAtTime(0.3, t + 0.2);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+    o2.connect(g2).connect(ac.destination);
+    o2.start(t + 0.18); o2.stop(t + 0.45);
+  }
+
+  function testBeep() { beep('up'); setTimeout(() => beep('down'), 500); }
+
+  // ===== ЗАПРОС ЦЕНЫ =====
+  async function fetchPrice() {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=' + S.currentSymbol);
+      const d = await res.json();
+      const p = parseFloat(d.lastPrice);
+      const ch = parseFloat(d.priceChangePercent);
+      const hi = parseFloat(d.highPrice);
+      const lo = parseFloat(d.lowPrice);
+      const vol = parseFloat(d.quoteVolume);
+
+      priceValue.textContent = '$' + fmt(p, p < 1 ? 6 : 2);
+      priceTime.textContent = 'Обновлено: ' + nowTime();
+      priceChange.className = 'price-change ' + (ch >= 0 ? 'up' : 'down');
+      priceChange.innerHTML = (ch >= 0 ? '▲ +' : '▼ ') + ch.toFixed(2) + '% за 24ч';
+
+      if (S.lastPrice !== null) {
+        priceBox.classList.remove('up', 'down');
+        priceBox.classList.add(p > S.lastPrice ? 'up' : 'down');
+      }
+
+      statLow.textContent = '$' + fmt(lo, lo < 1 ? 6 : 0);
+      statHigh.textContent = '$' + fmt(hi, hi < 1 ? 6 : 0);
+      statVol.textContent = '$' + fmtShort(vol);
+
+      checkAlerts(p);
+      checkMove(p);
+      S.prevPrice = p;
+      return p;
+    } catch (e) {
+      addLog('❌ Ошибка: ' + e.message, 'down');
+      priceTime.textContent = 'Ошибка';
+      return null;
+    }
+  }
+
+  function checkMove(p) {
+    if (!S.soundEnabled || S.prevPrice === null) return;
+    const diff = p - S.prevPrice;
+    const pct = Math.abs(diff / S.prevPrice) * 100;
+    if (pct >= S.threshold) {
+      const now = Date.now();
+      if (now - S.lastBeep < 3000) return;
+      S.lastBeep = now;
+      const dir = diff > 0 ? 'up' : 'down';
+      beep(dir);
+      priceBox.classList.remove('flash-up', 'flash-down');
+      void priceBox.offsetWidth;
+      priceBox.classList.add(dir === 'up' ? 'flash-up' : 'flash-down');
+      setTimeout(() => priceBox.classList.remove('flash-up', 'flash-down'), 1100);
+      addLog((dir === 'up' ? '🔔⬆️ Рост: +' : '🔔⬇️ Падение: ') + fmt(Math.abs(diff), 4) + ' $ (' + pct.toFixed(3) + '%)', dir);
+    }
+  }
+
+  // ===== АЛЕРТЫ =====
+  const ALERT_REPEAT_COOLDOWN = 30000; // 30 секунд между повторами
+
+  function checkAlerts(p) {
+    let changed = false;
+    S.alerts.forEach(a => {
+      // Проверяем, достигнут ли порог
+      let hit = false;
+      if (a.dir === 'above') hit = p >= a.price;
+      else if (a.dir === 'below') hit = p <= a.price;
+      else if (a.dir === 'equal') {
+        const tol = a.price * 0.0001;
+        hit = Math.abs(p - a.price) <= tol;
+      }
+
+      if (!hit) return;
+
+      // Если "один раз" и уже сработал — пропускаем
+      if (a.mode === 'once' && a.triggered) return;
+
+      // Если "с повтором" — проверяем кулдаун
+      if (a.mode === 'repeat') {
+        const now = Date.now();
+        if (a.lastTrigger && now - a.lastTrigger < ALERT_REPEAT_COOLDOWN) return;
+        a.lastTrigger = now;
+        a.triggered = true;
+      } else {
+        a.triggered = true;
+      }
+
+      changed = true;
+      const dt = a.dir === 'above' ? 'выше' : (a.dir === 'below' ? 'ниже' : 'равно');
+      speak('Алерт: ' + S.currentBase + ' ' + dt + ' ' + fmt(a.price, 0) + ' долларов. Текущая ' + Math.round(p).toLocaleString('ru-RU') + ' долларов.');
+      beep('up');
+      addLog('🚨 Алерт' + (a.mode === 'repeat' ? ' (повтор)' : '') + ': ' + S.currentSymbol + ' ' + fmt(p, 2) + ' $ (порог ' + fmt(a.price, 2) + ' $)', 'alert');
+    });
+    if (changed) renderAlerts();
+  }
+
+  function renderAlerts() {
+    if (S.alerts.length === 0) {
+      alertsList.innerHTML = '<div style="color:var(--text3);font-size:0.75rem;text-align:center;padding:6px;">Нет активных алертов</div>';
+      return;
+    }
+    alertsList.innerHTML = '';
+    S.alerts.forEach(a => {
+      const div = document.createElement('div');
+      div.className = 'alert-item';
+      const icon = a.dir === 'above' ? '⬆️' : (a.dir === 'below' ? '⬇️' : '🟰');
+      const dt = a.dir === 'above' ? 'выше' : (a.dir === 'below' ? 'ниже' : 'равно');
+
+      let stateText, stateClass;
+      if (a.mode === 'repeat') {
+        stateText = a.triggered ? '🔄 повтор активен' : '🔄 с повтором';
+        stateClass = 'state repeat';
+      } else {
+        stateText = a.triggered ? '✓ сработал' : 'активен';
+        stateClass = 'state' + (a.triggered ? ' triggered' : '');
+      }
+
+      div.innerHTML =
+        '<span>' + icon + '</span>' +
+        '<span class="price">$' + fmt(a.price, 2) + '</span>' +
+        '<span style="color:var(--text3);font-size:0.7rem;">' + dt + '</span>' +
+        '<span class="' + stateClass + '">' + stateText + '</span>' +
+        '<button class="remove" data-id="' + a.id + '">✕</button>';
+      alertsList.appendChild(div);
+    });
+    alertsList.querySelectorAll('.remove').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = +b.dataset.id;
+        S.alerts = S.alerts.filter(x => x.id !== id);
+        renderAlerts();
+      });
+    });
+  }
+
+  addAlert.addEventListener('click', () => {
+    const p = parseFloat(alertPrice.value);
+    if (isNaN(p) || p <= 0) { addLog('⚠️ Введите корректную цену', 'down'); return; }
+    S.alerts.push({
+      id: Date.now() + Math.random(),
+      price: p,
+      dir: alertDir.value,
+      mode: alertRepeat.value,
+      triggered: false,
+      lastTrigger: 0
+    });
+    alertPrice.value = '';
+    renderAlerts();
+    const dt = alertDir.value === 'above' ? 'выше' : (alertDir.value === 'below' ? 'ниже' : 'равно (0.01%)');
+    const modeStr = alertRepeat.value === 'repeat' ? ' (с повтором)' : '';
+    addLog('➕ Алерт' + modeStr + ': ' + S.currentSymbol + ' ' + dt + ' $' + fmt(p, 2), 'info');
+  });
+
+  // ===== ОЗВУЧКА =====
+  function analyzeAndSpeak() {
+    if (S.alertsOnly) { addLog('🎯 Режим «только алерты»', 'info'); return; }
+    const p = S.lastPrice;
+    if (p === null) { speak('Не удалось получить цену'); return; }
+    const prev = S.history.length >= 2 ? S.history[S.history.length - 2].p : null;
+    let dir = 'stable', diff = 0, pct = 0;
+    if (prev !== null) {
+      diff = p - prev;
+      pct = (diff / prev) * 100;
+      if (diff > 0) dir = 'up';
+      else if (diff < 0) dir = 'down';
+    }
+    const pStr = p < 1 ? p.toFixed(6) : Math.round(p).toLocaleString('ru-RU');
+    let text;
+    if (dir === 'up') {
+      text = S.currentBase + ' растёт. Цена ' + pStr + ' долларов.';
+      if (Math.abs(pct) >= 0.1) text += ' Рост ' + Math.abs(pct).toFixed(2) + ' процента.';
+      addLog('📈 +' + fmt(diff, 4) + ' $ (' + pct.toFixed(3) + '%)', 'up');
+    } else if (dir === 'down') {
+      text = S.currentBase + ' падает. Цена ' + pStr + ' долларов.';
+      if (Math.abs(pct) >= 0.1) text += ' Падение ' + Math.abs(pct).toFixed(2) + ' процента.';
+      addLog('📉 ' + fmt(diff, 4) + ' $ (' + pct.toFixed(3) + '%)', 'down');
+    } else {
+      text = S.currentBase + ' без изменений. Цена ' + pStr + ' долларов.';
+      addLog('➖ ' + pStr + ' $', 'info');
+    }
+    speak(text);
+  }
+
+  // ===== ЦИКЛ =====
+  async function tick() {
+    const p = await fetchPrice();
+    if (p !== null) {
+      S.lastPrice = p;
+      S.history.push({ t: Date.now(), p });
+      if (S.history.length > 200) S.history.shift();
+    }
+  }
+
+  // ===== СТАРТ / СТОП =====
+  function start() {
+    if (S.running) return;
+    S.running = true;
+    S.history = [];
+    S.lastPrice = null;
+    S.prevPrice = null;
+    startBtn.textContent = '⏹️ Остановить';
+    startBtn.classList.add('running');
+    soundBadge.classList.add('active');
+    soundBadge.textContent = S.alertsOnly ? '🎯 Только алерты' : '🔔 Звук активен';
+    addLog('▶️ Запуск ' + S.currentSymbol, 'info');
+    tick().then(() => {
+      setTimeout(() => { if (S.running && !S.alertsOnly) analyzeAndSpeak(); }, 2000);
+    });
+    S.fetchTimer = setInterval(tick, 10000);
+    S.intervalTimer = setInterval(() => { if (S.running && !S.alertsOnly) analyzeAndSpeak(); }, S.interval * 60000);
+  }
+
+  function stop() {
+    if (!S.running) return;
+    S.running = false;
+    startBtn.textContent = '▶️ Запустить';
+    startBtn.classList.remove('running');
+    soundBadge.classList.remove('active');
+    soundBadge.textContent = '🔔 Звук вкл';
+    clearInterval(S.fetchTimer);
+    clearInterval(S.intervalTimer);
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    addLog('⏹️ Остановлено', 'info');
+  }
+
+  startBtn.addEventListener('click', () => S.running ? stop() : start());
+  speakNowBtn.addEventListener('click', analyzeAndSpeak);
+  voiceTest.addEventListener('click', () => speak('Голос работает. Это тест.'));
+  soundTest.addEventListener('click', testBeep);
+
+  voiceToggle.addEventListener('change', () => {
+    S.voiceEnabled = voiceToggle.checked;
+    if (!S.voiceEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    addLog(S.voiceEnabled ? '🔊 Голос вкл' : '🔇 Голос выкл', 'info');
+  });
+
+  alertsOnlyToggle.addEventListener('change', () => {
+    S.alertsOnly = alertsOnlyToggle.checked;
+    addLog(S.alertsOnly ? '🎯 Только алерты' : '🎯 Обычный режим', 'info');
+    if (S.running) {
+      soundBadge.textContent = S.alertsOnly ? '🎯 Только алерты' : '🔔 Звук активен';
+    }
+    if (S.alertsOnly && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  });
+
+  soundToggle.addEventListener('change', () => {
+    S.soundEnabled = soundToggle.checked;
+    addLog(S.soundEnabled ? '🔔 Звук вкл' : '🔕 Звук выкл', 'info');
+  });
+
+  soundThreshold.addEventListener('change', () => {
+    let v = parseFloat(soundThreshold.value);
+    if (isNaN(v) || v < 0.05) v = 0.05;
+    if (v > 10) v = 10;
+    soundThreshold.value = v;
+    S.threshold = v;
+  });
+
+  intervalInput.addEventListener('change', () => {
+    let v = parseInt(intervalInput.value, 10);
+    if (isNaN(v) || v < 1) v = 1;
+    if (v > 60) v = 60;
+    intervalInput.value = v;
+    S.interval = v;
+    if (S.running) {
+      clearInterval(S.intervalTimer);
+      S.intervalTimer = setInterval(() => { if (S.running && !S.alertsOnly) analyzeAndSpeak(); }, v * 60000);
+    }
+  });
+
+  langSelect.addEventListener('change', () => {
+    S.lang = langSelect.value;
+    addLog('🗣️ ' + langSelect.options[langSelect.selectedIndex].text, 'info');
+  });
+
+  clearLog.addEventListener('click', () => { logList.innerHTML = ''; });
+  settingsTitle.addEventListener('click', () => settingsBox.classList.toggle('collapsed'));
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === ' ' && e.target === document.body) { e.preventDefault(); startBtn.click(); }
+  });
+
+  // ===== ИНИЦИАЛИЗАЦИЯ =====
+  addLog('👋 Загрузка...', 'info');
+  loadSymbols().then(() => tick());
+
+  window.addEventListener('beforeunload', () => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  });
+
+  renderAlerts();
+})();
+</script>
+</body>
+</html>
