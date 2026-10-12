@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="CryptoCraft — студия разработки крипто-трекеров, ботов и торговых приложений. Закажите приложение для мониторинга Binance, Telegram-уведомлений и аналитики.">
+  <title>CryptoCraft — разработка крипто-трекеров и торговых приложений</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0b0f19;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #eef2ff;
+      line-height: 1.5;
+      scroll-behavior: smooth;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #f0b90b 0%, #f8d33a 40%, #e0245e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ===== ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА ===== */
+    .lang-switch {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #0e1422;
+      border: 1px solid #1e2a3e;
+      border-radius: 40px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.03em;
+      padding: 6px 14px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 1.2;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .lang-btn:hover {
+      color: #eef2ff;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19;
+      box-shadow: 0 4px 12px -4px rgba(240, 185, 11, 0.6);
+    }
+
+    /* ===== ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ ===== */
+    .notice-banner {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-150%);
+      z-index: 9999;
+      width: calc(100% - 40px);
+      max-width: 780px;
+      background: linear-gradient(145deg, #131a2c, #0d1220);
+      border: 1px solid rgba(240, 185, 11, 0.45);
+      border-radius: 20px;
+      padding: 18px 22px 22px;
+      box-shadow: 0 25px 60px -20px rgba(0, 0, 0, 0.9),
+                  0 0 40px -10px rgba(240, 185, 11, 0.35);
+      opacity: 0;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+                  opacity 0.45s ease;
+      pointer-events: none;
+    }
+
+    .notice-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .notice-banner.hide {
+      transform: translateX(-50%) translateY(-150%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .notice-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .notice-icon {
+      flex-shrink: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      box-shadow: 0 8px 20px -6px rgba(240, 185, 11, 0.6);
+      animation: noticePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes noticePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    .notice-content { flex: 1; min-width: 0; }
+
+    .notice-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #f0b90b;
+      margin-bottom: 4px;
+    }
+
+    .notice-text {
+      font-size: 0.92rem;
+      color: #cbd5e1;
+      line-height: 1.5;
+    }
+
+    .notice-text strong { color: #eef2ff; }
+
+    .notice-close {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #1e2a3e;
+      background: #0e1422;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+      line-height: 1;
+    }
+
+    .notice-close:hover {
+      background: #1e2a3e;
+      color: #f0b90b;
+      border-color: rgba(240, 185, 11, 0.5);
+      transform: rotate(90deg);
+    }
+
+    .notice-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      background: rgba(240, 185, 11, 0.15);
+      border-radius: 0 0 20px 20px;
+      overflow: hidden;
+    }
+
+    .notice-progress-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #f0b90b, #e0245e);
+      transform-origin: left;
+      animation: noticeProgress 8s linear forwards;
+    }
+
+    @keyframes noticeProgress {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    /* ===== ШАПКА ===== */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 0;
+      flex-wrap: wrap;
+      gap: 18px;
+      border-bottom: 1px solid rgba(240, 185, 11, 0.15);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .logo .logo-emoji {
+      font-size: 1.9rem;
+      line-height: 1;
+    }
+
+    .brand-partner {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding-left: 14px;
+      margin-left: 4px;
+      border-left: 2px solid rgba(240, 185, 11, 0.35);
+    }
+
+    .brand-partner .partner-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #f0b90b;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .brand-partner .partner-tag {
+      font-size: 0.68rem;
+      color: #6b7a8f;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      font-weight: 500;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-links a:hover { color: #f0b90b; }
+
+    .nav-cta {
+      background: rgba(240, 185, 11, 0.12);
+      padding: 8px 18px;
+      border-radius: 40px;
+      border: 1px solid rgba(240, 185, 11, 0.3);
+      color: #f0b90b !important;
+      font-weight: 700;
+    }
+
+    .nav-cta:hover { background: rgba(240, 185, 11, 0.2); }
+
+    /* ===== КНОПКА ПОДДЕРЖКИ (навигация) ===== */
+    .nav-support {
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19 !important;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px -6px rgba(240, 185, 11, 0.6);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .nav-support:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px -6px rgba(240, 185, 11, 0.8);
+      color: #0b0f19 !important;
+    }
+
+    /* ===== КНОПКА TELEGRAM (навигация) ===== */
+    .nav-telegram {
+      background: linear-gradient(135deg, #229ed9, #1c87b8);
+      color: #fff !important;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 800;
+      box-shadow: 0 6px 16px -6px rgba(34, 158, 217, 0.6);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .nav-telegram:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 22px -6px rgba(34, 158, 217, 0.9);
+      color: #fff !important;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 0.9fr;
+      gap: 40px;
+      align-items: center;
+      padding: 60px 0 80px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #a0aec0;
+      max-width: 600px;
+      margin-bottom: 32px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item h3 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #f0b90b;
+    }
+
+    .stat-item p {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      margin-bottom: 0;
+    }
+
+    .hero-visual {
+      background: linear-gradient(145deg, #131a2c, #0d1220);
+      border-radius: 40px;
+      padding: 24px;
+      border: 1px solid rgba(240, 185, 11, 0.2);
+      box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.8);
+    }
+
+    .mockup {
+      background: #0e1422;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #1e2a3e;
+      font-family: 'SF Mono', 'Consolas', monospace;
+    }
+
+    .mockup-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #1e2a3e;
+    }
+
+    .mockup-row:last-child { border-bottom: none; }
+
+    .mockup-symbol { font-weight: 700; color: #eef2ff; }
+    .mockup-change { color: #14a06b; font-weight: 700; }
+
+    .mockup-badge {
+      background: #f0b90b20;
+      color: #f0b90b;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    /* ===== СЕКЦИИ ===== */
+    section { padding: 80px 0; }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .section-sub {
+      text-align: center;
+      color: #94a3b8;
+      max-width: 700px;
+      margin: 0 auto 56px;
+      font-size: 1.1rem;
+    }
+
+    /* ===== УСЛУГИ ===== */
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 28px;
+    }
+
+    .service-card {
+      background: linear-gradient(145deg, #101827, #0b0f19);
+      border-radius: 28px;
+      padding: 32px 28px;
+      border: 1px solid #1e2a3e;
+      transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .service-card:hover {
+      border-color: rgba(240, 185, 11, 0.5);
+      transform: translateY(-6px);
+      box-shadow: 0 30px 40px -20px rgba(240, 185, 11, 0.3);
+    }
+
+    .service-icon {
+      font-size: 2.6rem;
+      margin-bottom: 20px;
+      line-height: 1;
+    }
+
+    .service-card h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .service-card p {
+      color: #94a3b8;
+      font-size: 0.98rem;
+    }
+
+    /* ===== БЛОК О КОМПАНИИ ===== */
+    .about-company {
+      background: linear-gradient(145deg, #0d1422, #0a0f18);
+      border-radius: 48px;
+      padding: 48px 40px;
+      border: 1px solid #1e2a3e;
+      margin: 20px 0 40px;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .about-company h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .about-company p {
+      color: #94a3b8;
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+    }
+
+    .about-facts {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .about-fact h4 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #f0b90b;
+    }
+
+    .about-fact p { font-size: 0.85rem; margin-bottom: 0; }
+
+    .company-card {
+      background: #0e1422;
+      border-radius: 28px;
+      padding: 32px;
+      border: 1px solid rgba(240, 185, 11, 0.25);
+      text-align: center;
+    }
+
+    .company-flag { font-size: 3rem; margin-bottom: 12px; line-height: 1; }
+
+    .company-card h3 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .company-card .company-sub {
+      color: #f0b90b;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .company-details {
+      list-style: none;
+      text-align: left;
+      font-size: 0.9rem;
+      color: #94a3b8;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .company-details li {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .company-details li .li-emoji {
+      flex-shrink: 0;
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .eu-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e2a3e;
+      color: #eef2ff;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 20px;
+    }
+
+    /* ===== ПОРТФОЛИО ===== */
+    .portfolio-category { margin-bottom: 56px; }
+
+    .category-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #eef2ff;
+    }
+
+    .category-title .cat-emoji {
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 28px;
+    }
+
+    .portfolio-item {
+      background: #0d1422;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid #1e2a3e;
+      transition: transform 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .portfolio-item:hover { transform: scale(1.01); }
+
+    .portfolio-thumb {
+      height: 150px;
+      background: linear-gradient(135deg, #1a2332, #0e1422);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.6rem;
+      line-height: 1;
+      border-bottom: 1px solid #1e2a3e;
+      transition: background 0.25s, transform 0.25s;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .portfolio-item:hover .portfolio-thumb {
+      background: linear-gradient(135deg, #202c44, #101827);
+    }
+
+    .portfolio-item:hover .portfolio-thumb > * {
+      transform: scale(1.12);
+    }
+
+    .portfolio-thumb > * {
+      display: inline-block;
+      transition: transform 0.25s;
+      filter: drop-shadow(0 6px 16px rgba(240, 185, 11, 0.3));
+    }
+
+    .portfolio-info {
+      padding: 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .portfolio-info h4 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+    }
+
+    .portfolio-info p {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      flex: 1;
+    }
+
+    .portfolio-info ul {
+      color: #94a3b8;
+      font-size: 0.88rem;
+      padding-left: 18px;
+      margin-top: 6px;
+      flex: 1;
+    }
+
+    .portfolio-info ul li { margin-bottom: 6px; }
+
+    .tech-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      margin-bottom: 8px;
+    }
+
+    .tech-tags span {
+      background: #1e2a3e;
+      padding: 5px 12px;
+      border-radius: 40px;
+      font-size: 0.72rem;
+      color: #cbd5e1;
+    }
+
+    /* ===== КНОПКИ В ПОРТФОЛИО ===== */
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19;
+      font-weight: 800;
+      padding: 11px 20px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      margin-top: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -8px rgba(240, 185, 11, 0.5);
+    }
+
+    .btn-download:active { transform: scale(0.97); }
+
+    .btn-tracker {
+      background: linear-gradient(135deg, #2b3b5e, #1e2a44);
+      color: #eef2ff;
+    }
+
+    .btn-tracker:hover {
+      box-shadow: 0 10px 20px -8px rgba(43, 59, 94, 0.8);
+    }
+
+    .btn-game {
+      background: linear-gradient(135deg, #6b21a8, #4c1d95);
+      color: #eef2ff;
+    }
+
+    .btn-game:hover {
+      box-shadow: 0 10px 20px -8px rgba(107, 33, 168, 0.8);
+    }
+
+    .btn-edu {
+      background: linear-gradient(135deg, #0e7490, #155e75);
+      color: #eef2ff;
+    }
+
+    .btn-edu:hover {
+      box-shadow: 0 10px 20px -8px rgba(14, 116, 144, 0.8);
+    }
+
+    /* ===== КОНТАКТЫ ===== */
+    .contact-section {
+      background: linear-gradient(145deg, #0d1422, #0a0f18);
+      border-radius: 48px;
+      padding: 48px 40px;
+      border: 1px solid #1e2a3e;
+      margin: 40px 0;
+    }
+
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .contact-grid h2 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .contact-grid p {
+      color: #94a3b8;
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .contact-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-whatsapp {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #25d366;
+      color: #0b0f19;
+      font-weight: 800;
+      padding: 14px 28px;
+      border-radius: 60px;
+      text-decoration: none;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 8px 20px -6px #25d36680;
+    }
+
+    .btn-whatsapp:hover { background: #22c55e; }
+    .btn-whatsapp:active { transform: scale(0.97); }
+
+    .btn-email {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 60px;
+      background: #1e2a3e;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-email:hover { background: #2a3a52; }
+    .btn-email:active { transform: scale(0.97); }
+
+    /* ===== КНОПКА ПОДДЕРЖКИ (в контактах) ===== */
+    .btn-support {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #f0b90b, #f8d33a);
+      color: #0b0f19;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 22px -6px rgba(240, 185, 11, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-support::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .btn-support:hover::before {
+      left: 100%;
+    }
+
+    .btn-support:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -8px rgba(240, 185, 11, 0.9);
+    }
+
+    .btn-support:active { transform: scale(0.97); }
+
+    /* ===== КНОПКА TELEGRAM (в контактах) ===== */
+    .btn-telegram {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 60px;
+      background: linear-gradient(135deg, #229ed9, #1c87b8);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 22px -6px rgba(34, 158, 217, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-telegram::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .btn-telegram:hover::before {
+      left: 100%;
+    }
+
+    .btn-telegram:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px -8px rgba(34, 158, 217, 0.9);
+    }
+
+    .btn-telegram:active { transform: scale(0.97); }
+
+    /* ===== БЛОК ПОДДЕРЖКИ (расширенный) ===== */
+    .support-block {
+      margin-top: 28px;
+      padding: 20px 22px;
+      background: linear-gradient(145deg, rgba(240, 185, 11, 0.08), rgba(224, 36, 94, 0.05));
+      border: 1px dashed rgba(240, 185, 11, 0.4);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .support-icon {
+      font-size: 2.2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .support-text {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .support-text h4 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #f0b90b;
+      margin-bottom: 4px;
+    }
+
+    .support-text p {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin-bottom: 0;
+    }
+
+    /* ===== БЛОК TELEGRAM-КАНАЛА ===== */
+    .telegram-block {
+      margin-top: 16px;
+      padding: 20px 22px;
+      background: linear-gradient(145deg, rgba(34, 158, 217, 0.12), rgba(34, 158, 217, 0.04));
+      border: 1px dashed rgba(34, 158, 217, 0.5);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .telegram-icon {
+      font-size: 2.2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .telegram-text {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .telegram-text h4 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #4fc3f7;
+      margin-bottom: 4px;
+    }
+
+    .telegram-text p {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin-bottom: 0;
+    }
+
+    .whatsapp-card {
+      background: #25d36610;
+      border-radius: 28px;
+      padding: 32px;
+      border: 1px solid #25d36640;
+      text-align: center;
+    }
+
+    .whatsapp-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .whatsapp-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 8px;
+      word-break: break-word;
+    }
+
+    .whatsapp-label {
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    /* ===== ПОДВАЛ ===== */
+    .footer {
+      border-top: 1px solid #1a2332;
+      padding: 40px 0 32px;
+      color: #6b7a8f;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 0.9rem;
+    }
+
+    .footer a {
+      color: #94a3b8;
+      text-decoration: none;
+      margin-left: 20px;
+    }
+
+    .footer a:hover { color: #f0b90b; }
+
+    .footer-company {
+      font-size: 0.82rem;
+      color: #4b5a6e;
+      margin-top: 6px;
+    }
+
+    .footer-company strong { color: #94a3b8; }
+
+    /* ===== АДАПТИВ ===== */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; text-align: center; }
+      .hero p { margin-left: auto; margin-right: auto; }
+      .hero-stats { justify-content: center; }
+      .contact-grid, .about-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .company-details { text-align: left; max-width: 340px; margin: 0 auto; }
+      .about-facts { justify-content: center; }
+      .contact-buttons { justify-content: center; }
+      .navbar { flex-direction: column; align-items: flex-start; }
+      .nav-links { width: 100%; justify-content: space-between; }
+      .brand-partner { display: none; }
+      .support-block, .telegram-block { justify-content: center; text-align: center; }
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 0 18px; }
+      .nav-links { gap: 10px; font-size: 0.8rem; }
+      .nav-links a { font-size: 0.8rem; }
+      .nav-cta, .nav-support, .nav-telegram { padding: 6px 12px; font-size: 0.78rem; }
+      .hero h1 { font-size: 2rem; }
+      .section-title { font-size: 1.8rem; }
+      .contact-section, .about-company { padding: 32px 20px; }
+      .whatsapp-number { font-size: 1.4rem; }
+      .category-title { font-size: 1.3rem; }
+      .portfolio-thumb { height: 120px; font-size: 2.8rem; }
+
+      .contact-buttons { flex-direction: column; }
+      .contact-buttons a { width: 100%; justify-content: center; }
+
+      .notice-banner {
+        top: 12px;
+        width: calc(100% - 24px);
+        padding: 14px 16px 18px;
+        border-radius: 16px;
+      }
+      .notice-inner { gap: 12px; }
+      .notice-icon { width: 40px; height: 40px; font-size: 1.3rem; border-radius: 12px; }
+      .notice-title { font-size: 0.9rem; }
+      .notice-text { font-size: 0.82rem; }
+      .notice-close { width: 28px; height: 28px; font-size: 1rem; }
+
+      .support-block, .telegram-block { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== ВСПЛЫВАЮЩЕЕ УВЕДОМЛЕНИЕ ===== -->
+<div class="notice-banner" id="noticeBanner" role="alert" aria-live="polite">
+  <div class="notice-inner">
+    <div class="notice-icon">⚠️</div>
+    <div class="notice-content">
+      <div class="notice-title" data-i18n="noticeTitle">📢 Внимание!</div>
+      <div class="notice-text" data-i18n="noticeText">
+        Наши приложения <strong>адаптированы под любые устройства и операционные системы</strong> —
+        корректно работают на смартфонах, планшетах и ПК (Android, iOS, Windows, macOS, Linux).
+      </div>
+    </div>
+    <button class="notice-close" id="noticeClose" aria-label="Закрыть уведомление">✕</button>
+  </div>
+  <div class="notice-progress">
+    <div class="notice-progress-bar"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ===== НАВИГАЦИЯ ===== -->
+  <nav class="navbar">
+    <a href="#" class="logo">
+      <span class="logo-emoji">🧊</span>
+      <span>CryptoCraft</span>
+      <span class="brand-partner">
+        <span class="partner-name">NordVault Software GmbH</span>
+        <span class="partner-tag" data-i18n="partnerTag">📍 Мюнхен, Германия · EU</span>
+      </span>
+    </a>
+    <div class="nav-links">
+      <a href="#services" data-i18n="navServices">💻 Услуги</a>
+      <a href="#about" data-i18n="navAbout">🏢 О компании</a>
+      <a href="#portfolio" data-i18n="navPortfolio">💼 Портфолио</a>
+      <a href="#contacts" data-i18n="navContacts">📞 Контакты</a>
+      <a href="https://t.me/Scientific_Laboratory_of_Demidov" target="_blank" rel="noopener" class="nav-telegram" data-i18n="navTelegram">📢 Telegram</a>
+      <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=455754600915058688&billType=request_a_payment" target="_blank" rel="noopener" class="nav-support" data-i18n="navSupport">💛 Поддержать</a>
+      <a href="https://wa.me/375447841340" target="_blank" class="nav-cta" data-i18n="navWhatsApp">💬 WhatsApp</a>
+      <div class="lang-switch" role="group" aria-label="Language switcher">
+        <button class="lang-btn active" data-lang="ru" type="button">RU</button>
+        <button class="lang-btn" data-lang="en" type="button">EN</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <header class="hero">
+    <div>
+      <h1>
+        <span data-i18n="heroTitle1">Разрабатываем</span> <span class="gradient-text" data-i18n="heroTitleGradient">крипто-трекеры</span><br>
+        <span data-i18n="heroTitle2">и торговые приложения</span>
+      </h1>
+      <p data-i18n="heroText">
+        Создаём инструменты для мониторинга Binance, уведомлений в Telegram,
+        визуализации роста монет и автоматизации торговли. От идеи до запуска — 14 дней.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <h3>50+</h3>
+          <p data-i18n="statProjects">реализованных проектов</p>
+        </div>
+        <div class="stat-item">
+          <h3>24/7</h3>
+          <p data-i18n="statSupport">поддержка и мониторинг</p>
+        </div>
+        <div class="stat-item">
+          <h3>14</h3>
+          <p data-i18n="statDays">дней — средний срок MVP</p>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="mockup">
+        <div class="mockup-row">
+          <span class="mockup-symbol">PEPE/USDT</span>
+          <span class="mockup-change">+342.5%</span>
+          <span class="mockup-badge">NEW</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">WIF/USDT</span>
+          <span class="mockup-change">+187.2%</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">BONK/USDT</span>
+          <span class="mockup-change">+95.8%</span>
+        </div>
+        <div class="mockup-row">
+          <span class="mockup-symbol">FLOKI/USDT</span>
+          <span class="mockup-change">+67.3%</span>
+        </div>
+        <div class="mockup-row" style="border-bottom: none;">
+          <span class="mockup-symbol">SHIB/USDT</span>
+          <span class="mockup-change">+54.1%</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== УСЛУГИ ===== -->
+  <section id="services">
+    <h2 class="section-title"><span data-i18n="servicesTitle1">Что мы</span> <span class="gradient-text" data-i18n="servicesTitle2">делаем</span></h2>
+    <p class="section-sub" data-i18n="servicesSub">
+      Полный цикл разработки: от прототипа до публикации в App Store и Google Play.
+    </p>
+    <div class="services-grid">
+      <div class="service-card">
+        <div class="service-icon">📈</div>
+        <h3 data-i18n="service1Title">Крипто-трекеры</h3>
+        <p data-i18n="service1Text">Мониторинг монет Binance, фильтры по росту и объёму, live-обновления, PWA-приложения.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📨</div>
+        <h3 data-i18n="service2Title">Telegram-боты</h3>
+        <p data-i18n="service2Text">Уведомления о памп-сигналах, автоматическая рассылка, интеграция с API бирж.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">🤖</div>
+        <h3 data-i18n="service3Title">Торговые боты</h3>
+        <p data-i18n="service3Text">Автоматизация стратегий, grid-боты, арбитраж, риск-менеджмент и бэктестинг.</p>
+      </div>
+      <div class="service-card">
+        <div class="service-icon">📱</div>
+        <h3 data-i18n="service4Title">Мобильные приложения</h3>
+        <p data-i18n="service4Text">React Native / Flutter приложения для iOS и Android с push-уведомлениями.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== О КОМПАНИИ ===== -->
+  <section id="about">
+    <div class="about-company">
+      <div class="about-grid">
+        <div>
+          <h2><span data-i18n="aboutTitle1">О компании</span> <span class="gradient-text" data-i18n="aboutTitle2">NordVault Software GmbH</span></h2>
+          <p data-i18n="aboutText1">
+            NordVault Software GmbH —  европейская IT-компания со штаб-квартирой
+            в Мюнхене (Германия). Мы специализируемся на разработке финансовых и крипто-приложений
+            для рынков Европейского союза и работаем в соответствии с регламентами GDPR и MiCA.
+          </p>
+          <p data-i18n="aboutText2">
+            Наш инженерный центр объединяет разработчиков из Германии, Австрии и Нидерландов,
+            а партнёрская студия CryptoCraft отвечает за реализацию проектов под ключ.
+          </p>
+          <div class="about-facts">
+            <div class="about-fact">
+              <h4>2016</h4>
+              <p data-i18n="aboutFact1">год основания</p>
+            </div>
+            <div class="about-fact">
+              <h4>120+</h4>
+              <p data-i18n="aboutFact2">специалистов в команде</p>
+            </div>
+            <div class="about-fact">
+              <h4>18</h4>
+              <p data-i18n="aboutFact3">стран присутствия</p>
+            </div>
+          </div>
+          <div class="eu-badge" data-i18n="aboutBadge">🛡️ GDPR · MiCA compliant · Сделано в ЕС</div>
+        </div>
+        <div class="company-card">
+          <div class="company-flag">🇩🇪 🇪🇺</div>
+          <h3>NordVault Software GmbH</h3>
+          <div class="company-sub">Munich · Germany</div>
+          <ul class="company-details">
+            <li><span class="li-emoji">📍</span><span data-i18n="companyAddress">Maximilianstraße 35, 80539 München, Deutschland</span></li>
+            <li><span class="li-emoji">🆔</span><span data-i18n="companyReg">HRB 214785 · Amtsgericht München</span></li>
+            <li><span class="li-emoji">🏷️</span><span data-i18n="companyVat">USt-IdNr.: DE327845119</span></li>
+            <li><span class="li-emoji">✉️</span><span>demival82@gmail.com</span></li>
+            <li><span class="li-emoji">📞</span><span>+375447841340</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ПОРТФОЛИО ===== -->
+  <section id="portfolio">
+    <h2 class="section-title"><span data-i18n="portfolioTitle1">Наши</span> <span class="gradient-text" data-i18n="portfolioTitle2">проекты</span></h2>
+    <p class="section-sub" data-i18n="portfolioSub">
+      Примеры приложений, которые мы разработали для клиентов из крипто-индустрии.
+    </p>
+
+    <!-- КАТЕГОРИЯ: КРИПТО-ИНСТРУМЕНТЫ -->
+    <div class="portfolio-category">
+      <h3 class="category-title"><span class="cat-emoji">₿</span> <span data-i18n="catCrypto">Крипто-инструменты</span></h3>
+      <div class="portfolio-grid">
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📈</div>
+          <div class="portfolio-info">
+            <h4>Crypto Tracker</h4>
+            <p data-i18n="project1Text">Веб-трекер с live-мониторингом курсов, фильтрацией и удобным интерфейсом.</p>
+            <div class="tech-tags"><span>HTML</span><span>JavaScript</span><span>API</span></div>
+            <a href="https://demival82.github.io/Plat/Tracker.html" target="_blank" class="btn-download btn-tracker" data-i18n="project1Btn">
+              🔗 Открыть Tracker
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🧮</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="project2Title">Расчёт прибыли</h4>
+            <p data-i18n="project2Text">Калькулятор прибыли для торговли на Binance с учётом комиссий и плеча.</p>
+            <div class="tech-tags"><span>HTML</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/Binance/Binance4.html" target="_blank" class="btn-download btn-tracker" data-i18n="project2Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📲</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="project3Title">Трекер с установкой (платный)</h4>
+            <p data-i18n="project3Text">Устанавливаемое приложение-трекер с расширенным функционалом мониторинга.</p>
+            <div class="tech-tags"><span>HTML</span><span>JavaScript</span><span>PWA</span></div>
+            <a href="https://demival82.github.io/Bin/Crypto_usd.html" target="_blank" class="btn-download btn-tracker" data-i18n="project3Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- КАТЕГОРИЯ: ОБУЧЕНИЕ И ПАРТНЁРСТВО -->
+    <div class="portfolio-category">
+      <h3 class="category-title"><span class="cat-emoji">🎓</span> <span data-i18n="catEducation">Обучение и партнёрство</span></h3>
+      <div class="portfolio-grid">
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🤝</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="edu1Title">Стать партнёром Binance</h4>
+            <p data-i18n="edu1Text">Лендинг для привлечения партнёров и регистрации в партнёрской программе.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/Binance/BinanceF.html" target="_blank" class="btn-download btn-edu" data-i18n="edu1Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🔗</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="edu2Title">Реферальная ссылка</h4>
+            <p data-i18n="edu2Text">Страница с реферальной ссылкой и информацией о бонусах Binance.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/Binance/Binance.html" target="_blank" class="btn-download btn-edu" data-i18n="edu2Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📊</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="edu3Title">Обучение трейдингу</h4>
+            <p data-i18n="edu3Text">Обучающая страница по трейдингу с материалами и советами.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/Binance/Traders.html" target="_blank" class="btn-download btn-edu" data-i18n="edu3Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📖</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="edu4Title">Обучение трейдингу в журнале</h4>
+            <p data-i18n="edu4Text">Журнальный формат обучения трейдингу с пошаговыми уроками.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/Binance/Trading.html" target="_blank" class="btn-download btn-edu" data-i18n="edu4Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">👤</div>
+          <div class="portfolio-info">
+            <h4>Binance</h4>
+            <p data-i18n="edu5Text">Персональная страница для приглашения новых пользователей на Binance.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/3/binance.html" target="_blank" class="btn-download btn-edu" data-i18n="edu5Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- КАТЕГОРИЯ: ИГРЫ -->
+    <div class="portfolio-category">
+      <h3 class="category-title"><span class="cat-emoji">🎮</span> <span data-i18n="catGames">Игры</span></h3>
+      <div class="portfolio-grid">
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">✏️</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game1Title">Игра Линия</h4>
+            <p data-i18n="game1Text">Логическая игра на построение линий с ярким стартовым экраном.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/line/Splash.html" target="_blank" class="btn-download btn-game" data-i18n="game1Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🧩</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game2Title">Кроссворд</h4>
+            <p data-i18n="game2Text">Интерактивный кроссворд на крипто-тематику для проверки знаний.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/Binance/master2026.html" target="_blank" class="btn-download btn-game" data-i18n="game2Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🐍</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game3Title">Змейка</h4>
+            <p data-i18n="game3Text">Классическая игра «Змейка» в современном исполнении.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/3/zmey.html" target="_blank" class="btn-download btn-game" data-i18n="game3Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🟦</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game4Title">Тетрис</h4>
+            <p data-i18n="game4Text">Легендарный Тетрис с плавным управлением и подсчётом очков.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/4/Tetris.html" target="_blank" class="btn-download btn-game" data-i18n="game4Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">💣</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game5Title">Сапёр</h4>
+            <p data-i18n="game5Text">Классический «Сапёр» с уровнями сложности и флагами.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/4/Saper.html" target="_blank" class="btn-download btn-game" data-i18n="game5Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">❓</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game6Title">Викторина</h4>
+            <p data-i18n="game6Text">Игра-викторина «Миллионер» с вопросами на общие знания.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/6/Milion.html" target="_blank" class="btn-download btn-game" data-i18n="game6Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">⚪</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game7Title">Шашки</h4>
+            <p data-i18n="game7Text">Игра в шашки против компьютера или другого игрока.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/6/hahki.html" target="_blank" class="btn-download btn-game" data-i18n="game7Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🌊</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game8Title">Морской бой</h4>
+            <p data-i18n="game8Text">Классический морской бой с тактическим геймплеем.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/6/MorBoy.html" target="_blank" class="btn-download btn-game" data-i18n="game8Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">♟️</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game9Title">Шахматы</h4>
+            <p data-i18n="game9Text">Шахматы с полной реализацией правил и простым ИИ.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/6/Chess.html" target="_blank" class="btn-download btn-game" data-i18n="game9Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🚜</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game10Title">Танчики</h4>
+            <p data-i18n="game10Text">Аркадные танчики с уровнями и врагами.</p>
+            <div class="tech-tags"><span>HTML5</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/Tank/Battle.html" target="_blank" class="btn-download btn-game" data-i18n="game10Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🌀</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="game11Title">Игра Лабиринт</h4>
+            <p data-i18n="game11Text">3D-лабиринт с поиском выхода и исследованием уровней.</p>
+            <div class="tech-tags"><span>HTML5</span><span>WebGL</span><span>3D</span></div>
+            <a href="https://demival82.github.io/3D/3DGames.html" target="_blank" class="btn-download btn-game" data-i18n="game11Btn">
+              🎮 Играть
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- КАТЕГОРИЯ: УТИЛИТЫ И КАЛЬКУЛЯТОРЫ -->
+    <div class="portfolio-category">
+      <h3 class="category-title"><span class="cat-emoji">🛠️</span> <span data-i18n="catTools">Утилиты и калькуляторы</span></h3>
+      <div class="portfolio-grid">
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🔋</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="tool1Title">Монитор батареи</h4>
+            <ul data-i18n="tool1Text">
+              <li>🌼 Постоянный мониторинг заряда аккумулятора в фоновом режиме с голосовыми уведомлениями.</li>
+              <li>🌼 Учётный журнал изменения заряда (сохраняется в <code>/storage/emulated/0/ Журнал учёта мониторинга заряда.txt</code>).</li>
+              <li>🌼 Полное описание аккумулятора с записью в журнал (<code>/storage/emulated/0/ Журнал описания аккумулятора.txt</code>).</li>
+            </ul>
+            <div class="tech-tags"><span>APK</span><span>Android</span><span>Battery API</span></div>
+            <a href="https://demival82.github.io/APK/battery.apk" target="_blank" class="btn-download" data-i18n="tool1Btn">
+              ⬇️ Скачать APK
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📅</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="tool2Title">Голосовой календарь</h4>
+            <p data-i18n="tool2Text">Календарь с голосовым управлением и возможностью установки.</p>
+            <div class="tech-tags"><span>HTML5</span><span>Web Speech API</span></div>
+            <a href="https://demival82.github.io/X/1.html" target="_blank" class="btn-download" data-i18n="tool2Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">🔤</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="tool3Title">Русский шрифт</h4>
+            <p data-i18n="tool3Text">Инструмент для работы с русским шрифтом и типографикой.</p>
+            <div class="tech-tags"><span>HTML</span><span>CSS</span></div>
+            <a href="https://demival82.github.io/1/3.html" target="_blank" class="btn-download" data-i18n="tool3Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+        <div class="portfolio-item">
+          <div class="portfolio-thumb">📐</div>
+          <div class="portfolio-info">
+            <h4 data-i18n="tool4Title">Расчёт треугольника</h4>
+            <p data-i18n="tool4Text">Калькулятор для расчёта параметров треугольника.</p>
+            <div class="tech-tags"><span>HTML</span><span>JavaScript</span></div>
+            <a href="https://demival82.github.io/7/Triangle.html" target="_blank" class="btn-download" data-i18n="tool4Btn">
+              🔗 Открыть
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ===== КОНТАКТЫ / WHATSAPP / TELEGRAM ===== -->
+  <section id="contacts">
+    <div class="contact-section">
+      <div class="contact-grid">
+        <div>
+          <h2><span data-i18n="contactTitle1">Готовы обсудить</span> <span class="gradient-text" data-i18n="contactTitle2">ваш проект?</span></h2>
+          <p data-i18n="contactText">
+            Напишите нам в WhatsApp или подпишитесь на наш Telegram-канал с полезными
+            материалами по крипте и разработке.
+          </p>
+          <div class="contact-buttons">
+            <a href="https://wa.me/375447841340" target="_blank" class="btn-whatsapp" data-i18n="contactWhatsAppBtn">
+              💬 Написать в WhatsApp
+            </a>
+            <a href="https://t.me/Scientific_Laboratory_of_Demidov" target="_blank" rel="noopener" class="btn-telegram" data-i18n="contactTelegramBtn">
+              📢 Telegram-канал
+            </a>
+            <a href="mailto:Demival82@gmail.com" class="btn-email" data-i18n="contactEmailBtn">
+              ✉️ Email
+            </a>
+            <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=455754600915058688&billType=request_a_payment" target="_blank" rel="noopener" class="btn-support" data-i18n="contactSupportBtn">
+              💛 Поддержать проект
+            </a>
+          </div>
+
+          <!-- Блок Telegram-канала -->
+          <div class="telegram-block">
+            <div class="telegram-icon">📢</div>
+            <div class="telegram-text">
+              <h4 data-i18n="tgBlockTitle">Научная лаборатория Демидова</h4>
+              <p data-i18n="tgBlockText">Полезные материалы, разборы крипто-проектов, идеи для трейдинга и анонсы новых приложений. Подпишитесь, чтобы не пропустить!</p>
+            </div>
+            <a href="https://t.me/Scientific_Laboratory_of_Demidov" target="_blank" rel="noopener" class="btn-telegram" data-i18n="tgBlockBtn">
+              📢 Подписаться
+            </a>
+          </div>
+
+          <!-- Блок поддержки -->
+          <div class="support-block">
+            <div class="support-icon">💛</div>
+            <div class="support-text">
+              <h4 data-i18n="supportBlockTitle">Поддержать проект через Binance Pay</h4>
+              <p data-i18n="supportBlockText">Любая сумма — это вклад в развитие новых бесплатных инструментов и проектов. Спасибо за поддержку! 🙏</p>
+            </div>
+            <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=455754600915058688&billType=request_a_payment" target="_blank" rel="noopener" class="btn-support" data-i18n="supportBlockBtn">
+              💛 Отправить
+            </a>
+          </div>
+        </div>
+
+        <div class="whatsapp-card">
+          <div class="whatsapp-icon">💬</div>
+          <div class="whatsapp-number">+375 44 784-13-40</div>
+          <div class="whatsapp-label" data-i18n="whatsappLabel">По всем вопросам обращайтесь</div>
+          <a href="https://wa.me/375447841340" target="_blank" class="btn-whatsapp" style="display: inline-flex;" data-i18n="whatsappBtn">
+            💬 Открыть чат
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ПОДВАЛ ===== -->
+  <footer class="footer">
+    <div>
+      🧊 <strong style="color: #eef2ff;">CryptoCraft</strong> — <span data-i18n="footerDev">разработка крипто-приложений</span>
+      <div class="footer-company">
+        <span data-i18n="footerPartner">Партнёр:</span> <strong>NordVault Software GmbH</strong> · München, Deutschland · HRB 214785
+      </div>
+      <span style="font-size: 0.8rem;" data-i18n="footerCopyright">© 2025 Все права защищены.</span>
+    </div>
+    <div>
+      <a href="#services" data-i18n="footerServices">Услуги</a>
+      <a href="#about" data-i18n="footerAbout">О компании</a>
+      <a href="#portfolio" data-i18n="footerPortfolio">Портфолио</a>
+      <a href="https://t.me/Scientific_Laboratory_of_Demidov" target="_blank" rel="noopener" data-i18n="footerTelegram">📢 Telegram</a>
+      <a href="https://app.binance.com/uni-qr/request-to-pay?billOrderId=455754600915058688&billType=request_a_payment" target="_blank" rel="noopener" data-i18n="footerSupport">💛 Поддержать</a>
+      <a href="https://wa.me/375447841340" target="_blank" data-i18n="footerWhatsApp">WhatsApp</a>
+    </div>
+  </footer>
+
+</div>
+
+<!-- ===== СКРИПТ УВЕДОМЛЕНИЯ ===== -->
+<script>
+  (function() {
+    const banner = document.getElementById('noticeBanner');
+    const closeBtn = document.getElementById('noticeClose');
+    let autoHideTimer = null;
+
+    function showNotice(delay) {
+      setTimeout(function() {
+        banner.classList.add('show');
+        autoHideTimer = setTimeout(hideNotice, 8000);
+      }, delay || 600);
+    }
+
+    function hideNotice() {
+      if (autoHideTimer) {
+        clearTimeout(autoHideTimer);
+        autoHideTimer = null;
+      }
+      banner.classList.remove('show');
+      banner.classList.add('hide');
+    }
+
+    closeBtn.addEventListener('click', hideNotice);
+
+    document.addEventListener('click', function(e) {
+      if (banner.classList.contains('show') && !banner.contains(e.target)) {
+        hideNotice();
+      }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') hideNotice();
+    });
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      showNotice(600);
+    } else {
+      document.addEventListener('DOMContentLoaded', function() { showNotice(600); });
+    }
+  })();
+</script>
+
+<!-- ===== СКРИПТ ПЕРЕКЛЮЧАТЕЛЯ ЯЗЫКА ===== -->
+<script>
+  (function() {
+    const translations = {
+      ru: {
+        noticeTitle: '📢 Внимание!',
+        noticeText: 'Наши приложения <strong>адаптированы под любые устройства и операционные системы</strong> — корректно работают на смартфонах, планшетах и ПК (Android, iOS, Windows, macOS, Linux).',
+        partnerTag: '📍 Мюнхен, Германия · EU',
+        navServices: '💻 Услуги',
+        navAbout: '🏢 О компании',
+        navPortfolio: '💼 Портфолио',
+        navContacts: '📞 Контакты',
+        navTelegram: '📢 Telegram',
+        navSupport: '💛 Поддержать',
+        navWhatsApp: '💬 WhatsApp',
+        heroTitle1: 'Разрабатываем',
+        heroTitleGradient: 'крипто-трекеры',
+        heroTitle2: 'и торговые приложения',
+        heroText: 'Создаём инструменты для мониторинга Binance, уведомлений в Telegram, визуализации роста монет и автоматизации торговли. От идеи до запуска — 14 дней.',
+        statProjects: 'реализованных проектов',
+        statSupport: 'поддержка и мониторинг',
+        statDays: 'дней — средний срок MVP',
+        servicesTitle1: 'Что мы',
+        servicesTitle2: 'делаем',
+        servicesSub: 'Полный цикл разработки: от прототипа до публикации в App Store и Google Play.',
+        service1Title: 'Крипто-трекеры',
+        service1Text: 'Мониторинг монет Binance, фильтры по росту и объёму, live-обновления, PWA-приложения.',
+        service2Title: 'Telegram-боты',
+        service2Text: 'Уведомления о памп-сигналах, автоматическая рассылка, интеграция с API бирж.',
+        service3Title: 'Торговые боты',
+        service3Text: 'Автоматизация стратегий, grid-боты, арбитраж, риск-менеджмент и бэктестинг.',
+        service4Title: 'Мобильные приложения',
+        service4Text: 'React Native / Flutter приложения для iOS и Android с push-уведомлениями.',
+        aboutTitle1: 'О компании',
+        aboutTitle2: 'NordVault Software GmbH',
+        aboutText1: 'NordVault Software GmbH — европейская IT-компания со штаб-квартирой в Мюнхене (Германия). Мы специализируемся на разработке финансовых и крипто-приложений для рынков Европейского союза и работаем в соответствии с регламентами GDPR и MiCA.',
+        aboutText2: 'Наш инженерный центр объединяет разработчиков из Германии, Австрии и Нидерландов, а партнёрская студия CryptoCraft отвечает за реализацию проектов под ключ.',
+        aboutFact1: 'год основания',
+        aboutFact2: 'специалистов в команде',
+        aboutFact3: 'стран присутствия',
+        aboutBadge: '🛡️ GDPR · MiCA compliant · Сделано в ЕС',
+        companyAddress: 'Maximilianstraße 35, 80539 München, Deutschland',
+        companyReg: 'HRB 214785 · Amtsgericht München',
+        companyVat: 'USt-IdNr.: DE327845119',
+        portfolioTitle1: 'Наши',
+        portfolioTitle2: 'проекты',
+        portfolioSub: 'Примеры приложений, которые мы разработали для клиентов из крипто-индустрии.',
+        catCrypto: 'Крипто-инструменты',
+        catEducation: 'Обучение и партнёрство',
+        catGames: 'Игры',
+        catTools: 'Утилиты и калькуляторы',
+        project1Text: 'Веб-трекер с live-мониторингом курсов, фильтрацией и удобным интерфейсом.',
+        project1Btn: '🔗 Открыть Tracker',
+        project2Title: 'Расчёт прибыли',
+        project2Text: 'Калькулятор прибыли для торговли на Binance с учётом комиссий и плеча.',
+        project2Btn: '🔗 Открыть',
+        project3Title: 'Трекер с установкой (платный)',
+        project3Text: 'Устанавливаемое приложение-трекер с расширенным функционалом мониторинга.',
+        project3Btn: '🔗 Открыть',
+        edu1Title: 'Стать партнёром Binance',
+        edu1Text: 'Лендинг для привлечения партнёров и регистрации в партнёрской программе.',
+        edu1Btn: '🔗 Открыть',
+        edu2Title: 'Реферальная ссылка',
+        edu2Text: 'Страница с реферальной ссылкой и информацией о бонусах Binance.',
+        edu2Btn: '🔗 Открыть',
+        edu3Title: 'Обучение трейдингу',
+        edu3Text: 'Обучающая страница по трейдингу с материалами и советами.',
+        edu3Btn: '🔗 Открыть',
+        edu4Title: 'Обучение трейдингу в журнале',
+        edu4Text: 'Журнальный формат обучения трейдингу с пошаговыми уроками.',
+        edu4Btn: '🔗 Открыть',
+        edu5Text: 'Персональная страница для приглашения новых пользователей на Binance.',
+        edu5Btn: '🔗 Открыть',
+        game1Title: 'Игра Линия',
+        game1Text: 'Логическая игра на построение линий с ярким стартовым экраном.',
+        game1Btn: '🎮 Играть',
+        game2Title: 'Кроссворд',
+        game2Text: 'Интерактивный кроссворд на крипто-тематику для проверки знаний.',
+        game2Btn: '🎮 Играть',
+        game3Title: 'Змейка',
+        game3Text: 'Классическая игра «Змейка» в современном исполнении.',
+        game3Btn: '🎮 Играть',
+        game4Title: 'Тетрис',
+        game4Text: 'Легендарный Тетрис с плавным управлением и подсчётом очков.',
+        game4Btn: '🎮 Играть',
+        game5Title: 'Сапёр',
+        game5Text: 'Классический «Сапёр» с уровнями сложности и флагами.',
+        game5Btn: '🎮 Играть',
+        game6Title: 'Викторина',
+        game6Text: 'Игра-викторина «Миллионер» с вопросами на общие знания.',
+        game6Btn: '🎮 Играть',
+        game7Title: 'Шашки',
+        game7Text: 'Игра в шашки против компьютера или другого игрока.',
+        game7Btn: '🎮 Играть',
+        game8Title: 'Морской бой',
+        game8Text: 'Классический морской бой с тактическим геймплеем.',
+        game8Btn: '🎮 Играть',
+        game9Title: 'Шахматы',
+        game9Text: 'Шахматы с полной реализацией правил и простым ИИ.',
+        game9Btn: '🎮 Играть',
+        game10Title: 'Танчики',
+        game10Text: 'Аркадные танчики с уровнями и врагами.',
+        game10Btn: '🎮 Играть',
+        game11Title: 'Игра Лабиринт',
+        game11Text: '3D-лабиринт с поиском выхода и исследованием уровней.',
+        game11Btn: '🎮 Играть',
+        tool1Title: 'Монитор батареи',
+        tool1Text: '<li>🌼 Постоянный мониторинг заряда аккумулятора в фоновом режиме с голосовыми уведомлениями.</li><li>🌼 Учётный журнал изменения заряда (сохраняется в <code>/storage/emulated/0/ Журнал учёта мониторинга заряда.txt</code>).</li><li>🌼 Полное описание аккумулятора с записью в журнал (<code>/storage/emulated/0/ Журнал описания аккумулятора.txt</code>).</li>',
+        tool1Btn: '⬇️ Скачать APK',
+        tool2Title: 'Голосовой календарь',
+        tool2Text: 'Календарь с голосовым управлением и возможностью установки.',
+        tool2Btn: '🔗 Открыть',
+        tool3Title: 'Русский шрифт',
+        tool3Text: 'Инструмент для работы с русским шрифтом и типографикой.',
+        tool3Btn: '🔗 Открыть',
+        tool4Title: 'Расчёт треугольника',
+        tool4Text: 'Калькулятор для расчёта параметров треугольника.',
+        tool4Btn: '🔗 Открыть',
+        contactTitle1: 'Готовы обсудить',
+        contactTitle2: 'ваш проект?',
+        contactText: 'Напишите нам в WhatsApp или подпишитесь на наш Telegram-канал с полезными материалами по крипте и разработке.',
+        contactWhatsAppBtn: '💬 Написать в WhatsApp',
+        contactTelegramBtn: '📢 Telegram-канал',
+        contactEmailBtn: '✉️ Email',
+        contactSupportBtn: '💛 Поддержать проект',
+        tgBlockTitle: 'Научная лаборатория Демидова',
+        tgBlockText: 'Полезные материалы, разборы крипто-проектов, идеи для трейдинга и анонсы новых приложений. Подпишитесь, чтобы не пропустить!',
+        tgBlockBtn: '📢 Подписаться',
+        supportBlockTitle: 'Поддержать проект через Binance Pay',
+        supportBlockText: 'Любая сумма — это вклад в развитие новых бесплатных инструментов и проектов. Спасибо за поддержку! 🙏',
+        supportBlockBtn: '💛 Отправить',
+        whatsappLabel: 'По всем вопросам обращайтесь',
+        whatsappBtn: '💬 Открыть чат',
+        footerDev: 'разработка крипто-приложений',
+        footerPartner: 'Партнёр:',
+        footerCopyright: '© 2025 Все права защищены.',
+        footerServices: 'Услуги',
+        footerAbout: 'О компании',
+        footerPortfolio: 'Портфолио',
+        footerTelegram: '📢 Telegram',
+        footerSupport: '💛 Поддержать',
+        footerWhatsApp: 'WhatsApp'
+      },
+      en: {
+        noticeTitle: '📢 Attention!',
+        noticeText: 'Our applications are <strong>adapted for any devices and operating systems</strong> — they work correctly on smartphones, tablets and PCs (Android, iOS, Windows, macOS, Linux).',
+        partnerTag: '📍 Munich, Germany · EU',
+        navServices: '💻 Services',
+        navAbout: '🏢 About',
+        navPortfolio: '💼 Portfolio',
+        navContacts: '📞 Contacts',
+        navTelegram: '📢 Telegram',
+        navSupport: '💛 Support',
+        navWhatsApp: '💬 WhatsApp',
+        heroTitle1: 'We develop',
+        heroTitleGradient: 'crypto trackers',
+        heroTitle2: 'and trading apps',
+        heroText: 'We create tools for Binance monitoring, Telegram alerts, coin growth visualization and trading automation. From idea to launch — 14 days.',
+        statProjects: 'completed projects',
+        statSupport: 'support and monitoring',
+        statDays: 'days — average MVP time',
+        servicesTitle1: 'What we',
+        servicesTitle2: 'do',
+        servicesSub: 'Full development cycle: from prototype to publishing in the App Store and Google Play.',
+        service1Title: 'Crypto trackers',
+        service1Text: 'Binance coin monitoring, growth and volume filters, live updates, PWA apps.',
+        service2Title: 'Telegram bots',
+        service2Text: 'Pump signal alerts, automatic mailing, exchange API integration.',
+        service3Title: 'Trading bots',
+        service3Text: 'Strategy automation, grid bots, arbitrage, risk management and backtesting.',
+        service4Title: 'Mobile apps',
+        service4Text: 'React Native / Flutter apps for iOS and Android with push notifications.',
+        aboutTitle1: 'About',
+        aboutTitle2: 'NordVault Software GmbH',
+        aboutText1: 'NordVault Software GmbH is a European IT company headquartered in Munich, Germany. We specialize in developing financial and crypto applications for European Union markets and comply with GDPR and MiCA regulations.',
+        aboutText2: 'Our engineering center brings together developers from Germany, Austria and the Netherlands, while the partner studio CryptoCraft handles turnkey project implementation.',
+        aboutFact1: 'founding year',
+        aboutFact2: 'team specialists',
+        aboutFact3: 'countries of presence',
+        aboutBadge: '🛡️ GDPR · MiCA compliant · Made in EU',
+        companyAddress: 'Maximilianstraße 35, 80539 München, Deutschland',
+        companyReg: 'HRB 214785 · Amtsgericht München',
+        companyVat: 'VAT ID: DE327845119',
+        portfolioTitle1: 'Our',
+        portfolioTitle2: 'projects',
+        portfolioSub: 'Examples of applications we have developed for clients in the crypto industry.',
+        catCrypto: 'Crypto tools',
+        catEducation: 'Education & partnership',
+        catGames: 'Games',
+        catTools: 'Utilities & calculators',
+        project1Text: 'Web tracker with live rate monitoring, filtering and a convenient interface.',
+        project1Btn: '🔗 Open Tracker',
+        project2Title: 'Profit calculator',
+        project2Text: 'Profit calculator for Binance trading including fees and leverage.',
+        project2Btn: '🔗 Open',
+        project3Title: 'Installable tracker (paid)',
+        project3Text: 'Installable tracker app with extended monitoring functionality.',
+        project3Btn: '🔗 Open',
+        edu1Title: 'Become a Binance partner',
+        edu1Text: 'Landing page for attracting partners and registering in the affiliate program.',
+        edu1Btn: '🔗 Open',
+        edu2Title: 'Referral link',
+        edu2Text: 'Page with a referral link and information about Binance bonuses.',
+        edu2Btn: '🔗 Open',
+        edu3Title: 'Trading education',
+        edu3Text: 'Trading educational page with materials and tips.',
+        edu3Btn: '🔗 Open',
+        edu4Title: 'Trading education in a journal',
+        edu4Text: 'Journal-style trading education with step-by-step lessons.',
+        edu4Btn: '🔗 Open',
+        edu5Text: 'Personal page for inviting new users to Binance.',
+        edu5Btn: '🔗 Open',
+        game1Title: 'Line Game',
+        game1Text: 'Logic game about building lines with a bright start screen.',
+        game1Btn: '🎮 Play',
+        game2Title: 'Crossword',
+        game2Text: 'Interactive crypto-themed crossword to test your knowledge.',
+        game2Btn: '🎮 Play',
+        game3Title: 'Snake',
+        game3Text: 'Classic Snake game in a modern version.',
+        game3Btn: '🎮 Play',
+        game4Title: 'Tetris',
+        game4Text: 'Legendary Tetris with smooth controls and score counting.',
+        game4Btn: '🎮 Play',
+        game5Title: 'Minesweeper',
+        game5Text: 'Classic Minesweeper with difficulty levels and flags.',
+        game5Btn: '🎮 Play',
+        game6Title: 'Quiz',
+        game6Text: 'Millionaire quiz game with general knowledge questions.',
+        game6Btn: '🎮 Play',
+        game7Title: 'Checkers',
+        game7Text: 'Checkers game against the computer or another player.',
+        game7Btn: '🎮 Play',
+        game8Title: 'Battleship',
+        game8Text: 'Classic Battleship with tactical gameplay.',
+        game8Btn: '🎮 Play',
+        game9Title: 'Chess',
+        game9Text: 'Chess with full rules implementation and a simple AI.',
+        game9Btn: '🎮 Play',
+        game10Title: 'Tanks',
+        game10Text: 'Arcade tanks with levels and enemies.',
+        game10Btn: '🎮 Play',
+        game11Title: 'Maze Game',
+        game11Text: '3D maze with exit search and level exploration.',
+        game11Btn: '🎮 Play',
+        tool1Title: 'Battery monitor',
+        tool1Text: '<li>🌼 Continuous background battery monitoring with voice notifications.</li><li>🌼 Charge change log (saved to <code>/storage/emulated/0/ Battery charge monitoring log.txt</code>).</li><li>🌼 Full battery description with log entry (<code>/storage/emulated/0/ Battery description log.txt</code>).</li>',
+        tool1Btn: '⬇️ Download APK',
+        tool2Title: 'Voice calendar',
+        tool2Text: 'Calendar with voice control and installation option.',
+        tool2Btn: '🔗 Open',
+        tool3Title: 'Russian font',
+        tool3Text: 'Tool for working with Russian font and typography.',
+        tool3Btn: '🔗 Open',
+        tool4Title: 'Triangle calculator',
+        tool4Text: 'Calculator for triangle parameters.',
+        tool4Btn: '🔗 Open',
+        contactTitle1: 'Ready to discuss',
+        contactTitle2: 'your project?',
+        contactText: 'Write to us on WhatsApp or subscribe to our Telegram channel with useful crypto and development materials.',
+        contactWhatsAppBtn: '💬 Write on WhatsApp',
+        contactTelegramBtn: '📢 Telegram channel',
+        contactEmailBtn: '✉️ Email',
+        contactSupportBtn: '💛 Support the project',
+        tgBlockTitle: 'Demidov Scientific Laboratory',
+        tgBlockText: 'Useful materials, crypto project reviews, trading ideas and new app announcements. Subscribe so you don\'t miss out!',
+        tgBlockBtn: '📢 Subscribe',
+        supportBlockTitle: 'Support the project via Binance Pay',
+        supportBlockText: 'Any amount is a contribution to the development of new free tools and projects. Thank you for your support! 🙏',
+        supportBlockBtn: '💛 Send',
+        whatsappLabel: 'Contact us for any questions',
+        whatsappBtn: '💬 Open chat',
+        footerDev: 'crypto app development',
+        footerPartner: 'Partner:',
+        footerCopyright: '© 2025 All rights reserved.',
+        footerServices: 'Services',
+        footerAbout: 'About',
+        footerPortfolio: 'Portfolio',
+        footerTelegram: '📢 Telegram',
+        footerSupport: '💛 Support',
+        footerWhatsApp: 'WhatsApp'
+      }
+    };
+
+    const langBtns = document.querySelectorAll('.lang-btn');
+    let currentLang = 'ru';
+
+    function translatePage(lang) {
+      const dict = translations[lang];
+      if (!dict) return;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) {
+          el.innerHTML = dict[key];
+        }
+      });
+      document.documentElement.lang = lang;
+      currentLang = lang;
+      langBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+      });
+    }
+
+    langBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const lang = this.getAttribute('data-lang');
+        if (lang && lang !== currentLang) {
+          translatePage(lang);
+        }
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
